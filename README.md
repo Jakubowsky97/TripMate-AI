@@ -28,7 +28,7 @@ TripMate AI is an AI-powered web application that helps groups plan trips effort
 
 **Maps & Location:** Google Maps API / Mapbox
 
-**Authentication:** Firebase Auth
+**Authentication:** Supabase Auth
 
 
 #### **Backend**
@@ -38,3 +38,5 @@ TripMate AI is an AI-powered web application that helps groups plan trips effort
 **Database:** PostgreSQL (Supabase)
 
 **Chat & Real-time Data:** Firebase Firestore
+
+Supabase database password: OlHgRmFgAJhS1CiJ

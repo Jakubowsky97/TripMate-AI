@@ -1,0 +1,16 @@
+{
+  "name": "tripmateai",
+  "version": "1.0.0",
+  "description": "TripMate AI is an AI-powered web application that helps groups plan trips effortlessly. It provides intelligent itinerary suggestions, optimized routes, expense tracking, and real-time collaboration to make travel planning smooth and enjoyable.",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "start": "npm run start --prefix client & npm run start --prefix server",
+    "install:all": "npm install --prefix client && npm install --prefix server"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.7"
+  }
+}

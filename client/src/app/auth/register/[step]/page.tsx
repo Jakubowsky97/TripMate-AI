@@ -1,7 +1,7 @@
 "use client";
 
 import { SignUpForm, SignUpPasswordForm, SignUpPrefForm } from "@/components/auth/SignUpForm";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useRouter, useParams, usePathname} from "next/navigation";
 
 export default function RegisterStepPage({ params }: { params: { step: string }}) {
   const { step } = useParams();

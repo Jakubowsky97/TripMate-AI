@@ -1,11 +1,11 @@
 "use client";
-import { FaLock, FaMap, FaRegFlag } from "react-icons/fa";
+import { FaLock, FaMap, FaRegEnvelope, FaRegFlag } from "react-icons/fa";
 import PreferenceCard from "./PreferenceCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createClient } from "@/utils/supabase/client";
-import { signup } from "@/app/auth/actions";
+import { resendEmailVerification, signup } from "@/app/auth/actions";
 
 // Extend the Window interface to include initializeGoogleLogin
 declare global {
@@ -41,7 +41,7 @@ export function SignUpForm({ onClick }: SignUpFormInterface) {
           if (signInError) {
             console.error("Error signing in with Google", signInError);
           } else {
-            router.push("/auth/register/step-3");
+            router.push(`/auth/register/step-4?user_id=${signInData?.user?.id}`);
           }
         } catch (error) {
           console.error("Error signing in with Google", error);
@@ -157,10 +157,14 @@ export function SignUpForm({ onClick }: SignUpFormInterface) {
 
 export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
   const [email, setEmail] = useState<string | null>(null);
+  const [fname, setfname] = useState<string | null>(null);
+  const [lname, setlname] = useState<string | null>(null);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean>(true);
 
   useEffect(() => {
     setEmail(sessionStorage.getItem("email"));
+    setfname(sessionStorage.getItem("fName"));
+    setlname(sessionStorage.getItem("lName"));
   }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -175,6 +179,16 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
       return;
     }
 
+    if (!fname) {
+      alert("No first name found. Please go back and enter your first name.");
+      return;
+    }
+
+    if (!lname) { 
+      alert("No last name found. Please go back and enter your last name.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setPasswordsMatch(false);
       return;
@@ -184,6 +198,8 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
     formData.append("email", email);
     formData.append("password", password);
     formData.append("confirmPassword", confirmPassword);
+    formData.append("fname", fname);
+    formData.append("lname", lname);
 
     await signup(formData);
   };
@@ -246,8 +262,21 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
     );
 }
 
-export function SignUpPrefForm({onClick} : SignUpFormInterface) {
+export function ConfirmEmailForm({onClick} : SignUpFormInterface) { 
+  const [email, setEmail] = useState<string | null>(null);
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEmail(sessionStorage.getItem("email"));
+
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const errorParam = searchParams.get('error');
+      setError(errorParam);
+    }
+  }, []);
+
   useEffect(() => {
     // Get the user_id from the URL query parameters
     const userId = new URLSearchParams(window.location.search).get('user_id')
@@ -258,10 +287,96 @@ export function SignUpPrefForm({onClick} : SignUpFormInterface) {
       console.log("User ID saved to localStorage:", userId)
     } else {
       // If there's no user_id, redirect to error or login page
-      router.push('/error')
     }
-  }, [router])
+  }, [router]);
 
+  const handleResendEmailVerification: React.MouseEventHandler<HTMLButtonElement> = async (event) => {
+    event?.preventDefault();
+
+    if (!email) {
+      alert("No email found. Please go back and enter your email.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("email", email);
+
+    await resendEmailVerification(formData);
+  }
+
+  const handleOnClick = (event: React.FormEvent) => {
+    event.preventDefault();
+    router.push("/api/auth/checkVerification");
+  }
+
+    return(
+        <div className="max-w-md w-full p-8">
+              <div className="flex items-center flex-col mb-8">
+                <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
+                  <FaRegEnvelope aria-hidden="true" className="size-6 text-[#142F32]" />
+                </div>
+        
+                <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Confirm your email</h2>
+                <p className="text-[#51605D]">We've sent a confirmation email to your inbox.</p>
+              </div>
+
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                  <strong className="font-bold">Holy smokes!</strong>
+                  <span className="block sm:inline"> {decodeURIComponent(error as string).replace(/\+/g, ' ')}</span>
+                  <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url.toString());
+                    window.location.reload();
+                  }}> 
+                    <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <title>Close</title>
+                      <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+                    </svg>
+                  </span>
+                </div>
+              )}
+        
+              <form onSubmit={handleOnClick}>
+                <button
+                  type="submit"
+                  className="w-full bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]"
+                >
+                  Continue
+                </button>
+                <div className="mt-3">
+                  <span className="text-[#777C90]">
+                    You haven't received email?{" "}
+                    <button
+                      type="button"
+                      onClick={handleResendEmailVerification}
+                      className="text-[#142F32] hover:text-[#0F2528] underline"
+                    >
+                      Resend email
+                    </button>
+                  </span>
+                </div>
+              </form>
+            </div>
+    );
+}
+
+export function SignUpPrefForm({onClick} : SignUpFormInterface) {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Get the user_id from the URL query parameters
+    const userId = new URLSearchParams(window.location.search).get('user_id')
+
+    if (userId) {
+      // Store user_id in localStorage
+      localStorage.setItem('user_id', userId)
+      console.log("User ID saved to localStorage:", userId)
+    } else {
+      // If there's no user_id, redirect to error or login page
+    }
+  }, [router]);
     const travelPreferences = [
         {
           category: "Travel Interests",

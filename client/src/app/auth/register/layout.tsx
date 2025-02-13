@@ -13,8 +13,9 @@ export default function RegisterLayout({ children }: { children: ReactNode }) {
   const steps = [
     { step: 1, text: "Your details", description: "Please provide your name and email" },
     { step: 2, text: "Choose a password", description: "Must be at least 8 characters" },
-    { step: 3, text: "Set your preferences", description: "Choose your interests to get personalized AI recommendations." },
-    { step: 4, text: "Start planning your trips", description: "Explore AI-recommended accommodations and attractions." },
+    { step: 3, text: "Confirm your email", description: "Please check your email inbox" },
+    { step: 4, text: "Set your preferences", description: "Choose your interests to get personalized AI recommendations." },
+    { step: 5, text: "Start planning your trips", description: "Explore AI-recommended accommodations and attractions." },
   ];
 
   return (

@@ -30,11 +30,19 @@ export async function signup(formData: FormData) {
   }
   console.log("Password Matched")
 
+  const fullName = `${formData.get('fname')} ${formData.get('lname')}`
+
   // type-casting here for convenience
   // in practice, you should validate your inputs
   const dataUser = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    options: {
+      data: {
+        full_name: fullName,
+        email: formData.get('email') as string,
+      }
+    }
   }
 
   const { data, error } = await supabase.auth.signUp(dataUser)
@@ -44,4 +52,19 @@ export async function signup(formData: FormData) {
   }
 
   redirect('/auth/register/step-3?user_id=' + data?.user?.id);
+}
+
+export async function resendEmailVerification(formData: FormData) { 
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: formData.get('email') as string,
+  })
+  
+  if (error) {
+    redirect('/auth/register/step-3?error=' + error.message.replace(/ /g, '+'));
+  }
+
+  redirect('/auth/register/step-3');
 }

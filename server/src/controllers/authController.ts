@@ -42,3 +42,29 @@ export const confirmEmail = async (req: Request, res: Response): Promise<void> =
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const checkEmailVerification = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { user_id } = req.query;
+            const { data, error } = await supabase
+            .from("profiles")
+            .select("isConfirmed")
+            .eq("id", user_id);
+    
+        if (error) {
+            console.error("Error fetching email confirmation status:", error);
+            res.status(500).json({ message: "Failed to fetch confirmation status" });
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+    
+        res.status(200).json({ isConfirmed: data[0].isConfirmed });
+    } catch (err) {
+      console.error("Error:", err);
+      return;
+    }
+  };

@@ -362,121 +362,84 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
     );
 }
 
-export function SignUpPrefForm({onClick} : SignUpFormInterface) {
-  const router = useRouter();
+  export function SignUpPrefForm({onClick} : SignUpFormInterface) {
+    const router = useRouter();
+    const [selectedPreferences, setSelectedPreferences] = useState<{ [key: string]: string[] }>({});
 
-  useEffect(() => {
-    // Get the user_id from the URL query parameters
-    const userId = new URLSearchParams(window.location.search).get('user_id')
+    useEffect(() => {
+      const userId = new URLSearchParams(window.location.search).get("user_id");
+      if (userId) {
+        localStorage.setItem("user_id", userId);
+        console.log("User ID saved to localStorage:", userId);
+      }
+    }, [router]);
 
-    if (userId) {
-      // Store user_id in localStorage
-      localStorage.setItem('user_id', userId)
-      console.log("User ID saved to localStorage:", userId)
-    } else {
-      // If there's no user_id, redirect to error or login page
-    }
-  }, [router]);
     const travelPreferences = [
-        {
-          category: "Travel Interests",
-          options: [
-            "Adventure",
-            "Cultural Exploration",
-            "Food & Culinary",
-            "Wildlife & Nature",
-            "Relaxation",
-            "History & Heritage",
-          ],
-          icons: [
-            ""
-          ]
-        },
-        {
-          category: "Travel Style",
-          options: [
-            "Luxury",
-            "Budget",
-            "Backpacking",
-            "Solo Travel",
-            "Family Travel",
-            "Group Travel",
-          ],
-        },
-        {
-          category: "Preferred Transport",
-          options: [
-            "Airplane",
-            "Train",
-            "Car Rental",
-            "Bus",
-            "Bicycle",
-            "Walking",
-          ],
-        },
-        {
-          category: "Preferred Accommodation",
-          options: [
-            "Hotels",
-            "Hostels",
-            "Airbnb",
-            "Resorts",
-            "Camping",
-            "Guesthouses",
-          ],
-        },
-        {
-          category: "Favorite Types of Attractions",
-          options: [
-            "Beaches",
-            "Mountains",
-            "Historical Sites",
-            "Theme Parks",
-            "Museums",
-            "Nightlife",
-          ],
-        },
-      ];
+      { category: "travel_interests", options: ["Adventure", "Cultural Exploration", "Food & Culinary", "Wildlife & Nature", "Relaxation", "History & Heritage"] },
+      { category: "travel_style", options: ["Luxury", "Budget", "Backpacking", "Solo Travel", "Family Travel", "Group Travel"] },
+      { category: "preferred_transport", options: ["Airplane", "Train", "Car Rental", "Bus", "Bicycle", "Walking"] },
+      { category: "preferred_accommodation", options: ["Hotels", "Hostels", "Airbnb", "Resorts", "Camping", "Guesthouses"] },
+      { category: "favorite_types_of_attractions", options: ["Beaches", "Mountains", "Historical Sites", "Theme Parks", "Museums", "Nightlife"] },
+    ];
 
-    const handleSubmit = (event: React.FormEvent) => {
-        event.preventDefault(); 
-        onClick();  
-      };
+    const handleCheckboxChange = (category: string, option: string) => {
+      setSelectedPreferences((prev) => ({
+        ...prev,
+        [category]: prev[category]?.includes(option)
+          ? prev[category].filter((item) => item !== option)
+          : [...(prev[category] || []), option],
+      }));
+    };
 
-    return(
-        <div className="max-w-lg w-full p-8">
-              <div className="flex items-center flex-col mb-8">
-                <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-                  <FaMap aria-hidden="true" className="size-6 text-[#142F32]" />
-                </div>
-        
-                <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Set your preferences</h2>
-                <p className="text-[#51605D]">Choose your preferences for AI recommendations.</p>
-              </div>
-        
-              <form>
-              {travelPreferences.map((category) => (
-                <div key={category.category}>
-                    <h3 className="text-xl font-semibold text-[#142F32] mb-2 mt-4">{category.category}</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                    {category.options.map((option) => (
-                        <PreferenceCard
-                        key={option}
-                        option={option}
-                        />
-                    ))}
-                    </div>
-                </div>
+    const handleSubmit = async (event: React.FormEvent) => {
+      event.preventDefault();
+      
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        console.error("User ID not found!");
+        return;
+      }
+
+      localStorage.setItem("preferences", JSON.stringify(selectedPreferences));
+      console.log("Preferences saved to localStorage:", selectedPreferences);
+
+      router.push("/api/auth/savePreferences");
+    };
+
+    return (
+      <div className="max-w-lg w-full p-8">
+        <div className="flex items-center flex-col mb-8">
+          <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
+            <FaMap aria-hidden="true" className="size-6 text-[#142F32]" />
+          </div>
+          <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Set your preferences</h2>
+          <p className="text-[#51605D]">Choose your preferences for AI recommendations.</p>
+        </div>
+  
+        <form onSubmit={handleSubmit}>
+          {travelPreferences.map((category) => (
+            <div key={category.category}>
+              <h3 className="text-xl font-semibold text-[#142F32] mb-2 mt-4">{category.category
+              .replaceAll("_", " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {category.options.map((option) => (
+                  <PreferenceCard
+                    key={option}
+                    category={category.category}
+                    option={option}
+                    onChange={handleCheckboxChange}
+                    isChecked={selectedPreferences[category.category]?.includes(option) || false}
+                  />
                 ))}
-
-                <button
-                  type="submit"
-                  className="w-full mt-4 bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]"
-                  onClick={handleSubmit}
-                >
-                  Continue
-                </button>
-              </form>
+              </div>
             </div>
+          ))}
+  
+          <button type="submit" className="w-full mt-4 bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]">
+            Continue
+          </button>
+        </form>
+      </div>
     );
-}
+  }

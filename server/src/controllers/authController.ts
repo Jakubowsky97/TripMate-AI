@@ -68,3 +68,37 @@ export const checkEmailVerification = async (req: Request, res: Response): Promi
       return;
     }
   };
+
+export const saveUserPreferences = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { userId, preferences } = req.body;
+
+        if (!userId || !preferences) {
+            res.status(400).json({ error: "Missing user ID or preferences" });
+            return;
+        }
+
+        const { data, error } = await supabase
+        .from('user_travel_preferences')
+        .upsert([
+          {
+            id: userId,
+            travel_interests: preferences.travel_interests || [],
+            travel_style: preferences.travel_style || [],
+            preferred_transport: preferences.preferred_transport || [],
+            preferred_accommodation: preferences.preferred_accommodation || [],
+            favorite_types_of_attractions: preferences.favorite_types_of_attractions || [],
+          }
+        ], { onConflict: 'id' });
+
+        if (error) {
+            console.error("Supabase Error: ", error);
+            res.status(500).json({ error: error.message || "Failed to save preferences" });
+            return;
+        }
+
+        res.status(200).json({ message: "Preferences saved successfully", data });
+    } catch (err) { 
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

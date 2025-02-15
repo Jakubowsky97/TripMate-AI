@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
-import SignOutButton from '@/components/auth/SignOutButton'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -10,12 +9,11 @@ export default async function Dashboard() {
   if (error || !data?.user) {
     redirect('/auth/login')
   } 
+  const user_firstName = data.user.user_metadata.full_name.split(' ')[0]
 
   return (
     <div>
-      <p>Hello {data.user.email}</p>
-      <SignOutButton/>
+      <h1>Good Morning, {user_firstName} 👋</h1>
     </div>
-  
 )
 }

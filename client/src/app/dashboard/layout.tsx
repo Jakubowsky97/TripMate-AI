@@ -4,19 +4,27 @@ import { FaBars, FaTimes, FaUser, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOut
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import React from "react";
+import { DarkModeProvider, useDarkMode } from "@/components/ui/DarkModeContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <DarkModeProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </DarkModeProvider>
+  );
+}
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { darkMode, toggleDarkMode } = useDarkMode();
   const [isOpen, setIsOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const supabase = createClient();
   const router = useRouter();
 
-  const handleSignOut = async () => { 
+  const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-      router.push("/");
-    }
-  }
+    if (!error) router.push("/");
+  };  
 
   return (
     <div className={`flex h-screen ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
@@ -47,7 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Sidebar Footer */}
         <div className="p-4 flex flex-col space-y-2">
-          <button onClick={() => setDarkMode(!darkMode)} className="flex items-center p-3 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
+          <button onClick={toggleDarkMode} className="flex items-center p-3 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
             {darkMode ? <FaSun className={`${isOpen ? "mr-3" : "mr-0"} text-yellow-400`} /> : <FaMoon className={`${isOpen ? "mr-3" : "mr-0"}`} />}
             {isOpen && "Dark Mode"}
           </button>
@@ -59,7 +67,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 text-[#070e0e]">
+      <main className={`flex-1 p-6 text-[#070e0e] ${darkMode && "text-white"}`}>
         {children}
       </main>
     </div>

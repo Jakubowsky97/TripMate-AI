@@ -3,28 +3,27 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ConfirmPage() {
+export default function CheckVerifiaction() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const user_id = localStorage.getItem("user_id");
+    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        const confirmEmail = async () => {
-            const token_hash = searchParams.get("token_hash");
-            const type = searchParams.get("type");
-            const next = searchParams.get("next") || "/";
+        if (typeof window !== "undefined") {
+            const userIdFromStorage = localStorage.getItem("user_id");
+            setUserId(userIdFromStorage);
+        }
+    }, []);
 
-            if (!token_hash || !type) {
-                setError("Invalid confirmation link");
-                setLoading(false);
-                return;
-            }
+    useEffect(() => {
+        if (!userId) return;
+        const confirmEmail = async () => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/auth/confirm?token_hash=${token_hash}&type=${type}&next=${next}&user_id=${user_id}`
+                    `http://localhost:5000/api/auth/checkEmail?user_id=${userId}`
                 );
 
                 const data = await response.json();
@@ -33,7 +32,11 @@ export default function ConfirmPage() {
                     throw new Error(data.error || "Verification failed");
                 }
 
-                router.push(data.next);
+                if(data.isConfirmed === true) {
+                    router.push("/auth/register/step-4");
+                } else {
+                    router.push("/auth/register/step-3?error=Email%20not%20confirmed");
+                }
             } catch (err) {
                 if (err instanceof Error) {
                     setError(err.message);
@@ -46,10 +49,10 @@ export default function ConfirmPage() {
         };
 
         confirmEmail();
-    }, [searchParams, router]);
+    }, [searchParams, router, userId]);
 
-    if (loading) return <p>Verifying...</p>;
+    if (loading) return <p>Checking...</p>;
     if (error) return <p>Error: {error}</p>;
 
-    return null;
+    return ;
 }

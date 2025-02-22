@@ -1,6 +1,6 @@
 "use client";
 
-import { SignUpForm, SignUpPasswordForm, SignUpPrefForm } from "@/components/auth/SignUpForm";
+import { ConfirmEmailForm, SignUpForm, SignUpPasswordForm, SignUpPrefForm } from "@/components/auth/SignUpForm";
 import { useRouter, useParams, usePathname} from "next/navigation";
 
 export default function RegisterStepPage({ params }: { params: { step: string }}) {
@@ -26,9 +26,13 @@ export default function RegisterStepPage({ params }: { params: { step: string }}
         );
       case "step-3":
         return (
+            <ConfirmEmailForm onClick={handleNext}/>
+        );  
+      case "step-4":
+        return (
             <SignUpPrefForm onClick={handleNext}/>
         );
-      case "step-4":
+      case "step-5":
         return (
             <SignUpForm onClick={handleNext}/>
         );

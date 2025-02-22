@@ -1,7 +1,20 @@
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
+import { createClient } from "@/utils/supabase/client";
+import { redirect } from "next/navigation";
 
 export default function HeroSection() {
+  const handleOnClick = async () => {
+      const supabase = await createClient()
+    
+      const { data, error } = await supabase.auth.getUser()
+      if (data?.user) {
+        redirect('/dashboard');
+      } else if (error || !data?.user) {
+        redirect('/auth/register');
+      }
+  }
+
     return(
         <section className="flex flex-col items-center justify-center text-center py-24 px-6">
         <motion.h2
@@ -20,7 +33,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Button variant="themeMain" className="mt-6 px-6 py-3">Get Started Now</Button>
+          <Button variant="themeMain" className="mt-6 px-6 py-3" onClick={handleOnClick}>Get Started Now</Button>
         </motion.div>
       </section>
     )

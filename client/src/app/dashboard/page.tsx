@@ -1,21 +1,7 @@
-import { redirect } from 'next/navigation'
+import { getUser } from "@/utils/supabase/server";
+import Dashboard from "@/components/ui/Dashboard";
 
-import { createClient } from '@/utils/supabase/server'
-import SignOutButton from '@/components/auth/SignOutButton'
-
-export default async function Dashboard() {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect('/auth/login')
-  }
-
-  return (
-    <div>
-      <p>Hello {data.user.email}</p>
-      <SignOutButton/>
-    </div>
-  
-)
-}
+export default async function DashboardPage() {
+  const user = await getUser();
+  return <Dashboard user={user} />;
+} 

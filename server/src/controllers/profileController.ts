@@ -4,24 +4,32 @@ import supabase from "../utils/supabase";
 
 export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { user_id, username, avatar_url, email, first_name, last_name } = req.body;  
-        const full_name = `${first_name} ${last_name}`;
+        const { user_id, username, avatar_url, email, full_name } = req.body;  
 
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;
         }
 
+        const { data: userData, error: userError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user_id);
+
+        const user = userData?.[0];
+
         const updateFields: any = {};
-        if (username) updateFields.username = username;
-        if (avatar_url) updateFields.avatar_url = avatar_url;
-        if (email) updateFields.email = email;
-        if (full_name) updateFields.full_name = full_name
+        if (username && (user.username != username)) updateFields.username = username;
+        if (avatar_url && (user.avatar_url != avatar_url)) updateFields.avatar_url = avatar_url;
+        if (email && (user.email != email)) updateFields.email = email;
+        if (full_name && (user.full_name != full_name)) updateFields.full_name = full_name
 
         if (Object.keys(updateFields).length === 0) {
             res.status(400).json({ error: "No fields to update" });
             return;
         }
+
+        updateFields.updated_at = new Date();
 
         const { data, error } = await supabase
             .from("profiles")
@@ -54,7 +62,8 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const { user_id } = req.query;  
-       
+        const  session = await supabase.auth.getSession()
+
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;

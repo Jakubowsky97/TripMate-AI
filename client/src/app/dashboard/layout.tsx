@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { FaBars, FaTimes, FaUser, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOutAlt } from "react-icons/fa";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { DarkModeProvider, useDarkMode } from "@/components/ui/DarkModeContext";
 
@@ -20,6 +20,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
   const [supabase, setSupabase] = useState<any>(null); 
   const router = useRouter();
+  const userId = useSearchParams().get("user_id");
   
   useEffect(() => {
     setSupabase(createClient());
@@ -31,10 +32,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   };  
 
   return (
-    <div className={`flex h-screen  transition-colors duration-300 ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
+    <div className={`flex min-h-full transition-colors duration-300 ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
       
       {/* Sidebar */}
-      <aside className={`h-full ${isOpen ? "w-64" : "w-16 items-center"} transition-all duration-300 ${darkMode ? "bg-[#1a1e1f] border-r border-[#2D2D2D]" : "bg-[#122C26]"} shadow-md flex flex-col `}>
+      <aside className={`fixed top-0 left-0 h-full ${isOpen ? "w-64" : "w-16 items-center"} transition-all duration-300 ${darkMode ? "bg-[#1a1e1f] border-r border-[#2D2D2D]" : "bg-[#122C26]"} shadow-md flex flex-col `}>
         
         {/* Sidebar Header */}
         <div className="p-4 flex items-center justify-between">
@@ -46,13 +47,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
         {/* Sidebar Links */}
         <nav className="flex-1 px-2">
-          <Link href="/dashboard" className={`flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded`}>
+          <Link href={`/dashboard?user_id=${userId}`} className={`flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded`}>
             <FaHome className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "Dashboard"}
           </Link>
           <Link href="/trips" className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
             <FaMap className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "My Trips"}
           </Link>
-          <Link href="/dashboard/settings" className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
+          <Link href={`/dashboard/settings?user_id=${userId}`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
             <FaCog className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "Settings"}
           </Link>
         </nav>
@@ -71,7 +72,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 p-6 transition-colors duration-300 text-[#070e0e] ${darkMode && "text-[#f8f8f8]"}`}>
+      <main className={`flex-1 p-6 ${isOpen ? "ml-64" : "ml-16"} transition-colors duration-300 text-[#070e0e] ${darkMode && "text-[#f8f8f8]"}`}>
         {children}
       </main>
     </div>

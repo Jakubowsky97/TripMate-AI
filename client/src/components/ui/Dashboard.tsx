@@ -1,14 +1,22 @@
 "use client";
-import { redirect } from 'next/navigation'
+import { redirect, useSearchParams } from 'next/navigation'
 import { FaChartPie, FaMap, FaPlane, FaTrophy } from 'react-icons/fa'
 import { useDarkMode } from '@/components/ui/DarkModeContext';
 
-export default function Dashboard({ user }: { user: any }) {
+interface DashboardProps {
+  user: any;
+  access_token: string;
+  refresh_token: string;
+}
+
+export default function Dashboard({ user, access_token, refresh_token }: DashboardProps) {
   const { darkMode } = useDarkMode();
+  localStorage.setItem("access_token", access_token);
+  localStorage.setItem("refresh_token", refresh_token);
   if (!user) {
     redirect("/auth/login");
     return null;
-  } 
+  }
   const user_firstName = user.user_metadata.full_name.split(' ')[0]
 
   return (

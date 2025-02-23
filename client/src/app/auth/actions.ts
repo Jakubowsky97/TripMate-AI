@@ -13,13 +13,29 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword(dataUser)
+  const { data: signinData, error } = await supabase.auth.signInWithPassword(dataUser)
 
   if (error) {
     redirect('/error')
   }
 
-  redirect('/dashboard?user_id=' + data?.user?.id);
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            email: dataUser.email,
+            password: dataUser.password,
+        }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+    }
+
+  redirect('/dashboard?user_id=' + signinData?.user?.id);
 }
 
 export async function signup(formData: FormData) {

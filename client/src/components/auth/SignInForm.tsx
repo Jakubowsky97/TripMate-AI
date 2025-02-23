@@ -29,8 +29,26 @@ export function SignInForm() {
               if (signInError) {
                 console.error("Error signing in with Google", signInError);
               } else {
-                router.push("/dashboard");
+                router.push("/dashboard?user_id=" + signInData?.user.id);
               }
+
+              const responseLogin = await fetch("http://localhost:5000/api/auth/loginGoogle", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    response: response,
+                }),
+            });
+        
+            const data = await responseLogin.json();
+            if (!responseLogin.ok) {
+                throw new Error(data.error || "Login failed");
+            } else {
+              console.log("Login successful", data);
+            }       
+
             } catch (error) {
               console.error("Error signing in with Google", error);
             }
@@ -117,6 +135,10 @@ export function SignInForm() {
                       You don't have an account?{" "}
                       <a href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
                         Register
+                      </a>
+                      {" "}or{" "}
+                      <a href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
+                        Reset password
                       </a>
                     </span>
                   </div>

@@ -3,7 +3,11 @@ import { Button } from "../ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { redirect } from "next/navigation";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  darkMode: boolean;
+}
+
+export default function HeroSection({ darkMode } : HeroSectionProps) {
   const handleOnClick = async () => {
       const supabase = await createClient()
     
@@ -33,7 +37,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Button variant="themeMain" className="mt-6 px-6 py-3" onClick={handleOnClick}>Get Started Now</Button>
+          <Button variant={`${darkMode ? "dakrModeMain" : "themeMain"}`} className="mt-6 px-6 py-3" onClick={handleOnClick}>Get Started Now</Button>
         </motion.div>
       </section>
     )

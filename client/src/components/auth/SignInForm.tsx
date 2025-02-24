@@ -137,7 +137,7 @@ export function SignInForm() {
                         Register
                       </a>
                       {" "}or{" "}
-                      <a href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
+                      <a href="/auth/reset-password/verify-email" className="text-[#142F32] hover:text-[#0F2528]">
                         Reset password
                       </a>
                     </span>

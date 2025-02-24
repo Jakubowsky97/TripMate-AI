@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
+import { DarkModeProvider } from "@/components/ui/DarkModeContext";
 
 export const metadata: Metadata = {
   title: "TripMate AI",
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+          <DarkModeProvider>
+              {children}
+          </DarkModeProvider>
       </body>
     </html>
   );

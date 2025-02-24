@@ -84,3 +84,16 @@ export async function resendEmailVerification(formData: FormData) {
 
   redirect('/auth/register/step-3');
 }
+
+export async function sendResetPassword(email: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `http://localhost:3000/auth/reset-password`,
+  });
+
+  if (error) {
+      return{ error };
+  }
+  return { data };
+}

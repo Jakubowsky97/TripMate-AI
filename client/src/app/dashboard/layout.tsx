@@ -17,7 +17,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [supabase, setSupabase] = useState<any>(null); 
   const router = useRouter();
   const userId = useSearchParams().get("user_id");
@@ -32,13 +32,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   };  
 
   return (
-    <div className={`flex min-h-full transition-colors duration-300 ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
+    <div className={`flex min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
       
       {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full ${isOpen ? "w-64" : "w-16 items-center"} transition-all duration-300 ${darkMode ? "bg-[#1a1e1f] border-r border-[#2D2D2D]" : "bg-[#122C26]"} shadow-md flex flex-col `}>
         
         {/* Sidebar Header */}
-        <div className="p-4 flex items-center justify-between">
+        <div className="p-4 items-center justify-between hidden md:flex">
           {isOpen && <h2 className="text-lg font-bold">TripMate AI</h2>}
           <button onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <FaTimes /> : <FaBars />}
@@ -72,7 +72,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 p-6 ${isOpen ? "ml-64" : "ml-16"} transition-colors duration-300 text-[#070e0e] ${darkMode && "text-[#f8f8f8]"}`}>
+      <main className={`flex-1 h-full p-6 ${isOpen ? "ml-64" : "ml-16"} transition-colors duration-300 text-[#070e0e] ${darkMode && "text-[#f8f8f8]"}`}>
         {children}
       </main>
     </div>

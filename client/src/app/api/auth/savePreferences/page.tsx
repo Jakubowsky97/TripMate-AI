@@ -37,7 +37,7 @@ export default function SavePreferences() {
                 }
 
                 // Preferencje zapisane poprawnie → przekierowanie do dashboardu
-                router.push("/dashboard");
+                router.push('/dashboard?user_id=' + userId);
 
             } catch (err) {
                 if (err instanceof Error) {

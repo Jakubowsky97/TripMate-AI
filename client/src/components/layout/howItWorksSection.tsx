@@ -23,9 +23,13 @@ const steps = [
     },
 ]
 
-export default function HowItWorksSection() {
+interface HowItWorksSectionProps {
+    darkMode: boolean;
+}
+
+export default function HowItWorksSection({darkMode}: HowItWorksSectionProps) {
     return (
-        <div className="bg-[#f8f8f8] py-24 sm:py-32 text-[#142F32]">
+        <div className={`${darkMode ? "text-[#f8f8f8]" : "bg-[#f8f8f8]"} py-24 sm:py-32 text-[#142F32]`}>
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl pl-4 lg:text-center sm:pl-0">
                     <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty sm:text-5xl lg:text-balance">
@@ -38,7 +42,7 @@ export default function HowItWorksSection() {
                 <div className="mx-auto mt-16 max-w-2xl lg:max-w-4xl">
                     <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:gap-y-4">
                         {steps.map((step, index) => (
-                            <Step key={index} step={step.step} name={step.name} description={step.description} />
+                            <Step key={index} step={step.step} name={step.name} description={step.description} darkMode={darkMode}/>
                         ))}
                     </dl>
                 </div>

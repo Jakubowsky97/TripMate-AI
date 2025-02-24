@@ -28,9 +28,13 @@ const features = [
     },
   ];
 
-  export default function FeatureSection() {
+  interface FeatureSectionProps {
+    darkMode: boolean;
+  }
+
+  export default function FeatureSection({ darkMode }: FeatureSectionProps) {
     return (
-      <div className="bg-[#142F32] py-24 sm:py-32 text-[#f8f8f8]">
+      <div className={`${darkMode ? "bg-[#1a1e1f]" : "bg-[#142F32]"} py-24 sm:py-32 text-[#f8f8f8]`}>
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
             <h2 className="text-base/7 font-semibold text-[#E3FFCC]">Explore More, Together</h2>

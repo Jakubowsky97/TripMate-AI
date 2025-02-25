@@ -62,7 +62,6 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const { user_id } = req.query;  
-        const  session = await supabase.auth.getSession()
 
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
@@ -80,8 +79,63 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
         }
 
         res.status(200).json({ message: "User profile updated successfully", data });
-
     } catch (err) {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
+
+export const getPreferences = async (req: Request, res: Response): Promise<void>=> {
+    try {
+        const { user_id } = req.query;
+    
+        if (!user_id || typeof user_id !== "string") {
+        res.status(400).json({ error: "Missing or invalid user_id parameter" });
+        return;
+        }
+    
+        const { data, error } = await supabase
+        .from("user_travel_preferences")
+        .select("travel_interests, travel_style, preferred_transport, preferred_accommodation, favorite_types_of_attractions")
+        .eq("id", user_id)
+    
+        if (error) {
+        res.status(500).json({ message: "Error fetching user travel preferences", details: error });
+        return;
+        }
+    
+        res.status(200).json({ message: "User travel preferences fetched successfully", data });
+    } catch(err){
+        res.status(500).json({ error: "Internal server error", details: err });
+    }
+  };
+
+  export const updatePreferences = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { user_id, ...updatedPreferences } = req.body;
+
+
+      if (!user_id || typeof user_id !== "string") {
+        res.status(400).json({ error: "Missing or invalid user_id" });
+        return;
+      }
+
+      if (Object.keys(updatedPreferences).length === 0) {
+        res.status(400).json({ error: "No fields to update" });
+        return;
+      }
+      const { data, error } = await supabase
+        .from("user_travel_preferences")
+        .update(updatedPreferences) 
+        .eq("id", user_id);
+
+      if (error) {
+        res.status(500).json({ error: "Error updating preferences", details: error.message });
+        return;
+      }
+
+      res.status(200).json({ message: "Preferences updated successfully", data });
+
+    } catch (err) {
+      res.status(500).json({ error: "Internal server error", details: err });
+    }
+  };

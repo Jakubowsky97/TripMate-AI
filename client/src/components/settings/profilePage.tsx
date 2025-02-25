@@ -11,12 +11,14 @@ interface UserData {
     email: string;
   }
 
-export default function ProfilePage({ setError, setLoading }: { setError: (message: string) => void; setLoading: (loading: boolean) => void; }) {
+export default function ProfilePage() {
       const { darkMode } = useDarkMode();
       const searchParams = useSearchParams();
 
       const [uploading, setUploading] = useState(false);
       const [message, setMessage] = useState("");
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState("");
     
       const [userData, setUserData] = useState<UserData | null>(null);
       const [localData, setLocalData] = useState({
@@ -26,7 +28,7 @@ export default function ProfilePage({ setError, setLoading }: { setError: (messa
         email: "",
         avatarUrl: "",
       });
-    
+
       useEffect(() => {
         const fetchUserData = async () => {
           const userId = searchParams.get("user_id");
@@ -55,7 +57,6 @@ export default function ProfilePage({ setError, setLoading }: { setError: (messa
           } catch (err) {
             setError(err instanceof Error ? err.message : "An unknown error occurred");
           } finally {
-            console.log("setLoading called!");
             setLoading(false);
           }
           
@@ -127,7 +128,11 @@ export default function ProfilePage({ setError, setLoading }: { setError: (messa
     
       const handleChangePassword = () => sendResetPassword(localData.email);
       
-    return (
+      if (loading) return <p>Loading user data...</p>;
+      if (error) return <p>Error: {error}</p>;
+      if (uploading) return <p>Uploading avatar...</p>;
+
+      return (
                 <div className="space-y-6">
                     {Object.entries({ firstName: "First Name", lastName: "Last Name", username: "Username", email: "Email"}).map(([key, label]) => (
                       <div key={key}>
@@ -157,5 +162,5 @@ export default function ProfilePage({ setError, setLoading }: { setError: (messa
                     <button className="bg-[#1a1e1f] text-white p-2 rounded" onClick={handleSubmit}>Save Changes</button>
                     {message && <p className="mt-4 text-left">{message}</p>}
                   </div>
-    )
+      )
 }

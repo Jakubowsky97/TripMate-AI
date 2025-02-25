@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { getUserProfile, updateUserProfile } from "../controllers/profileController";
+import { getPreferences, getUserProfile, updatePreferences, updateUserProfile } from "../controllers/profileController";
 
 const router = Router();
  
 router.get("/getUser", getUserProfile);
 router.post("/updateUser", updateUserProfile);
+router.get("/getPreferences", getPreferences);
+router.post("/updatePreferences", updatePreferences);
 
 export default router;

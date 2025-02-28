@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 
 interface ButtonProps {
-  variant?: 'ghost' | 'solid' | 'themeMain' | 'themeSecondary' | 'themeMainWhite' | 'dakrModeMain'; 
+  variant?: 'ghost' | 'solid' | 'themeMain' | 'themeSecondary' | 'themeMainWhite' | 'dakrModeMain' | 'next'; 
   children: ReactNode;
   className?: string;
   onClick?: () => void;
@@ -16,7 +16,8 @@ export const Button: React.FC<ButtonProps> = ({ variant = 'solid', children, cla
     themeMain: 'bg-[#142F32] text-[#E3FFCC]',
     themeMainWhite: 'bg-[#142F32] text-[#f8f8f8]',
     themeSecondary: 'bg-[#E3FFCC] text-[#142F32]',
-    dakrModeMain: 'bg-[#1a1e1f] text-[#f8f8f8]'
+    dakrModeMain: 'bg-[#1a1e1f] text-[#f8f8f8]',
+    next: 'bg-[#007bff] text-white hover:bg-[#0056b3]'
   };
 
   return (

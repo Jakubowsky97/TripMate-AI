@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "../styles/globals.css";
+import "@/app/globals.css"
 import { DarkModeProvider } from "@/components/ui/DarkModeContext";
 
 export const metadata: Metadata = {

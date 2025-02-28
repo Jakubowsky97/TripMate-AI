@@ -3,7 +3,7 @@
 const nextConfig: NextConfig = {
   /* config options here */
   // Disable React Strict Mode for testing preferences page in Settings
-  reactStrictMode: false,
+  //reactStrictMode: false,
 };
 
 

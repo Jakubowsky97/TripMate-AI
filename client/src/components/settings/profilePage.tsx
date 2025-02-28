@@ -159,7 +159,7 @@ export default function ProfilePage() {
                       <label className="block text-sm font-medium">Avatar</label>
                       <Avatar url={localData.avatarUrl} size={150} onUpload={handleAvatarUpload} />
                     </div>
-                    <button className="bg-[#1a1e1f] text-white p-2 rounded" onClick={handleSubmit}>Save Changes</button>
+                    <button className={`${darkMode ? "bg-[#4e73df] text-white hover:bg-[#2e59e5]" : "bg-[#007bff] text-white hover:bg-[#0056b3]"} p-2 rounded`} onClick={handleSubmit}>Save Changes</button>
                     {message && <p className="mt-4 text-left">{message}</p>}
                   </div>
       )

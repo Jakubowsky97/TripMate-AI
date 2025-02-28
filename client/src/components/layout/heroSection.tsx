@@ -13,7 +13,7 @@ export default function HeroSection({ darkMode } : HeroSectionProps) {
     
       const { data, error } = await supabase.auth.getUser()
       if (data?.user) {
-        redirect('/dashboard');
+        redirect('/dashboard?user_id=' + data.user.id);
       } else if (error || !data?.user) {
         redirect('/auth/register');
       }

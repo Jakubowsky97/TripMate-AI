@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { FaBars, FaTimes, FaUser, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOutAlt } from "react-icons/fa";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -24,6 +24,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     setSupabase(createClient());
+    if(document.body.clientWidth > 768) setIsOpen(true);
   }, []); 
 
   const handleSignOut = () => {
@@ -32,7 +33,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   };  
 
   return (
-    <div className={`flex min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
+    <div className={`flex min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#121212] text-white" : "bg-[#f8f8f8] text-[#f8f8f8]"}`}>
       
       {/* Sidebar */}
       <aside className={`fixed top-0 left-0 h-full ${isOpen ? "w-64" : "w-16 items-center"} transition-all duration-300 ${darkMode ? "bg-[#1a1e1f] border-r border-[#2D2D2D]" : "bg-[#122C26]"} shadow-md flex flex-col `}>
@@ -50,7 +51,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <Link href={`/dashboard?user_id=${userId}`} className={`flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded`}>
             <FaHome className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "Dashboard"}
           </Link>
-          <Link href="/trips" className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
+          <Link href={`/dashboard/trips?user_id=${userId}`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
             <FaMap className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "My Trips"}
           </Link>
           <Link href={`/dashboard/settings?user_id=${userId}`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">

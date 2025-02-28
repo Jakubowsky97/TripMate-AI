@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PreferenceCard from "../auth/PreferenceCard";
 import { useSearchParams } from "next/navigation";
+import { useDarkMode } from "../ui/DarkModeContext";
 
 interface Preferences {
     [key: string]: string[];
@@ -20,6 +21,7 @@ export default function PreferencesPage() {
         preferred_accommodation: [],
         favorite_types_of_attractions: [],
       });  
+    const { darkMode }= useDarkMode();
     
     useEffect(() => {
         const fetchPreferences = async () => {
@@ -37,13 +39,8 @@ export default function PreferencesPage() {
               }
           
               const data = await response.json();
-              setPreferences({
-                travel_interests: data.data[0].travel_interests || [],
-                travel_style: data.data[0].travel_style || [],
-                preferred_transport: data.data[0].preferred_transport || [],
-                preferred_accommodation: data.data[0].preferred_accommodation || [],
-                favorite_types_of_attractions: data.data[0].favorite_types_of_attractions || [],
-            });
+
+              setPreferences(data.data[0]);
             } catch (error) {
               console.error("Error fetching preferences:", error);
             } finally {
@@ -54,15 +51,8 @@ export default function PreferencesPage() {
         fetchPreferences();
     }, [searchParams]);
 
-    const travelPreferences = [
-        { category: "Travel Interests", options: ["Adventure", "Cultural Exploration", "Food & Culinary", "Wildlife & Nature", "Relaxation", "History & Heritage"] },
-        { category: "Travel Style", options: ["Luxury", "Budget", "Backpacking", "Solo Travel", "Family Travel", "Group Travel"] },
-        { category: "Preferred Transport", options: ["Airplane", "Train", "Car Rental", "Bus", "Bicycle", "Walking"] },
-        { category: "Preferred Accommodation", options: ["Hotels", "Hostels", "Airbnb", "Resorts", "Camping", "Guesthouses"] },
-        { category: "Favorite Types of Attractions", options: ["Beaches", "Mountains", "Historical Sites", "Theme Parks", "Museums", "Nightlife"] },
-      ];
-      
-      const handlePreferenceChange = (category: string, option: string) => {
+    
+      const handlePreferenceChange = (category: string, option: string) => { 
         const categoryKey = category.replaceAll(" ", "_").toLowerCase();
 
         setPreferences((prevPreferences) => {
@@ -79,8 +69,6 @@ export default function PreferencesPage() {
           return updatedPreferences;
         });
       };
-      
-    
     
       const [customText, setCustomText] = useState<{
         [key: string]: string;
@@ -150,35 +138,35 @@ export default function PreferencesPage() {
       return (
                 <div>
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                    {travelPreferences.map((category) => (
-                        <div key={category.category}>
-                        <h3 className="text-xl font-semibold text-[#142F32] mb-2 mt-4">{category.category
-                        .replaceAll("_", " ")
-                        .replace(/\b\w/g, (char) => char.toUpperCase())}</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                            {category.options.map((option) => (
-                                <PreferenceCard
-                                key={option}
-                                category={category.category}
-                                option={option}
-                                onChange={() => handlePreferenceChange(category.category, option)}
-                                isChecked={preferences[category.category.replaceAll(" ", "_").toLowerCase()]?.includes(option)}
-                                />
-                            ))}
-                            </div>
-                            <div className="mt-2">
-                            <input
-                                type="text"
-                                value={customText[category.category.replaceAll(" ", "_").toLowerCase()] || ""}
-                                onChange={(e) => handleCustomTextChange(category.category, e.target.value)}
-                                className="w-full p-2 mt-2 rounded border"
-                                placeholder={`Enter your custom options after space for ${category.category}`}
+                    {Object.entries(preferences).map(([categoryKey, options]) => (
+                      <div key={categoryKey}>
+                        <h3 className={`${darkMode && "text-[#E0E0E0]"} text-[#142F32] text-xl font-semibold mb-2 mt-4`}>
+                          {categoryKey.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          {options.map((option) => (
+                            <PreferenceCard
+                              key={option}
+                              category={categoryKey}
+                              option={option}
+                              onChange={() => handlePreferenceChange(categoryKey, option)}
+                              isChecked={preferences[categoryKey]?.includes(option)}
                             />
-                            </div>
+                          ))}
                         </div>
-                        ))}
+                        <div className="mt-2">
+                          <input
+                            type="text"
+                            value={customText[categoryKey] || ""}
+                            onChange={(e) => handleCustomTextChange(categoryKey, e.target.value)}
+                            className={`${darkMode && "bg-[#1E1E1E] placeholder-[#A0A0A0] border-[#2C2C2C]"} w-full p-2 mt-2 rounded border`}
+                            placeholder={`Enter your custom options after space for ${categoryKey.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())}`}
+                          />
+                        </div>
+                      </div>
+                      ))}
                     </div>
-                    <button className="bg-[#1a1e1f] text-white p-2 rounded mt-4" onClick={handleSubmit}>Save Preferences</button>
+                    <button className={`${darkMode ? "bg-[#4e73df] text-white hover:bg-[#2e59e5]" : "bg-[#007bff] text-white hover:bg-[#0056b3]"} text-white p-2 rounded mt-4`} onClick={handleSubmit}>Save Preferences</button>
                     {message && <p className="mt-4 text-left">{message}</p>}
                 </div>
               );

@@ -1,6 +1,4 @@
 "use client";
-
-import { useState } from "react";
 import FeatureSection from "@/components/layout/feturesSection";
 import HeroSection from "@/components/layout/heroSection";
 import NavBar from "@/components/layout/navBar";

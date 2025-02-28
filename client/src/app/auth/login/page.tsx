@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
   const supabase = await createClient()
-
+  
   const { data, error } = await supabase.auth.getUser()
   if (data?.user) {
-    redirect('/dashboard')
+    redirect('/dashboard?user_id=' + data.user.id)
   }
   return (
     <div className="min-h-screen flex bg-white">

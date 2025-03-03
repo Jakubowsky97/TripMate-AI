@@ -3,11 +3,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import InviteFriends from "@/components/trip/creator/InviteScreen";
-import PlanOnMap from "@/components/trip/creator/PlanOnMap";
 import ReviewAndSave from "@/components/trip/creator/ReviewAndSave";
 import TripDetails from "@/components/trip/creator/TripDetals";
 
-const steps = ["Trip Details", "Invite Friends", "Plan on Map", "Review & Save"];
+const steps = ["Trip Details", "Invite Friends", "Review & Save"];
 
 export default function TripCreationFlow() {
     const { darkMode } = useDarkMode();
@@ -23,8 +22,6 @@ export default function TripCreationFlow() {
             case 1:
                 return <InviteFriends nextStep={nextStep} prevStep={prevStep} />;
             case 2:
-                return <PlanOnMap nextStep={nextStep} prevStep={prevStep} />;
-            case 3:
                 return <ReviewAndSave prevStep={prevStep} />;
             default:
                 return null;

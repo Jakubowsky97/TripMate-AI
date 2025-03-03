@@ -14,7 +14,7 @@ export default function CreateTripCard({ darkMode, onCreateTrip }: CreateTripCar
                     darkMode ? "bg-[#1a1e1f] text-white shadow-lg shadow-white/10 border-[#2D2D2D]" : "bg-white text-black"
                 } rounded-3xl shadow-xl overflow-hidden transition-all transform hover:scale-105`}
             >
-                <div className={`${darkMode && "bg-[#2D2D2D]"} w-full h-60 bg-gray-200 flex items-center justify-center rounded-t-3xl`}>
+                <div className={`${darkMode ? "bg-[#2D2D2D]" : "bg-gray-200"} w-full h-60 flex items-center justify-center rounded-t-3xl`}>
                     <span className={`${darkMode ? "text-white" : "text-black"} text-2xl font-semibold`}>
                         Create a New Trip
                     </span>

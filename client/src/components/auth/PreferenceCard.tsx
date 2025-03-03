@@ -10,7 +10,7 @@ interface PreferenceCardInterface {
   export default function PreferenceCard({ option, category, onChange, isChecked }: PreferenceCardInterface) {
     const { darkMode }= useDarkMode();
     return (
-      <div className={`${darkMode ? "bg-[#1a1e1f] shadow-lg shadow-white/10 border-[#2C2C2C] hover:shadow-[#292929]" : "border"} p-3 rounded-md flex items-center`}>
+      <div className={`${darkMode ? "bg-[#1a1e1f] shadow-lg shadow-white/10 border-[#2C2C2C] hover:shadow-[#292929]" : "border"} bg-white p-3 rounded-md flex items-center`}>
         <input
           type="checkbox"
           name={option}

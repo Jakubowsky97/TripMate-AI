@@ -4,7 +4,7 @@ import ProfilePage from "@/components/settings/profilePage";
 import PreferencesPage from "@/components/settings/preferencesPage";
 import { redirect } from "next/navigation";
 
-const tabs = ["Profile", "Preferences", "Account"];
+const tabs = ["Profile", "Preferences", "Notifications", "Account"];
 
 export default function Settings({ user } : { user: any }) {
     if (!user) {
@@ -18,7 +18,9 @@ export default function Settings({ user } : { user: any }) {
       case "Profile":
         return <ProfilePage /> ;
       case "Preferences":
-        return <PreferencesPage />
+        return <PreferencesPage />;
+      case "Notifications": 
+        return <p>Work in progress</p>;
       case "Account":
         return <button className="bg-red-500 text-white p-2 rounded">Delete Account</button>;
       default:

@@ -30,9 +30,14 @@ export default function RegisterLayout({ children }: { children: ReactNode }) {
         </ul>
       </div>
 
-      {/* Signup Form */}
-      <div className="flex-1 flex flex-col items-center justify-center">
+      <div className="flex-1 flex flex-col justify-center relative">
+        {/* Background overlay */}
+        <div className="absolute inset-0 bg-[url(../img/background/Wenecja.jpg)] bg-cover bg-center opacity-25 z-0" />
+
+        {/* Signup Form */}
+        <div className="z-10 p-8">
           {children}
+        </div>
       </div>
     </div>
   );

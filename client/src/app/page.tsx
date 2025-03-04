@@ -9,7 +9,9 @@ export default function LandingPage() {
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   return (
-    <div className={`${darkMode ? "bg-[#070e0e] text-white" : "bg-[#f8f8f8] text-gray-900"} min-h-screen transition-colors duration-300`}>  
+    <div
+      className={`${darkMode ? "bg-[#070e0e] text-white" : "bg-[#fefaee] text-gray-900"} min-h-screen transition-colors duration-300`}
+    >
       {/* Navbar */}
       <NavBar darkMode={darkMode} setDarkMode={toggleDarkMode} />
 

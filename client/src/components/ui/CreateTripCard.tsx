@@ -28,7 +28,7 @@ export default function CreateTripCard({ darkMode, onCreateTrip }: CreateTripCar
                         className={`${
                             darkMode
                                 ? "bg-[#4e73df] text-white hover:bg-[#2e59e5]"
-                                : "bg-[#007bff] text-white hover:bg-[#0056b3]"
+                                : "bg-[#FF6347] text-white hover:bg-[#ff4500]"
                         } px-4 py-2 rounded-md font-semibold w-full mt-4 transition-colors`}
                     >
                         Create Trip

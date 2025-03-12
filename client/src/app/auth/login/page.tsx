@@ -13,7 +13,7 @@ export default async function LoginPage() {
     <div className="min-h-screen flex bg-white">      
       <div className="flex-1 flex flex-col justify-center items-center relative">
         {/* Background overlay */}
-        <div className="absolute inset-0 bg-[url(../img/background/loginBg.jpg)] bg-cover bg-center opacity-25 z-0" />
+        <div className="absolute inset-0 bg-[url(/img/background/loginBg.jpg)] bg-cover bg-center opacity-25 z-0" />
 
         {/* Signin Form */}
         <div className="z-10">

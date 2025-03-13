@@ -1,52 +1,46 @@
 "use client";
 
 import { ConfirmEmailForm, SignUpForm, SignUpPasswordForm, SignUpPrefForm } from "../../../../components/auth/SignUpForm";
-import { useRouter, useParams, usePathname} from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
-export default function RegisterStepPage({ params }: { params: { step: string }}) {
-  const { step } = useParams();
+interface RegisterStepPageProps {
+  params: {
+    step: string;
+  };
+}
+
+export default function RegisterStepPage({ params }: { params: { step: string } }) {
+  const { step } = params;
   const router = useRouter();
   const pathname = usePathname();
 
-  // Pobieranie aktualnego kroku z URL
   const stepMatch = pathname.match(/step-(\d+)/);
   const currentStep = stepMatch ? parseInt(stepMatch[1], 10) : 1;
 
-  const steps = 4; // Liczba kroków rejestracji
+  const steps = 4;
 
   const renderStepContent = () => {
     switch (step) {
       case "step-1":
-        return (
-            <SignUpForm onClick={handleNext}/>
-        );
+        return <SignUpForm onClick={handleNext} />;
       case "step-2":
-        return (
-            <SignUpPasswordForm onClick={handleNext}/>
-        );
+        return <SignUpPasswordForm onClick={handleNext} />;
       case "step-3":
-        return (
-            <ConfirmEmailForm onClick={handleNext}/>
-        );  
+        return <ConfirmEmailForm onClick={handleNext} />;
       case "step-4":
-        return (
-            <SignUpPrefForm onClick={handleNext}/>
-        );
+        return <SignUpPrefForm onClick={handleNext} />;
       case "step-5":
-        return (
-            <SignUpForm onClick={handleNext}/>
-        );
+        return <SignUpForm onClick={handleNext} />;
       default:
         return <p>Invalid step</p>;
     }
   };
 
-
   const handleNext = () => {
-    if (currentStep < steps){
+    if (currentStep < steps) {
       router.push(`/auth/register/step-${currentStep + 1}`);
       console.log(currentStep);
-      }
+    }
   };
 
   return (

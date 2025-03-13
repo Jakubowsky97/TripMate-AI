@@ -126,7 +126,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
               className="w-fit"
             />
             {imagePreview && (
-              <Image src={imagePreview} alt="trip cover" className="w-96 object-cover rounded-lg" />
+              <Image src={imagePreview} width={384} height={256} alt="trip cover" className="object-cover rounded-lg" />
             )}
           </div>
         </div>

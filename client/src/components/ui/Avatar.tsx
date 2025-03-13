@@ -73,8 +73,9 @@ export default function Avatar({ url, size, onUpload }: AvatarProps) {
         <Image
           src={avatarUrl}
           alt="Avatar"
+          width={size}
+          height={size}
           className="avatar image mt-2"
-          style={{ height: size, width: size }}
         />
       ) : (
         <div className="avatar no-image hidden" style={{ height: size, width: size }} />

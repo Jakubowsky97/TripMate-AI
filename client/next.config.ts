@@ -1,10 +1,15 @@
-  import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  // Disable React Strict Mode for testing preferences page in Settings
-  //reactStrictMode: false,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'jjgtakmeqaeguwsarenk.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/sign/**', // <-- Add this to match the actual image paths
+      },
+    ],
+  },
 };
-
 
 export default nextConfig;

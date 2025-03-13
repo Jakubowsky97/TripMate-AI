@@ -46,9 +46,11 @@ const ImageCarousel = () => {
         {images.map((src, index) => (
           <div key={index}>
             <Image
+              width={640}
+              height={384}
               src={src}
               alt={`Travel ${index + 1}`}
-              className="w-full h-96 object-cover shadow-lg"
+              className="w-full object-cover shadow-lg"
             />
           </div>
         ))}

@@ -28,13 +28,17 @@ const features = [
     },
   ];
 
-  export default function FeatureSection() {
+  interface FeatureSectionProps {
+    darkMode: boolean;
+  }
+
+  export default function FeatureSection({ darkMode }: FeatureSectionProps) {
     return (
-      <div className="bg-[#142F32] py-24 sm:py-32 text-[#f8f8f8]">
+      <div className={`${darkMode ? "bg-[#1a1e1f]" : "bg-gradient-to-b from-[#FFB703] to-[#FB8500]"} py-24 sm:py-32 text-[#f8f8f8]`}> 
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base/7 font-semibold text-[#E3FFCC]">Explore More, Together</h2>
-            <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-[#f8f8f8] sm:text-5xl lg:text-balance">
+            <h2 className="text-base/7 font-semibold text-[#FFEDD5]">🌴 Explore More, Together ☀️</h2>
+            <p className="mt-2 text-4xl font-bold tracking-tight text-pretty text-[#f8f8f8] sm:text-5xl lg:text-balance">
                 Why TripMate AI?
             </p>
             <p className="mt-6 text-lg/8 text-[#f8f8f8]">
@@ -51,13 +55,13 @@ const features = [
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
                 >
-                  <dt className="text-xl font-semibold">
-                    <div className="absolute top-0 left-0 flex size-10 items-center justify-center rounded-lg bg-[#E3FFCC]">
-                      <feature.icon aria-hidden="true" className="size-6 text-[#142F32]" />
+                  <dt className="text-xl font-bold">
+                    <div className="absolute top-0 left-0 flex size-12 items-center justify-center rounded-full bg-[#FFEDD5] shadow-lg animate-bounce">
+                      <feature.icon aria-hidden="true" className="size-6 text-[#FFB703]" />
                     </div>
                     {feature.name}
                   </dt>
-                  <dd className="mt-2 text-base/7">{feature.description}</dd>
+                  <dd className="mt-2 text-base/7 text-[#FFEDD5]">{feature.description}</dd>
                 </motion.div>
               ))}
             </dl>

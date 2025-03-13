@@ -1,10 +1,11 @@
 "use client";
 import { login } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/client";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useEffect } from "react";
-import { FaRegFlag } from "react-icons/fa";
+import { FaPlane, FaRegFlag } from "react-icons/fa";
 
 export function SignInForm() {
     const router = useRouter();
@@ -29,8 +30,26 @@ export function SignInForm() {
               if (signInError) {
                 console.error("Error signing in with Google", signInError);
               } else {
-                router.push("/dashboard");
+                router.push("/dashboard?user_id=" + signInData?.user.id);
               }
+
+              const responseLogin = await fetch("http://localhost:5000/api/auth/loginGoogle", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    response: response,
+                }),
+            });
+        
+            const data = await responseLogin.json();
+            if (!responseLogin.ok) {
+                throw new Error(data.error || "Login failed");
+            } else {
+              console.log("Login successful", data);
+            }       
+
             } catch (error) {
               console.error("Error signing in with Google", error);
             }
@@ -42,10 +61,14 @@ export function SignInForm() {
               <div className="max-w-md w-full p-8">
                 <Script src="https://accounts.google.com/gsi/client"/>
                 <div className="flex items-center flex-col mb-4">
-                  <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-                    <FaRegFlag aria-hidden="true" className="size-6 text-[#142F32]" />
-                  </div>
-          
+                <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <FaPlane aria-hidden="true" className="size-6 text-[#FFA500]" />
+                  </motion.div>
+                </div>
                   <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Log In</h2>
                   <p className="text-[#51605D]">Please provide your email and password.</p>
                 </div>
@@ -107,7 +130,7 @@ export function SignInForm() {
           
                   <button
                     type="submit"
-                    className="w-full bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]"
+                    className="w-full bg-[#FF7F50] text-white py-2 px-4 rounded-md shadow-lg hover:bg-[#FF6347]"
                     formAction={login}
                   >
                     Continue
@@ -117,6 +140,10 @@ export function SignInForm() {
                       You don't have an account?{" "}
                       <a href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
                         Register
+                      </a>
+                      {" "}or{" "}
+                      <a href="/auth/reset-password/verify-email" className="text-[#142F32] hover:text-[#0F2528]">
+                        Reset password
                       </a>
                     </span>
                   </div>

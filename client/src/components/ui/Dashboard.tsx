@@ -1,78 +1,103 @@
 "use client";
-import { redirect } from 'next/navigation'
-import { FaChartPie, FaMap, FaPlane, FaTrophy } from 'react-icons/fa'
-import { useDarkMode } from '@/components/ui/DarkModeContext';
+import { redirect, useSearchParams } from "next/navigation";
+import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
+import { useDarkMode } from "@/components/ui/DarkModeContext";
+import TripCard from "./TripCard";
+import { useEffect, useState } from "react";
 
-export default function Dashboard({ user }: { user: any }) {
+interface DashboardProps {
+  user: any;
+  access_token: string;
+  refresh_token: string;
+}
+
+const mockTrips = [
+  {
+    id: 1,
+    title: "Trip to Paris",
+    destination: "Paris, France",
+    startDate: "2025-03-01",
+    endDate: "2025-03-10",
+    image: "https://www.cia-france.com/media/125/5_1100x700.jpg",
+    friendsList: ["Alice", "Bob"],
+  },
+  {
+    id: 2,
+    title: "Trip to New York",
+    destination: "New York, USA",
+    startDate: "2025-04-15",
+    endDate: "2025-04-20",
+    image:
+      "https://media.architecturaldigest.com/photos/5da74823d599ec0008227ea8/16:9/w_1280,c_limit/GettyImages-946087016.jpg",
+    friendsList: ["Charlie", "Dave"],
+  },
+];
+
+export default function Dashboard({ user, access_token, refresh_token }: DashboardProps) {
   const { darkMode } = useDarkMode();
+  const [trips, setTrips] = useState(mockTrips);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  localStorage.setItem("access_token", access_token);
+  localStorage.setItem("refresh_token", refresh_token);
+
   if (!user) {
     redirect("/auth/login");
     return null;
-  } 
-  const user_firstName = user.user_metadata.full_name.split(' ')[0]
+  }
+
+  const user_firstName = user.user_metadata.full_name.split(" ")[0];
 
   return (
-    <div>
-      <h1 className="font-bold text-2xl mb-4">Good Morning, {user_firstName} 👋</h1>
+    <div className="p-6">
+      <h1 className="font-bold text-3xl mb-6 text-[#0077B6]">🌴 Good Morning, {user_firstName} 👋</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`p-6 ${darkMode ? "bg-[#1a1e1f]" : "bg-[#142F32]"} text-[#f8f8f8] rounded-lg shadow-md flex items-center`}>
-          <FaMap className="text-blue-500 text-3xl mr-4" />
-          <div> 
-            <p className="text-lg font-semibold">Countries Visited</p>
-            <p className="text-2xl font-bold">12</p>
+        {[{
+          icon: <FaMap className="text-yellow-400 text-4xl" />, label: "Countries Visited", value: "12" },
+          { icon: <FaTrophy className="text-amber-300 text-4xl" />, label: "Top Travel Companion", value: "Alex" },
+          { icon: <FaChartPie className="text-purple-500 text-4xl" />, label: "AI Travel Score", value: "85%" }].map((item, index) => (
+          <div key={index} className={`p-6 bg-opacity-30 backdrop-blur-lg rounded-xl shadow-lg flex items-center space-x-4 ${darkMode ? "bg-gray-800" : "bg-blue-100"}`}>
+            {item.icon}
+            <div>
+              <p className="text-lg font-semibold text-gray-700">{item.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+            </div>
           </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
+          <h2 className="text-xl font-semibold mb-4">AI Travel Recommendations</h2>
+          <ul className="space-y-3">
+            {["🚀 Japan - Perfect for culture & tech lovers", "🌴 Maldives - Best for relaxation & beaches", "🎢 Orlando, USA - Adventure & theme parks"].map((rec, i) => (
+              <li key={i} className={`p-4 rounded-lg shadow-md hover:scale-105 transition-transform ${darkMode ? "bg-gray-700" : "bg-white text-gray-900"}`}>{rec}</li>
+            ))}
+          </ul>
         </div>
-        <div className={`p-6 ${darkMode ? "bg-[#1a1e1f]" : "bg-[#142F32]"} text-[#f8f8f8] rounded-lg shadow-md flex items-center`}>
-          <FaTrophy className="text-amber-300 text-3xl mr-4" />
-          <div>
-            <p className="text-lg font-semibold">Top Travel Companion</p>
-            <p className="text-xl">You've traveled the most with: <span className='font-bold'>Alex</span></p>
-          </div>
-        </div>
-        <div className={`p-6 ${darkMode ? "bg-[#1a1e1f]" : "bg-[#142F32]"} text-[#f8f8f8] rounded-lg shadow-md flex items-center`}>
-          <FaChartPie className="text-purple-500 text-3xl mr-4" />
-          <div>
-            <p className="text-lg font-semibold">AI Travel Score</p>
-            <p className="text-2xl font-bold">85%</p>
+
+        {/*TODO: Sprawdzać najbliższą wycieczkę z bazy, sprawdzać dla tych miast/miasta pogode 
+        i wyswietlac 3 najbliższe dni w tym miescie*/}
+
+        <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
+          <h2 className="text-xl font-semibold mb-4">Weather at Your Next Destination</h2>
+          <div className="text-center">
+            <p className="text-4xl">☀️</p>
+            <p className="text-2xl font-bold">25°C</p>
+            <p className="text-lg">Paris, France</p>
           </div>
         </div>
       </div>
 
-      {/* Recent Trips & AI Recommendations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        
-        {/* Recent Trips */}
-        <div className={`${darkMode ? "bg-[#1a1e1f] shadow-lg shadow-white/10 transition duration-200" : "bg-[#142F32]"} text-[#f8f8f8] p-6 rounded-lg shadow-md`}>
-          <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
-          <ul className={`space-y-3 ${!darkMode && "text-[#070e0e]"}`}>
-            <li className={`p-4 ${darkMode ? "bg-gray-700 hover:bg-[#475569]" : "bg-[#DCEFE5]"} rounded-md`}>
-              ✈️ Paris, France <span className="text-gray-500 text-sm">- Jan 2025</span>
-            </li>
-            <li className={`p-4 ${darkMode ? "bg-gray-700 hover:bg-[#475569]" : "bg-[#DCEFE5]"} rounded-md`}>
-              🏝️ Bali, Indonesia <span className="text-gray-500 text-sm">- Dec 2024</span>
-            </li>
-            <li className={`p-4 ${darkMode ? "bg-gray-700 hover:bg-[#475569]" : "bg-[#DCEFE5]"} rounded-md`}>
-              🏔️ Swiss Alps <span className="text-gray-500 text-sm">- Nov 2024</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* AI Recommendations */}
-        <div className={`${darkMode ? "bg-[#1a1e1f] shadow-lg shadow-white/10 transition duration-200" : "bg-[#142F32]"} text-[#f8f8f8] p-6 rounded-lg shadow-md`}>
-          <h2 className="text-xl font-semibold mb-4">AI Travel Recommendations</h2>
-          <ul className={`space-y-3  ${!darkMode && "text-[#070e0e]"}`}>
-            <li className={`p-4 ${darkMode ? "bg-gray-700" : "bg-[#DCEFE5]"} rounded-md`}>
-              🚀 Japan - Perfect for culture & tech lovers
-            </li>
-            <li className={`p-4 ${darkMode ? "bg-gray-700" : "bg-[#DCEFE5]"} rounded-md`}>
-              🌴 Maldives - Best for relaxation & beaches
-            </li>
-            <li className={`p-4 ${darkMode ? "bg-gray-700" : "bg-[#DCEFE5]"} rounded-md`}>
-              🎢 Orlando, USA - Adventure & theme parks
-            </li>
-          </ul>
+      <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg mt-6 ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
+        <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trips.map((trip) => (
+            <TripCard key={trip.id} {...trip} darkMode={darkMode} />
+          ))}
         </div>
       </div>
     </div>
-)
+  );
 }

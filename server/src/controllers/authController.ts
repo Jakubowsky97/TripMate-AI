@@ -102,3 +102,50 @@ export const saveUserPreferences = async (req: Request, res: Response): Promise<
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const login = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            res.status(400).json({ error: "Missing email or password" });
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) {
+            res.status(401).json({ error: error.message });
+            return;
+        }
+
+        // Zapisz tokeny w ciasteczkach, które będą dostępne w przyszłych żądaniach
+        res.cookie("access_token", data?.session?.access_token, { httpOnly: true, secure: true });
+        res.cookie("refresh_token", data?.session?.refresh_token, { httpOnly: true, secure: true });
+
+        res.status(200).json({ message: "Login successful", user: data.user });
+    } catch (err) {
+        res.status(500).json({ error: "Internal server error", details: err });
+    }
+};
+
+export const loginWithGoogle = async (req: Request, res: Response): Promise<void> => {
+    const { response } = req.body;
+    try {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithIdToken({
+          provider: "google",
+          token: response.credential,
+        });
+
+        if (signInError) {
+          res.status(500).json({error: "Error signing in with Google", details: signInError});
+        } else {
+            res.status(200).json({ message: "Login successful", user: signInData?.user });
+        }
+      } catch (error) {
+        res.status(500).json({error: "Error signing in with Google", details: error});
+      }
+};

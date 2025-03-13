@@ -1,11 +1,12 @@
 "use client";
-import { FaLock, FaMap, FaRegEnvelope, FaRegFlag } from "react-icons/fa";
+import { FaLock, FaMap, FaPlane, FaRegEnvelope, FaRegFlag } from "react-icons/fa";
 import PreferenceCard from "./PreferenceCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createClient } from "@/utils/supabase/client";
 import { resendEmailVerification, signup } from "@/app/auth/actions";
+import { motion } from "framer-motion";
 
 // Extend the Window interface to include initializeGoogleLogin
 declare global {
@@ -68,9 +69,14 @@ export function SignUpForm({ onClick }: SignUpFormInterface) {
       />
 
       <div className="flex items-center flex-col mb-4">
-        <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-          <FaRegFlag aria-hidden="true" className="size-6 text-[#142F32]" />
-        </div>
+      <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <FaPlane aria-hidden="true" className="size-6 text-[#FFA500]" />
+                  </motion.div>
+                </div>
 
         <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Your details</h2>
         <p className="text-[#51605D]">Please provide your name and email.</p>
@@ -137,7 +143,7 @@ export function SignUpForm({ onClick }: SignUpFormInterface) {
           />
         </div>
 
-        <button type="submit" className="w-full bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]">
+        <button type="submit" className="w-full bg-[#FF7F50] text-white py-2 px-4 rounded-md shadow-lg hover:bg-[#FF6347]">
           Continue
         </button>
 
@@ -214,7 +220,7 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
         <div className="max-w-md w-full p-8">
               <div className="flex items-center flex-col mb-8">
                 <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-                  <FaLock aria-hidden="true" className="size-6 text-[#142F32]" />
+                  <FaLock aria-hidden="true" className="size-6 text-[#FFA500]" />
                 </div>
         
                 <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Choose a password</h2>
@@ -252,7 +258,7 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
 
                 <button
                   type="submit"
-                  className={`w-full bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]" ${passwordsMatch ? 'bg-[#142F32]' : 'bg-[#51605D]'}`}
+                  className={`w-full bg-[#FF7F50] text-white shadow-lg hover:bg-[#FF6347] py-2 px-4 rounded-md " ${passwordsMatch ? 'bg-[#FF7F50]' : 'bg-[#c7775a]'}`}
                   disabled={!passwordsMatch}
                 >
                   Continue
@@ -313,7 +319,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
         <div className="max-w-md w-full p-8">
               <div className="flex items-center flex-col mb-8">
                 <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-                  <FaRegEnvelope aria-hidden="true" className="size-6 text-[#142F32]" />
+                  <FaRegEnvelope aria-hidden="true" className="size-6 text-[#FFA500]" />
                 </div>
         
                 <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Confirm your email</h2>
@@ -341,7 +347,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
               <form onSubmit={handleOnClick}>
                 <button
                   type="submit"
-                  className="w-full bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]"
+                  className="w-full bg-[#FF7F50] text-white shadow-lg hover:bg-[#FF6347] py-2 px-4 rounded-md"
                 >
                   Continue
                 </button>
@@ -410,7 +416,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
       <div className="max-w-lg w-full p-8">
         <div className="flex items-center flex-col mb-8">
           <div className="mb-6 border p-3 w-fit rounded-lg border-[#142F32]">
-            <FaMap aria-hidden="true" className="size-6 text-[#142F32]" />
+            <FaMap aria-hidden="true" className="size-6 text-[#FFA500]" />
           </div>
           <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Set your preferences</h2>
           <p className="text-[#51605D]">Choose your preferences for AI recommendations.</p>
@@ -436,7 +442,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
             </div>
           ))}
   
-          <button type="submit" className="w-full mt-4 bg-[#142F32] text-white py-2 px-4 rounded-md hover:bg-[#0F2528]">
+          <button type="submit" className="w-full mt-4 bg-[#FF7F50] text-white shadow-lg hover:bg-[#FF6347] py-2 px-4 rounded-md">
             Continue
           </button>
         </form>

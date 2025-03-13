@@ -1,7 +1,7 @@
 interface stepInterface {
     step: number,
-    name: String,
-    description: String,
+    name: string,
+    description: string,
     darkMode: boolean
 }
 

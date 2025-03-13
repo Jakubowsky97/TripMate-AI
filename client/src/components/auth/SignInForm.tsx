@@ -2,6 +2,7 @@
 import { login } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/client";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useEffect } from "react";
@@ -137,10 +138,10 @@ export function SignInForm() {
                   </button>
                   <div className="mt-3">
                     <span className="text-[#777C90]">
-                      You don't have an account?{" "}
-                      <a href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
+                      You don&apos;t have an account?{" "}
+                      <Link href="/auth/register" className="text-[#142F32] hover:text-[#0F2528]">
                         Register
-                      </a>
+                      </Link>
                       {" "}or{" "}
                       <a href="/auth/reset-password/verify-email" className="text-[#142F32] hover:text-[#0F2528]">
                         Reset password

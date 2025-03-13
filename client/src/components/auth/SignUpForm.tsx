@@ -323,7 +323,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
                 </div>
         
                 <h2 className="text-3xl font-bold mb-4 text-[#142F32]">Confirm your email</h2>
-                <p className="text-[#51605D]">We've sent a confirmation email to your inbox.</p>
+                <p className="text-[#51605D]">We&apos;ve sent a confirmation email to your inbox.</p>
               </div>
 
               {error && (
@@ -353,7 +353,7 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
                 </button>
                 <div className="mt-3">
                   <span className="text-[#777C90]">
-                    You haven't received email?{" "}
+                    You haven&apos;t received email?{" "}
                     <button
                       type="button"
                       onClick={handleResendEmailVerification}

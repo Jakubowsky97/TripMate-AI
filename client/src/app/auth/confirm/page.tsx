@@ -46,7 +46,7 @@ export default function ConfirmPage() {
         };
 
         confirmEmail();
-    }, [searchParams, router]);
+    }, [searchParams, router, user_id]);
 
     if (loading) return <p>Verifying...</p>;
     if (error) return <p>Error: {error}</p>;

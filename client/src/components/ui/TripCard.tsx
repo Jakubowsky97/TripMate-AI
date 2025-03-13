@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { FaUsers } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
 import { FcCalendar } from "react-icons/fc";
+import Image from "next/image";
 
 interface TripCardProps {
     title: string;
@@ -30,7 +31,7 @@ export default function TripCard({
                     darkMode ? "bg-[#1a1e1f] text-white shadow-lg shadow-white/10 border-[#2D2D2D]" : "bg-[#f8f8f8] text-black"
                 } rounded-3xl shadow-xl overflow-hidden transition-all transform hover:scale-105`}
             >
-                <img src={image} alt={title} className="w-full h-60 object-cover rounded-t-3xl" />
+                <Image src={image} alt={title} className="w-full h-60 object-cover rounded-t-3xl" />
                 <CardContent className="p-6">
                     <h3 className={`${darkMode ? "text-white" : "text-black"} text-2xl font-bold mb-2`}>
                         {title}

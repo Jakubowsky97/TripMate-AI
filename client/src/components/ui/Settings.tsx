@@ -7,11 +7,11 @@ import { redirect } from "next/navigation";
 const tabs = ["Profile", "Preferences", "Notifications", "Account"];
 
 export default function Settings({ user } : { user: any }) {
+  const [activeTab, setActiveTab] = useState("Profile");
     if (!user) {
         redirect("/auth/login");
         return null;
       }
-  const [activeTab, setActiveTab] = useState("Profile");
 
   const renderContent = () => {
     switch (activeTab) {

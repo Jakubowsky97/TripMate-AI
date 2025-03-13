@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import { createClient } from "@/utils/supabase/client"
+import Image from 'next/image';
 
 interface AvatarProps {
   url: string;
@@ -16,7 +17,7 @@ export default function Avatar({ url, size, onUpload }: AvatarProps) {
     if (url) {
       downloadImage(url);
     }
-  }, [url])
+  }, [url, downloadImage])
 
   async function downloadImage(path: string) {
     try {
@@ -69,7 +70,7 @@ export default function Avatar({ url, size, onUpload }: AvatarProps) {
   return (
     <div>
       {avatarUrl ? (
-        <img
+        <Image
           src={avatarUrl}
           alt="Avatar"
           className="avatar image mt-2"

@@ -2,10 +2,10 @@
 import { use, useEffect, useState } from "react";
 import { FaBars, FaTimes, FaUser, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOutAlt } from "react-icons/fa";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "../../utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { DarkModeProvider, useDarkMode } from "@/components/ui/DarkModeContext";
+import { DarkModeProvider, useDarkMode } from "../../components/ui/DarkModeContext";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

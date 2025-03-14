@@ -1,5 +1,5 @@
 "use client";
-import SignUpStep from "@/components/ui/SignUpStep";
+import SignUpStep from "../../../components/ui/SignUpStep";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 

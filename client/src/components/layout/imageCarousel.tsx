@@ -1,6 +1,7 @@
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import Image from "next/image";
 
 const images = [
   "/img/carousel/photo1.jpg",
@@ -9,7 +10,8 @@ const images = [
   "/img/carousel/plane.jpg",
   "/img/carousel/trip.jpg",
 ];
-``
+
+
 const ImageCarousel = () => {
   const settings = {
     dots: false,
@@ -43,10 +45,12 @@ const ImageCarousel = () => {
       <Slider {...settings}>
         {images.map((src, index) => (
           <div key={index}>
-            <img
+            <Image
+              width={640}
+              height={384}
               src={src}
               alt={`Travel ${index + 1}`}
-              className="w-full h-96 object-cover shadow-lg"
+              className="w-full object-cover shadow-lg"
             />
           </div>
         ))}

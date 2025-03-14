@@ -51,7 +51,7 @@ export default function SavePreferences() {
         };
 
         savePreferences();
-    }, [userId, preferences]);
+    }, [userId, preferences, router]);
 
     if (loading) return <p>Saving preferences...</p>;
     if (error) return <p>Error: {error}</p>;

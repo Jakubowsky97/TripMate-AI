@@ -2,9 +2,9 @@ import { CiCircleCheck } from "react-icons/ci";
 
 interface SignUpStepInterface {
   step: number;
-  text: String;
+  text: string;
   active?: boolean;
-  description: String;
+  description: string;
 }
 
 export default function SignUpStep({ step, text, active, description }: SignUpStepInterface) {

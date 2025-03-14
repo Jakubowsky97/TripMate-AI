@@ -1,5 +1,5 @@
 "use client";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import TripCard from "./TripCard";
@@ -18,7 +18,7 @@ const mockTrips = [
     destination: "Paris, France",
     startDate: "2025-03-01",
     endDate: "2025-03-10",
-    image: "https://www.cia-france.com/media/125/5_1100x700.jpg",
+    image: "https://jjgtakmeqaeguwsarenk.supabase.co/storage/v1/object/sign/trip-images/paris.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0cmlwLWltYWdlcy9wYXJpcy5qcGciLCJpYXQiOjE3NDE4ODUxMjQsImV4cCI6MTc0NDQ3NzEyNH0.OBQV4W_A-y2fBFqUMGOPXzLJoxd2Ou89E0PWEcRCv7g",
     friendsList: ["Alice", "Bob"],
   },
   {
@@ -27,8 +27,7 @@ const mockTrips = [
     destination: "New York, USA",
     startDate: "2025-04-15",
     endDate: "2025-04-20",
-    image:
-      "https://media.architecturaldigest.com/photos/5da74823d599ec0008227ea8/16:9/w_1280,c_limit/GettyImages-946087016.jpg",
+    image: "https://jjgtakmeqaeguwsarenk.supabase.co/storage/v1/object/sign/trip-images/newYork.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0cmlwLWltYWdlcy9uZXdZb3JrLndlYnAiLCJpYXQiOjE3NDE4ODUwMzgsImV4cCI6MTc0NDQ3NzAzOH0.uDia57sZUaN7pUUJ0nb2nRw3aAbmGHKZJeUdNJW8EmM",
     friendsList: ["Charlie", "Dave"],
   },
 ];

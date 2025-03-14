@@ -12,6 +12,7 @@ export default function TripPage() {
   return (
     <div>
       <h1>Podróż: {tripId}</h1>
+      
       <TripMap tripId={tripId}/>
     </div>
   );

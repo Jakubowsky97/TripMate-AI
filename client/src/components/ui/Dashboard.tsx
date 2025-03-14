@@ -1,5 +1,5 @@
 "use client";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import TripCard from "./TripCard";

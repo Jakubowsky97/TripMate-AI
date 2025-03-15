@@ -1,13 +1,140 @@
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+
 interface ReviewAndSaveProps {
     prevStep: () => void;
+    nextStep: () => void;
 }
 
-const ReviewAndSave = ({ prevStep } : ReviewAndSaveProps) => (
-    <div>
-        <h2 className="text-2xl font-bold mb-4">Review & Save</h2>
-        <button onClick={prevStep} className="mr-4 bg-gray-500 text-white px-4 py-2 rounded-lg">Back</button>
-        <button className="bg-green-500 text-white px-4 py-2 rounded-lg">Save Trip</button>
-    </div>
-);
+const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
+    const router = useRouter();
+    const supabase = createClient();
+    const searchParams = useSearchParams();
+    const user_id = searchParams.get('user_id');
+    const title = sessionStorage.getItem('tripName');
+    const start_date = sessionStorage.getItem('startDate');
+    const end_date = sessionStorage.getItem('endDate');
+    const type_of_trip = sessionStorage.getItem('tripType');
+    const image = sessionStorage.getItem('image');
+
+    const uploadData = async () => {
+        try {
+            const base64Image = sessionStorage.getItem("imageFile");
+            const fileType = sessionStorage.getItem("imageFileType");
+    
+            if (!base64Image || !fileType) {
+                throw new Error("Brak wybranego obrazu.");
+            }
+    
+            const blob = base64toBlob(base64Image, fileType);
+            const fileExt = fileType.split("/")[1]; // Pobieramy rozszerzenie (np. 'webp')
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `user-images/${user_id}/${fileName}`; // Organizacja obrazów według ID użytkownika
+
+            console.log(blob);
+    
+            // Wysyłamy obraz na serwer
+            const { data, error } = await supabase.storage.from("trip-images").upload(filePath, blob);
+            if (error) throw error;
+    
+            // Uzyskiwanie publicznego URL do przesłanego pliku
+            const { data: { publicUrl } } = supabase.storage.from("trip-images").getPublicUrl(filePath);
+    
+            // Wysyłamy dane o podróży na serwer
+            const response = await fetch(`${process.env.API_URL}/api/trip/createTrip`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id,
+                    title,
+                    start_date,
+                    end_date,
+                    type_of_trip,
+                    image: publicUrl, // Używamy publicznego URL
+                }),
+            });
+    
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.error || "Weryfikacja nie powiodła się");
+            }
+    
+            console.log("Trip created successfully:", responseData);
+        } catch (err) {
+            console.log(err instanceof Error ? err.message : "Wystąpił nieznany błąd");
+        }
+    };
+    
+    function base64toBlob(base64Data: string, contentType: string) {
+        contentType = contentType || '';
+        var sliceSize = 1024;
+        const base64String = base64Data.split(',')[1];
+        var byteCharacters = atob(base64String);
+        var bytesLength = byteCharacters.length;
+        var slicesCount = Math.ceil(bytesLength / sliceSize);
+        var byteArrays = new Array(slicesCount);
+    
+        for (var sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+            var begin = sliceIndex * sliceSize;
+            var end = Math.min(begin + sliceSize, bytesLength);
+    
+            var bytes = new Array(end - begin);
+            for (var offset = begin, i = 0; offset < end; ++i, ++offset) {
+                bytes[i] = byteCharacters[offset].charCodeAt(0);
+            }
+            byteArrays[sliceIndex] = new Uint8Array(bytes);
+        }
+        return new Blob(byteArrays, { type: contentType });
+    }
+
+    const clearSessionStorage = () => {
+        sessionStorage.removeItem('tripName');
+        sessionStorage.removeItem('startDate');
+        sessionStorage.removeItem('endDate');
+        sessionStorage.removeItem('tripType');
+        sessionStorage.removeItem('image');
+        sessionStorage.removeItem('imageFile');
+        sessionStorage.removeItem('imageFileType');
+        sessionStorage.removeItem('imagePreview');
+    }
+
+    const handleSave = async () => {
+        if (!title || !start_date || !end_date || !type_of_trip) {
+            return alert('Missing trip details, please go back and complete the form.');
+        }
+        await uploadData();
+        clearSessionStorage();
+        nextStep();
+    };
+
+    return (
+        <div className="flex flex-col gap-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg">
+            <div className="flex flex-row justify-between">
+                <div className="flex flex-col">
+                    <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Review & Save</h2>
+                    <div className="flex flex-col gap-4 text-gray-900 dark:text-white">
+                        <p><strong>Title:</strong> {title}</p>
+                        <p><strong>Starting date:</strong> {start_date}</p>
+                        <p><strong>Ending date:</strong> {end_date}</p>
+                        <p><strong>Type of trip:</strong> {type_of_trip}</p>
+                    </div>
+                </div>
+            
+            {image && (
+                    <div className="flex justify-center">
+                        <Image src={image} width={384} height={256} alt="Trip cover" className="object-cover rounded-lg" />
+                    </div>
+                )}
+           </div>
+
+            <div className="flex justify-center gap-4">
+                <Button onClick={prevStep} className="bg-gray-500 text-white px-4 py-2 rounded-lg">Back</Button>
+                <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded-lg">Save & Next</button>
+            </div>
+        </div>
+    );
+};
 
 export default ReviewAndSave;

@@ -1,13 +1,22 @@
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FaRegCopy } from 'react-icons/fa';
 interface InviteScreenProps {
-    nextStep: () => void;
     prevStep: () => void;
 }
 
-const InviteFriends = ({ nextStep, prevStep }: InviteScreenProps) => {
+const InviteFriends = ({ prevStep }: InviteScreenProps) => {
     const [isCopied, setIsCopied] = useState(false);
-    const tripCode = "TRIP123"; // This should be dynamically generated or fetched from your backend
+    const [tripCode, setTripCode] = useState("");
+    const router = useRouter();
+
+    const getTripCode = () => {
+        
+    }
+
+    const nextStep = () => {
+        router.push(`/trip/${tripCode}`);
+    };
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(tripCode).then(() => {
@@ -34,7 +43,7 @@ const InviteFriends = ({ nextStep, prevStep }: InviteScreenProps) => {
             </div>
             <div>
                 <button onClick={prevStep} className="mr-4 bg-gray-500 text-white px-4 py-2 rounded-lg">Back</button>
-                <button onClick={nextStep} className="bg-blue-500 text-white px-4 py-2 rounded-lg">Next</button>
+                <button onClick={nextStep} className="bg-blue-500 text-white px-4 py-2 rounded-lg">Plan your trip</button>
             </div>
         </div>
     )

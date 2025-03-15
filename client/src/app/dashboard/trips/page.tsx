@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import TripCard from "@/components/ui/TripCard";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import CreateTripCard from "@/components/ui/CreateTripCard";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 const mockTrips = [
     {
@@ -28,6 +28,8 @@ const mockTrips = [
 
 const TripsPage = () => {
     const { darkMode } = useDarkMode();
+    const searchParams = useSearchParams();
+    const userId = searchParams.get("user_id");
     const [trips, setTrips] = useState<
         { id: number; title: string; destination: string; startDate: string; endDate: string; image: string; friendsList: string[] }[]
     >([]);
@@ -57,7 +59,7 @@ const TripsPage = () => {
     }, []);
 
     const handleCreateTrip = () => {
-        router.push("/trip/creator");
+        router.push(`/trip/creator?user_id=${userId}`);
     };
 
     if (loading) return <p className={`${darkMode ? "text-white" : "text-black"}`}>Loading trips...</p>;

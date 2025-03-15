@@ -78,7 +78,7 @@ export default function TripMap({ tripId }: { tripId: string }) {
 
   return (
     <div>
-            {/* {isMapLoaded && (
+            {isMapLoaded && (
         <SearchBox
           accessToken={mapboxgl.accessToken || ''}
           map={mapRef.current || undefined}
@@ -103,7 +103,7 @@ export default function TripMap({ tripId }: { tripId: string }) {
           }}
           marker
         />
-      )} */}
+      )}
       <div ref={mapContainerRef} style={{ width: '100%', height: '100vh' }} />
     </div>
   );

@@ -4,6 +4,7 @@ import { PORT } from "./env";
 import { createServer } from 'node:http';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
+import tripRoutes from './routes/trip';
 import { Server } from "socket.io";
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/trip', tripRoutes);
 
 const io = new Server(server, {
   cors: {

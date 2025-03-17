@@ -60,11 +60,11 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
           icon: <FaMap className="text-yellow-400 text-4xl" />, label: "Countries Visited", value: "12" },
           { icon: <FaTrophy className="text-amber-300 text-4xl" />, label: "Top Travel Companion", value: "Alex" },
           { icon: <FaChartPie className="text-purple-500 text-4xl" />, label: "AI Travel Score", value: "85%" }].map((item, index) => (
-          <div key={index} className={`p-6 bg-opacity-30 backdrop-blur-lg rounded-xl shadow-lg flex items-center space-x-4 ${darkMode ? "bg-gray-800" : "bg-blue-100"}`}>
+          <div key={index} className={`p-6 bg-opacity-30 backdrop-blur-lg rounded-xl shadow-lg flex items-center space-x-4 ${darkMode ? "bg-gray-800 " : "bg-blue-100"}`}>
             {item.icon}
             <div>
-              <p className="text-lg font-semibold text-gray-700">{item.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+              <p className={`text-lg font-semibold text-gray-700 ${darkMode && "text-white"}`}>{item.label}</p>
+              <p className={`text-2xl font-bold text-gray-900 ${darkMode && "text-white"}`}>{item.value}</p>
             </div>
           </div>
         ))}

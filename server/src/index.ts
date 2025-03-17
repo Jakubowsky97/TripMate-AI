@@ -52,14 +52,20 @@ io.on('connection', (socket) => {
 
   socket.on('addMarker', ({ tripId, marker }) => {
     if (marker && typeof marker.lng === 'number' && typeof marker.lat === 'number') {
-      trips[tripId].push(marker); // Save marker
+      if (!trips[tripId]) {
+        trips[tripId] = []; // Upewnij się, że tripId istnieje
+      }
+  
+      trips[tripId].push(marker); // Zapisz marker
+  
+      // Powiadom wszystkich użytkowników w tej samej podróży o nowym markerze
       io.to(tripId).emit('newMarker', marker);
-      console.log(marker);
+  
     } else {
-      console.error('Invalid marker data:', marker);
+      console.error('Nieprawidłowe dane markera:', marker);
     }
   });
-
+  
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
   });

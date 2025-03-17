@@ -38,8 +38,12 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  localStorage.setItem("access_token", access_token);
-  localStorage.setItem("refresh_token", refresh_token);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
+    }
+  }, [access_token, refresh_token]);
 
   if (!user) {
     redirect("/auth/login");

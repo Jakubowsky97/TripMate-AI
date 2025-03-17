@@ -87,7 +87,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
 
     return (
       <div className="flex flex-col gap-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg">
-        <div className="flex flex-row gap-24 justify-between items-start">
+        <div className="flex flex-col gap-6 justify-between items-start md:flex-row md:gap-24">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <Label className="text-xl font-bold text-gray-900 dark:text-white">Title</Label>
@@ -138,7 +138,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
               </Select>
             </div>
           </div>
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-2 md:items-center">
             <Label className="text-xl font-bold text-gray-900 dark:text-white">Cover image</Label>
             <Input
               type="file"
@@ -146,7 +146,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
               onChange={(e) => {
                 handleImageChange(e);
               }}
-              className="w-fit"
+              className="md:w-fit"
             />
             {imagePreview && (
               <Image src={imagePreview} width={384} height={256} alt="trip cover" className="object-cover rounded-lg" />

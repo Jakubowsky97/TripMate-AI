@@ -22,7 +22,7 @@ export default function TripCreationFlow() {
             case 1:
                 return <ReviewAndSave nextStep={nextStep} prevStep={prevStep} />;
             case 2:
-                return <InviteFriends prevStep={prevStep} />;
+                return <InviteFriends />;
             default:
                 return null;
         }

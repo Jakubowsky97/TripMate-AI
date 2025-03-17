@@ -9,7 +9,6 @@ interface ReviewAndSaveProps {
 }
 
 const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
-    const router = useRouter();
     const supabase = createClient();
     const searchParams = useSearchParams();
     const user_id = searchParams.get('user_id');
@@ -21,29 +20,25 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
 
     const uploadData = async () => {
         try {
+            let publicUrl = null; // Ustawienie domyślnej wartości dla obrazu
+    
             const base64Image = sessionStorage.getItem("imageFile");
             const fileType = sessionStorage.getItem("imageFileType");
     
-            if (!base64Image || !fileType) {
-                throw new Error("Brak wybranego obrazu.");
+            if (base64Image && fileType) {
+                const blob = base64toBlob(base64Image, fileType);
+                const fileExt = fileType.split("/")[1]; 
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `user-images/${user_id}/${fileName}`;
+    
+                const { error } = await supabase.storage.from("trip-images").upload(filePath, blob);
+                if (error) throw error;
+    
+                const { data } = supabase.storage.from("trip-images").getPublicUrl(filePath);
+                publicUrl = data.publicUrl;
             }
     
-            const blob = base64toBlob(base64Image, fileType);
-            const fileExt = fileType.split("/")[1]; // Pobieramy rozszerzenie (np. 'webp')
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `user-images/${user_id}/${fileName}`; // Organizacja obrazów według ID użytkownika
-
-            console.log(blob);
-    
-            // Wysyłamy obraz na serwer
-            const { data, error } = await supabase.storage.from("trip-images").upload(filePath, blob);
-            if (error) throw error;
-    
-            // Uzyskiwanie publicznego URL do przesłanego pliku
-            const { data: { publicUrl } } = supabase.storage.from("trip-images").getPublicUrl(filePath);
-    
-            // Wysyłamy dane o podróży na serwer
-            const response = await fetch(`${process.env.API_URL}/api/trip/createTrip`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/createTrip`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -52,7 +47,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
                     start_date,
                     end_date,
                     type_of_trip,
-                    image: publicUrl, // Używamy publicznego URL
+                    image: publicUrl, // Może być null, jeśli brak zdjęcia
                 }),
             });
     
@@ -61,7 +56,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
                 throw new Error(responseData.error || "Weryfikacja nie powiodła się");
             }
     
-            console.log("Trip created successfully:", responseData);
+            sessionStorage.setItem("trip_id", responseData.travelData.id);
         } catch (err) {
             console.log(err instanceof Error ? err.message : "Wystąpił nieznany błąd");
         }
@@ -111,7 +106,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
 
     return (
         <div className="flex flex-col gap-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg">
-            <div className="flex flex-row justify-between">
+            <div className="flex flex-col gap-6 justify-between md:flex-row md:gap-0">
                 <div className="flex flex-col">
                     <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Review & Save</h2>
                     <div className="flex flex-col gap-4 text-gray-900 dark:text-white">

@@ -30,3 +30,24 @@ export const createTripData = async (req: Request, res: Response): Promise<void>
       res.status(500).json({error});
     }
   };
+
+  export const getTripCodeById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { trip_id } = req.params;
+        const { data, error } = await supabase
+            .from("travel_data")
+            .select("trip_code")
+            .eq("id", trip_id) 
+            .single(); 
+
+        if (error) {
+            res.status(500).json({ error: "Error fetching trip code", details: error.message });
+            return;
+        }
+
+        res.status(200).json({ trip_code: data.trip_code });
+
+    } catch (err) {
+        res.status(500).json({ error: "Internal server error", details: err });
+    }
+};

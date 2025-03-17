@@ -1,17 +1,29 @@
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { FaRegCopy } from 'react-icons/fa';
-interface InviteScreenProps {
-    prevStep: () => void;
-}
 
-const InviteFriends = ({ prevStep }: InviteScreenProps) => {
+const InviteFriends = () => {
     const [isCopied, setIsCopied] = useState(false);
     const [tripCode, setTripCode] = useState("");
     const router = useRouter();
+    const trip_id = sessionStorage.getItem("trip_id");
 
-    const getTripCode = () => {
-        
+    useEffect(() => {
+        if (trip_id) {
+            getTripCode();
+        }
+    }, [trip_id]);
+    const getTripCode = async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripCodeById/${trip_id}`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Error fetching trip code");
+            }
+            setTripCode(data.trip_code);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     const nextStep = () => {
@@ -42,7 +54,7 @@ const InviteFriends = ({ prevStep }: InviteScreenProps) => {
                 </div>
             </div>
             <div>
-                <button onClick={prevStep} className="mr-4 bg-gray-500 text-white px-4 py-2 rounded-lg">Back</button>
+
                 <button onClick={nextStep} className="bg-blue-500 text-white px-4 py-2 rounded-lg">Plan your trip</button>
             </div>
         </div>

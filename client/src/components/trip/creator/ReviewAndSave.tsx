@@ -71,7 +71,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
         const slicesCount = Math.ceil(bytesLength / sliceSize);
         const byteArrays = new Array(slicesCount);
     
-        for (const sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+        for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
             const begin = sliceIndex * sliceSize;
             const end = Math.min(begin + sliceSize, bytesLength);
     

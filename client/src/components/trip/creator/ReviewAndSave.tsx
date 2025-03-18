@@ -76,7 +76,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
             const end = Math.min(begin + sliceSize, bytesLength);
     
             const bytes = new Array(end - begin);
-            for (const offset = begin, let i = 0; offset < end; ++i, ++offset) {
+            for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
                 bytes[i] = byteCharacters[offset].charCodeAt(0);
             }
             byteArrays[sliceIndex] = new Uint8Array(bytes);

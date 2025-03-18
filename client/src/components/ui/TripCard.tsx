@@ -1,13 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { FaUsers } from "react-icons/fa";
-import { FiMapPin } from "react-icons/fi";
-import { FcCalendar } from "react-icons/fc";
+import { FcCalendar, FcFolder } from "react-icons/fc";
 import Image from "next/image";
 
 interface TripCardProps {
     title: string;
-    destination: string;
+    typeOfTrip: string;
     startDate: string;
     endDate: string;
     friendsList: string[];
@@ -17,7 +16,7 @@ interface TripCardProps {
 
 export default function TripCard({
     title,
-    destination,
+    typeOfTrip,
     startDate,
     endDate,
     friendsList,
@@ -37,9 +36,9 @@ export default function TripCard({
                         {title}
                     </h3>
                     <div className="flex items-center space-x-2">   
-                        <FiMapPin/>
+                        <FcFolder/>
                         <p className={`${darkMode ? "text-gray-400" : "text-gray-600"} text-sm`}>
-                            {destination}
+                            {typeOfTrip}
                         </p>
                     </div>
                     

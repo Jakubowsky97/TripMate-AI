@@ -24,18 +24,16 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
     
             const base64Image = sessionStorage.getItem("imageFile");
             const fileType = sessionStorage.getItem("imageFileType");
-    
+            let fileName = null;
+
             if (base64Image && fileType) {
                 const blob = base64toBlob(base64Image, fileType);
                 const fileExt = fileType.split("/")[1]; 
-                const fileName = `${Math.random()}.${fileExt}`;
+                fileName = `${Math.random()}.${fileExt}`;
                 const filePath = `user-images/${user_id}/${fileName}`;
     
                 const { error } = await supabase.storage.from("trip-images").upload(filePath, blob);
                 if (error) throw error;
-    
-                const { data } = supabase.storage.from("trip-images").getPublicUrl(filePath);
-                publicUrl = data.publicUrl;
             }
     
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/createTrip`, {
@@ -47,7 +45,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
                     start_date,
                     end_date,
                     type_of_trip,
-                    image: publicUrl, // Może być null, jeśli brak zdjęcia
+                    image: fileName, // Może być null, jeśli brak zdjęcia
                 }),
             });
     

@@ -10,7 +10,12 @@ const ConfirmPageContent = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const user_id = localStorage.getItem("user_id");
+    const [user_id, setUser_id] = useState<string | null>(null);
+
+    useEffect(() => {
+        setUser_id(localStorage.getItem('user_id'));
+    }, []);
+  
 
     useEffect(() => {
         const confirmEmail = async () => {

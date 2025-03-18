@@ -64,19 +64,19 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
     
     function base64toBlob(base64Data: string, contentType: string) {
         contentType = contentType || '';
-        var sliceSize = 1024;
+        let sliceSize = 1024;
         const base64String = base64Data.split(',')[1];
-        var byteCharacters = atob(base64String);
-        var bytesLength = byteCharacters.length;
-        var slicesCount = Math.ceil(bytesLength / sliceSize);
-        var byteArrays = new Array(slicesCount);
+        let byteCharacters = atob(base64String);
+        let bytesLength = byteCharacters.length;
+        let slicesCount = Math.ceil(bytesLength / sliceSize);
+        const byteArrays = new Array(slicesCount);
     
-        for (var sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
-            var begin = sliceIndex * sliceSize;
-            var end = Math.min(begin + sliceSize, bytesLength);
+        for (let sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
+            let begin = sliceIndex * sliceSize;
+            let end = Math.min(begin + sliceSize, bytesLength);
     
-            var bytes = new Array(end - begin);
-            for (var offset = begin, i = 0; offset < end; ++i, ++offset) {
+            const bytes = new Array(end - begin);
+            for (const offset = begin, i = 0; offset < end; ++i, ++offset) {
                 bytes[i] = byteCharacters[offset].charCodeAt(0);
             }
             byteArrays[sliceIndex] = new Uint8Array(bytes);

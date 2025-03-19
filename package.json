@@ -10,7 +10,12 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@huggingface/inference": "^3.5.1",
+    "@llama-node/llama-cpp": "^0.1.6",
     "concurrently": "^9.1.2",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "llama-node": "^0.1.6",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.87.3"
   }
 }

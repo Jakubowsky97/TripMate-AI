@@ -199,7 +199,7 @@ export const updatePreferences = async (req: Request, res: Response): Promise<vo
     // .select("travel_preferences, travel_style, prefered_transport, prefered_accomodation, favorite_types_of_attractions")
     // .eq("user_id", user_id)
     // masz zapytania osobno albo w jednym zalezy jak ci wygodnie 
-  
+
     if (errors.length > 0) {
       res.status(207).json({
         message: "Partial success",
@@ -251,3 +251,110 @@ export const updatePreferences = async (req: Request, res: Response): Promise<vo
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
+
+export const updateTravelData = async (req: Request, res: Response) => {
+  try {
+    const { user_id, country, city, place_to_stay,title, start_date, end_date, type_of_trip, friends_list, trip_code, image } = req.body;
+
+    if (!user_id || !start_date || !end_date || !title || !type_of_trip) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const { data: travelData, error: travelError } = await supabase
+      .from('travel_data')
+      .upsert([{ country, city, place_to_stay,title,  start_date, end_date, type_of_trip, friends_list, trip_code, image }])
+      .select()
+      .single();
+
+    res.status(200).json({ message: "Trip added successfully", travelData });
+
+  } catch (travelError) {
+    res.status(500).json({travelError});
+  }
+};
+
+export const getTripCodeById = async (req: Request, res: Response): Promise<void> => {
+  try {
+      const { trip_id } = req.params;
+      const { data, error } = await supabase
+          .from("travel_data")
+          .select("trip_code")
+          .eq("id", trip_id) 
+          .single(); 
+
+      if (error) {
+          res.status(500).json({ error: "Error fetching trip code", details: error.message });
+          return;
+      }
+
+      res.status(200).json({ trip_code: data.trip_code });
+
+  } catch (err) {
+      res.status(500).json({ error: "Internal server error", details: err });
+  }
+};
+
+export const getAllTrips = async (req: Request, res: Response): Promise<void> => {
+try{
+  const {user_id} = req.params;
+
+  if (!user_id || typeof user_id !== "string") {
+    res.status(400).json({ error: "Missing or invalid user_id parameter" });
+    return;
+  }
+
+  const {data,error}  = await supabase .from("profiles_travel_data")
+    .select("travel_data(*)") 
+    .eq("user_id", user_id);
+
+  if(error){
+    res.status(500).json({ error: "Error fetching trip code", details: error.message });
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    res.status(404).json({ message: "No trips found for this user." });
+    return;
+  }
+
+  res.status(200).json({message:"data fetch successful",data})
+}
+catch(err){
+  res.status(500).json({ error: "Internal server error", details: err });
+}
+ 
+
+};
+
+export const getLatestTrips = async (req: Request, res: Response): Promise<void> => {
+  try{
+    const {user_id} = req.params;
+  
+    if (!user_id || typeof user_id !== "string") {
+      res.status(400).json({ error: "Missing or invalid user_id parameter" });
+      return;
+    }
+  
+    const {data,error}  = await supabase .from("profiles_travel_data")
+      .select("travel_data(*)") 
+      .eq("user_id", user_id)
+      .limit(4);
+  
+    if(error){
+      res.status(500).json({ error: "Error fetching trip code", details: error.message });
+      return;
+    }
+  
+    if (!data || data.length === 0) {
+      res.status(404).json({ message: "No trips found for this user." });
+      return;
+    }
+  
+    res.status(200).json({message:"data fetch successful",data})
+  }
+  catch(err){
+    res.status(500).json({ error: "Internal server error", details: err });
+  }
+   
+  
+  };

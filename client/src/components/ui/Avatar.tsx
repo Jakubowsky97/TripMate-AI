@@ -17,7 +17,7 @@ export default function Avatar({ url, size, onUpload }: AvatarProps) {
     if (url) {
       downloadImage(url);
     }
-  }, [url, downloadImage])
+  }, [url])
 
   async function downloadImage(path: string) {
     try {

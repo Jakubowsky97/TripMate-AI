@@ -1,9 +1,10 @@
 "use client";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import TripCard from "./TripCard";
 import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 interface DashboardProps {
   user: any;
@@ -11,32 +12,78 @@ interface DashboardProps {
   refresh_token: string;
 }
 
-const mockTrips = [
-  {
-    id: 1,
-    title: "Trip to Paris",
-    destination: "Paris, France",
-    startDate: "2025-03-01",
-    endDate: "2025-03-10",
-    image: "https://jjgtakmeqaeguwsarenk.supabase.co/storage/v1/object/sign/trip-images/paris.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0cmlwLWltYWdlcy9wYXJpcy5qcGciLCJpYXQiOjE3NDE4ODUxMjQsImV4cCI6MTc0NDQ3NzEyNH0.OBQV4W_A-y2fBFqUMGOPXzLJoxd2Ou89E0PWEcRCv7g",
-    friendsList: ["Alice", "Bob"],
-  },
-  {
-    id: 2,
-    title: "Trip to New York",
-    destination: "New York, USA",
-    startDate: "2025-04-15",
-    endDate: "2025-04-20",
-    image: "https://jjgtakmeqaeguwsarenk.supabase.co/storage/v1/object/sign/trip-images/newYork.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0cmlwLWltYWdlcy9uZXdZb3JrLndlYnAiLCJpYXQiOjE3NDE4ODUwMzgsImV4cCI6MTc0NDQ3NzAzOH0.uDia57sZUaN7pUUJ0nb2nRw3aAbmGHKZJeUdNJW8EmM",
-    friendsList: ["Charlie", "Dave"],
-  },
-];
-
 export default function Dashboard({ user, access_token, refresh_token }: DashboardProps) {
   const { darkMode } = useDarkMode();
-  const [trips, setTrips] = useState(mockTrips);
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("user_id");
+  const supabase = createClient();
+  const [trips, setTrips] = useState<{
+    id: number;
+    title: string;
+    typeOfTrip: string;
+    startDate: string;
+    endDate: string;
+    image: string | null;
+    friendsList: string[] | null;
+  }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchTrips = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/getLatestTrips/${userId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch trips");
+        }
+        const data = await response.json();
+    
+        if (data && data.data) {
+          const mappedTrips = await Promise.all(
+            data.data.map(async (item: any) => {
+              let imageUrl = null;
+              const imagePath = item.travel_data.image ? `${userId}/${item.travel_data.image}` : null;
+    
+              if (imagePath) {
+                // Generate a signed URL only if the image exists
+                const { data: signedUrlData, error: signedUrlError } = await supabase
+                  .storage
+                  .from("trip-images/user-images")
+                  .createSignedUrl(imagePath, 60); // 60 seconds validity
+    
+                if (signedUrlError) {
+                  console.error("Error getting signed URL:", signedUrlError);
+                } else {
+                  imageUrl = signedUrlData.signedUrl;
+                }
+              }
+    
+              return {
+                id: item.travel_data.id,
+                title: item.travel_data.title,
+                typeOfTrip: item.travel_data.type_of_trip || "No type specified",
+                startDate: item.travel_data.start_date,
+                endDate: item.travel_data.end_date,
+                image: imageUrl || "/default-image.jpg",  // Fallback to a default image if none exists
+                friendsList: item.travel_data.friends_list || [],
+              };
+            })
+          );
+    
+          console.log(mappedTrips);
+          setTrips(mappedTrips);
+        }
+      } catch (error) {
+        console.error("Error fetching trips:", error);
+        setError("Failed to fetch trips");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+
+    fetchTrips();
+  }, [userId]); 
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -95,9 +142,9 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
 
       <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg mt-6 ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
         <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {trips.map((trip) => (
-            <TripCard key={trip.id} {...trip} darkMode={darkMode} />
+            <TripCard key={trip.id} {...trip} image={trip.image || "/default-image.jpg"} friendsList={trip.friendsList || []} darkMode={darkMode} />
           ))}
         </div>
       </div>

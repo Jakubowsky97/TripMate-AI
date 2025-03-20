@@ -32,19 +32,40 @@ const TripsPage = () => {
           throw new Error("Failed to fetch trips");
         }
         const data = await response.json();
-
+    
         if (data && data.data) {
-          // Map the data to match the structure you need for the trips state
-          const mappedTrips = data.data.map((item: any) => ({
-            id: item.travel_data.id,
-            title: item.travel_data.title,
-            typeOfTrip: item.travel_data.type_of_trip || "No type specified",
-            startDate: item.travel_data.start_date,
-            endDate: item.travel_data.end_date,
-            image: supabase.storage.from(`sign/user-images/${userId}/`).download(item.travel_data.image),
-            friendsList: item.travel_data.friends_list || [],
-          }));
-
+          const mappedTrips = await Promise.all(
+            data.data.map(async (item: any) => {
+              let imageUrl = null;
+              const imagePath = item.travel_data.image ? `${userId}/${item.travel_data.image}` : null;
+    
+              if (imagePath) {
+                // Generate a signed URL only if the image exists
+                const { data: signedUrlData, error: signedUrlError } = await supabase
+                  .storage
+                  .from("trip-images/user-images")
+                  .createSignedUrl(imagePath, 60); // 60 seconds validity
+    
+                if (signedUrlError) {
+                  console.error("Error getting signed URL:", signedUrlError);
+                } else {
+                  imageUrl = signedUrlData.signedUrl;
+                }
+              }
+    
+              return {
+                id: item.travel_data.id,
+                title: item.travel_data.title,
+                typeOfTrip: item.travel_data.type_of_trip || "No type specified",
+                startDate: item.travel_data.start_date,
+                endDate: item.travel_data.end_date,
+                image: imageUrl || "/default-image.jpg",  // Fallback to a default image if none exists
+                friendsList: item.travel_data.friends_list || [],
+              };
+            })
+          );
+    
+          console.log(mappedTrips);
           setTrips(mappedTrips);
         }
       } catch (error) {
@@ -54,6 +75,7 @@ const TripsPage = () => {
         setLoading(false);
       }
     };
+    
 
     fetchTrips();
   }, [userId]); // Ensure the fetch is triggered when the userId changes

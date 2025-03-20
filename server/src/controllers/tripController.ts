@@ -88,9 +88,8 @@ export const getAllTrips = async (req: Request, res: Response): Promise<void> =>
         return;
       }
     
-      const {data,error}  = await supabase .from("profiles_travel_data")
-        .select("travel_data(id,title,destination,start_date,end_date,image,friendsList)")
-        .order("start_date", { ascending: false }) 
+      const {data,error}  = await supabase.from("profiles_travel_data")
+        .select("travel_data(*)")
         .eq("user_id", user_id)
         .limit(4);
     

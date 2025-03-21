@@ -1,0 +1,46 @@
+import Image from "next/image";
+
+interface User {
+  avatar_url: string;
+  full_name: string;
+}
+
+interface UserAvatarsProps {
+  users: User[];
+}
+
+export default function UserAvatars({ users }: UserAvatarsProps) {
+  const displayedUsers = users.slice(0, 3);
+  const extraUsers = users.length - displayedUsers.length;
+
+  return (
+    <div className="flex items-center">
+      {displayedUsers.map((user, index) => (
+        <div
+          key={index}
+          className={`w-10 h-10 overflow-hidden rounded-full border-2 border-white relative ${
+            index !== 0 ? "-ml-3" : ""
+          }`}
+          style={{
+            maskImage: "radial-gradient(circle at right, rgba(0,0,0,1) 100%, rgba(0,0,0,0) 100%)",
+            WebkitMaskImage:
+              "radial-gradient(circle at right, rgba(0,0,0,1) 100%, rgba(0,0,0,0) 100%)",
+          }}
+        >
+          <Image
+            src={user.avatar_url || "/default.png"}
+            alt={user.full_name}
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+      {extraUsers > 0 && (
+        <div className="-ml-3 w-10 h-10 flex items-center justify-center rounded-full border-2 border-white bg-gray-300 text-xs font-semibold z-10"   >
+          +{extraUsers}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -20,8 +20,18 @@ export default function TripPage() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userId = searchParams.get('user_id');
 
-  const [activeUsers, setActiveUsers] = useState(['Alice', 'Bob']);
-  const [inactiveUsers, setInactiveUsers] = useState(['Charlie', 'David']);
+  const [activeUsers, setActiveUsers] = useState([
+    { avatar_url: '/avatars/alice.jpg', full_name: 'Alice Johnson', username: 'alicej' },
+    { avatar_url: '/avatars/bob.jpg', full_name: 'Bob Smith', username: 'bob_s' },
+    { avatar_url: '/avatars/charlie.jpg', full_name: 'Charlie Brown', username: 'charlieb' },
+    { avatar_url: '/avatars/david.png', full_name: 'David Wilson', username: 'davidw' },
+  ]);
+  
+  const [inactiveUsers, setInactiveUsers] = useState([
+    { avatar_url: '/avatars/charlie.png', full_name: 'Charlie Brown', username: 'charlieb' },
+    { avatar_url: '/avatars/david.png', full_name: 'David Wilson', username: 'davidw' },
+  ]);
+  
   const [selectedPlaces, setSelectedPlaces] = useState([
     { name: 'Best Pizza', type: 'Restaurant', coordinates: [52.52, 13.405] },
     { name: 'Grand Hotel', type: 'Hotel', coordinates: [48.8566, 2.3522] },

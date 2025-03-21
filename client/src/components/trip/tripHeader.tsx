@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { IoMdNotifications } from "react-icons/io";
+import UserAvatars from '../ui/UserAvatars';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg';
 
@@ -115,7 +116,7 @@ export default function TripHeader({ mapRef, tripId, socket, activeUsers, inacti
     if (error) return <p>Error: {error}</p>;
 
     return (
-        <nav className="flex items-center justify-between bg-white shadow-md p-4 px-16">
+        <nav className="flex items-center justify-between bg-white shadow-md p-4 px-16 border">
             <div className='flex flex-row gap-9'>
                 <div className="text-3xl font-bold text-orange-500">TripMate</div>
                 {mapRef.current && (
@@ -135,34 +136,15 @@ export default function TripHeader({ mapRef, tripId, socket, activeUsers, inacti
           
           <div>
             <div className='flex flex-row gap-8 items-center'>
-                <div className="relative">
-                    <button
-                    className="bg-gray-200 px-4 py-2 rounded-md"
-                    onClick={() => setShowUserList(!showUserList)}
-                    >
-                    Users ({activeUsers.length})
-                    </button>
-                    {showUserList && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg p-2 z-10">
-                        <div className="font-semibold">Active Users</div>
-                        {activeUsers.map((user, index) => (
-                        <div key={index} className="text-green-600">{user}</div>
-                        ))}
-                        <div className="font-semibold mt-2">Inactive Users</div>
-                        {inactiveUsers.map((user, index) => (
-                        <div key={index} className="text-gray-600">{user}</div>
-                        ))}
-                    </div>
-                    )}
-                </div>
+              <UserAvatars users={activeUsers} />
 
                 <IoMdNotifications size={24} />
 
                 <Image
                     src={avatarUrl || '/default.png'}
                     alt="Avatar"
-                    width={60}
-                    height={60}
+                    width={50}
+                    height={50}
                     className="avatar rounded-full w-12 h-12"
                 />
             </div>

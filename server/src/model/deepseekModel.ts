@@ -19,7 +19,6 @@ interface ChatCompletion {
   }[];
 }
 
-
 async function getChatResponse(messages: Message[]){
   try {
     const response = await openai.chat.completions.create({
@@ -37,7 +36,7 @@ async function getChatResponse(messages: Message[]){
 (async () => {
   const messages: Message[] = [
     { role: "system", content: "You are a travel planning specialist, give me concise and short answers to the questions I ask you." },
-    { role: 'user', content: 'Show me top 3 restaurants around Wawel in crackow i need their name,street,what cusine they serve,and if u could find exact x,y coordinates on a map, e.g. Google  ' }, 
+    { role: 'user', content: 'Show me top 3 restaurants around Wawel in crackow i need their name,street,what cusine they serve check it, e.g. Google Maps and other map providers at current state of year 2025 check your information in diffrent sources' }, 
   ];
 
   const response = await getChatResponse(messages);

@@ -16,3 +16,4 @@ export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 export const PORT = process.env.PORT || 5001;
 export const HF_TOKEN = process.env.HF_TOKEN;
 export const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+export const PINECONE_API_KEY = process.env.PINECONE_API_KEY;

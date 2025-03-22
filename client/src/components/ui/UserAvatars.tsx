@@ -7,9 +7,10 @@ interface User {
 
 interface UserAvatarsProps {
   users: User[];
+  size: number; 
 }
 
-export default function UserAvatars({ users }: UserAvatarsProps) {
+export default function UserAvatars({ users, size }: UserAvatarsProps) {
   const displayedUsers = users.slice(0, 3);
   const extraUsers = users.length - displayedUsers.length;
 
@@ -18,7 +19,7 @@ export default function UserAvatars({ users }: UserAvatarsProps) {
       {displayedUsers.map((user, index) => (
         <div
           key={index}
-          className={`w-10 h-10 overflow-hidden rounded-full border-2 border-white relative ${
+          className={`w-${size} h-${size} overflow-hidden rounded-full border-2 border-white relative ${
             index !== 0 ? "-ml-3" : ""
           }`}
           style={{
@@ -37,7 +38,7 @@ export default function UserAvatars({ users }: UserAvatarsProps) {
         </div>
       ))}
       {extraUsers > 0 && (
-        <div className="-ml-3 w-10 h-10 flex items-center justify-center rounded-full border-2 border-white bg-gray-300 text-xs font-semibold z-10"   >
+        <div className={`-ml-3 w-${size} h-${size} flex items-center justify-center rounded-full border-2 border-white bg-[#fff7ed] text-[#ef700c] text-xs font-semibold z-10`}>
           +{extraUsers}
         </div>
       )}

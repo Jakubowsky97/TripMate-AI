@@ -5,106 +5,130 @@ import { useDarkMode } from "@/components/ui/DarkModeContext";
 import CreateTripCard from "@/components/ui/CreateTripCard";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
+import { FaFilter, FaPlus } from "react-icons/fa";
+
+interface Owner {
+  id: string; // Unikalny identyfikator właściciela
+  full_name: string; // Pełne imię i nazwisko właściciela
+  username: string; // Nazwa użytkownika
+  email: string; // Adres e-mail właściciela
+  avatar_url: string; // Ścieżka do zdjęcia profilowego
+  isConfirmed: boolean; // Status potwierdzenia właściciela
+  updated_at: string; // Data ostatniej aktualizacji
+}
 
 const TripsPage = () => {
   const { darkMode } = useDarkMode();
   const searchParams = useSearchParams();
   const userId = searchParams.get("user_id");
   const supabase = createClient();
-  const [trips, setTrips] = useState<{
-    id: number;
-    title: string;
-    typeOfTrip: string;
-    startDate: string;
-    endDate: string;
-    image: string | null;
-    friendsList: string[] | null;
-  }[]>([]);
+  const [trips, setTrips] = useState<
+    {
+      id: number;
+      title: string;
+      typeOfTrip: string;
+      startDate: string;
+      endDate: string;
+      image: string | null;
+      friendsList: { id: string; full_name: string }[];
+      owner: Owner;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    const fetchTrips = async () => {
+    const loadTrips = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/getAllTrips/${userId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch trips");
+        if (!userId) {
+          throw new Error("User ID is required to fetch trips");
         }
-        const data = await response.json();
-    
-        if (data && data.data) {
-          const mappedTrips = await Promise.all(
-            data.data.map(async (item: any) => {
-              let imageUrl = null;
-              const imagePath = item.travel_data.image ? `${userId}/${item.travel_data.image}` : null;
-    
-              if (imagePath) {
-                // Generate a signed URL only if the image exists
-                const { data: signedUrlData, error: signedUrlError } = await supabase
-                  .storage
-                  .from("trip-images/user-images")
-                  .createSignedUrl(imagePath, 60); // 60 seconds validity
-    
-                if (signedUrlError) {
-                  console.error("Error getting signed URL:", signedUrlError);
-                } else {
-                  imageUrl = signedUrlData.signedUrl;
-                }
-              }
-    
-              return {
-                id: item.travel_data.id,
-                title: item.travel_data.title,
-                typeOfTrip: item.travel_data.type_of_trip || "No type specified",
-                startDate: item.travel_data.start_date,
-                endDate: item.travel_data.end_date,
-                image: imageUrl || "/default-image.jpg",  // Fallback to a default image if none exists
-                friendsList: item.travel_data.friends_list || [],
-              };
-            })
-          );
-    
-          console.log(mappedTrips);
-          setTrips(mappedTrips);
-        }
-      } catch (error) {
-        console.error("Error fetching trips:", error);
+        const userTrips = await fetchTrips(userId);
+        const friendsTrips = await fetchTripsFromFriends(userId);
+        setTrips([...(userTrips || []), ...(friendsTrips || [])]);
+      } catch (err) {
         setError("Failed to fetch trips");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    
 
-    fetchTrips();
-  }, [userId]); // Ensure the fetch is triggered when the userId changes
+    loadTrips();
+  }, [userId]);
 
   const handleCreateTrip = () => {
     router.push(`/trip/creator?user_id=${userId}`);
   };
 
-  if (loading) return <p className={`${darkMode ? "text-white" : "text-black"}`}>Loading trips...</p>;
+  const handleFilterClick = () => {
+    router.push(`/trip/filter?user_id=${userId}`);
+  };
+
+  if (loading)
+    return (
+      <p className={`${darkMode ? "text-white" : "text-black"}`}>
+        Loading trips...
+      </p>
+    );
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div
-      className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 rounded-3xl p-1 md:p-8 ${
-        darkMode ? "" : "text-black"
-      }`}>
-      <CreateTripCard darkMode={darkMode} onCreateTrip={handleCreateTrip} />
-      {trips.map((trip) => (
-        <TripCard
-          key={trip.id}
-          title={trip.title}
-          typeOfTrip={trip.typeOfTrip}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
-          image={trip.image || ""}
-          friendsList={trip.friendsList || []}
-          darkMode={darkMode}
-        />
-      ))}
+    <div className="p-1 md:p-8 md:pt-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1
+          className={`font-semibold text-3xl ${darkMode ? "text-white" : "text-black"
+            }`}
+        >
+          My Trips
+        </h1>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleFilterClick}
+            className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${darkMode
+                ? "bg-gray-600 hover:bg-gray-700 text-white"  // Ciemny tryb
+                : "bg-[#FFB703] hover:bg-[#FF7F50] text-white"  // Jasny tryb, pomarańczowy
+              } text-sm sm:text-base py-1 px-2`} 
+          >
+            <FaFilter />
+            <span>Filter</span>
+          </button>
+        
+        <button
+          onClick={handleCreateTrip}
+          className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${darkMode
+              ? "bg-blue-600 hover:bg-blue-800 text-white"  // Ciemny tryb
+              : "bg-[#FF7F50] hover:bg-[#FF5733] text-white"  // Jasny tryb, pomarańczowy
+            } text-sm sm:text-base py-1 px-2`} 
+        >
+          <FaPlus />
+          <span>Create trip</span>
+        </button>
+        </div>
+      </div>
+
+      <div
+        className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 rounded-3xl ${darkMode ? "" : "text-black"
+          }`}
+      >
+        {/* {<CreateTripCard darkMode={darkMode} onCreateTrip={handleCreateTrip} />} */}
+        {trips.map((trip) => (
+          <TripCard
+            key={trip.id}
+            title={trip.title}
+            typeOfTrip={trip.typeOfTrip}
+            startDate={trip.startDate}
+            endDate={trip.endDate}
+            image={trip.image || ""}
+            owner={trip.owner}
+            friendsList={trip.friendsList || []}
+            darkMode={darkMode}
+            onClick={() => router.push(`/trip/${trip.id}?user_id=${userId}`)}
+          />
+        ))}
+      </div>
     </div>
   );
 };

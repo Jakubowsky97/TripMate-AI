@@ -1,16 +1,28 @@
 "use client";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
 import TripCard from "./TripCard";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 
 interface DashboardProps {
   user: any;
   access_token: string;
   refresh_token: string;
 }
+
+interface Owner {
+  id: string; // Unikalny identyfikator właściciela
+  full_name: string; // Pełne imię i nazwisko właściciela
+  username: string; // Nazwa użytkownika
+  email: string; // Adres e-mail właściciela
+  avatar_url: string; // Ścieżka do zdjęcia profilowego
+  isConfirmed: boolean; // Status potwierdzenia właściciela
+  updated_at: string; // Data ostatniej aktualizacji
+}
+
 
 export default function Dashboard({ user, access_token, refresh_token }: DashboardProps) {
   const { darkMode } = useDarkMode();
@@ -24,66 +36,32 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
     startDate: string;
     endDate: string;
     image: string | null;
-    friendsList: string[] | null;
+    friendsList: { id: string; full_name: string }[];
+    owner: Owner;
   }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchTrips = async () => {
+    const loadTrips = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/getLatestTrips/${userId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch trips");
+        if (!userId) {
+          throw new Error("User ID is required to fetch trips");
         }
-        const data = await response.json();
-    
-        if (data && data.data) {
-          const mappedTrips = await Promise.all(
-            data.data.map(async (item: any) => {
-              let imageUrl = null;
-              const imagePath = item.travel_data.image ? `${userId}/${item.travel_data.image}` : null;
-    
-              if (imagePath) {
-                // Generate a signed URL only if the image exists
-                const { data: signedUrlData, error: signedUrlError } = await supabase
-                  .storage
-                  .from("trip-images/user-images")
-                  .createSignedUrl(imagePath, 60); // 60 seconds validity
-    
-                if (signedUrlError) {
-                  console.error("Error getting signed URL:", signedUrlError);
-                } else {
-                  imageUrl = signedUrlData.signedUrl;
-                }
-              }
-    
-              return {
-                id: item.travel_data.id,
-                title: item.travel_data.title,
-                typeOfTrip: item.travel_data.type_of_trip || "No type specified",
-                startDate: item.travel_data.start_date,
-                endDate: item.travel_data.end_date,
-                image: imageUrl || "/default-image.jpg",  // Fallback to a default image if none exists
-                friendsList: item.travel_data.friends_list || [],
-              };
-            })
-          );
-    
-          console.log(mappedTrips);
-          setTrips(mappedTrips);
-        }
-      } catch (error) {
-        console.error("Error fetching trips:", error);
+        const userTrips = await fetchTrips(userId);
+        const friendsTrips = await fetchTripsFromFriends(userId);
+        setTrips([...(userTrips || []), ...(friendsTrips || [])]);
+      } catch (err) {
         setError("Failed to fetch trips");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    
 
-    fetchTrips();
-  }, [userId]); 
+    loadTrips();
+  }, [userId]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -142,9 +120,9 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
 
       <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg mt-6 ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
         <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {trips.map((trip) => (
-            <TripCard key={trip.id} {...trip} image={trip.image || "/default-image.jpg"} friendsList={trip.friendsList || []} darkMode={darkMode} />
+            <TripCard key={trip.id} {...trip} image={trip.image || "/default-image.jpg"} friendsList={trip.friendsList || []} owner={trip.owner} darkMode={darkMode} onClick={() => router.push(`/trip/${trip.id}?user_id=${userId}`)}/>
           ))}
         </div>
       </div>

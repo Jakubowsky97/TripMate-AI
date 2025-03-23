@@ -8,6 +8,7 @@ import io from "socket.io-client";
 import SidebarLeft from "@/components/trip/sideBarLeft";
 import SidebarRight from "@/components/trip/sideBarRight";
 import { createClient } from "@/utils/supabase/client";
+import { fetchFriendsData } from "@/utils/fetchTrips";
 
 interface UserData {
   id: string;
@@ -35,7 +36,16 @@ export default function TripPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const supabase = createClient();
-  
+  const [tripData, setTripData] = useState({
+    id: 0,
+    title: "",
+    start_date: "",
+    end_date: "",
+    image: "",
+    type_of_trip: "",
+    owner_id: "",
+    friends_list: [],
+  });
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [localData, setLocalData] = useState({
@@ -89,55 +99,69 @@ export default function TripPage() {
       }
     };
 
+    const getTripData = async () => {
+      if (!userId) {
+        setError("Missing or invalid user_id");
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripById/${tripId}?user_id=${userId}`
+        );
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch trip data");
+        }
+        setTripData({
+          id: data.data.id,
+          title: data.data.title,
+          start_date: data.data.start_date,
+          end_date: data.data.end_date,
+          image: data.data.image,
+          type_of_trip: data.data.type_of_trip,
+          owner_id: data.data.profiles_travel_data[0].user_id,
+          friends_list: data.data.friends_list,
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchUserData();
+    getTripData();
   }, [searchParams]);
 
-  const [activeUsers, setActiveUsers] = useState([
-    {
-      id: "1",
-      avatar_url: "/avatars/alice.jpg",
-      full_name: "Alice Johnson",
-      username: "alicej",
-      email: "alice@example.com",
-    },
-    {
-      id: "2",
-      avatar_url: "/avatars/bob.jpg",
-      full_name: "Bob Smith",
-      username: "bob_s",
-      email: "bob@example.com",
-    },
-    {
-      id: "3",
-      avatar_url: "/avatars/charlie.jpg",
-      full_name: "Charlie Brown",
-      username: "charlieb",
-      email: "charlie@example.com",
-    },
-    {
-      id: "4",
-      avatar_url: "/avatars/david.png",
-      full_name: "David Wilson",
-      username: "davidw",
-      email: "david@example.com",
-    },
-  ]);
+  useEffect(() => {
+    const getFriendsData = async () => {
+      if (tripData.friends_list.length == 0) {
+      return;
+    }
+  
+    try {
+      const response = fetchFriendsData(tripData.friends_list);
+      const friendsData = await response;
+      setActiveUsers(friendsData);
+    } catch (err) {
+      console.error("Error fetching friends data:", err);
+    }
+    }
+    getFriendsData();
+  }, [tripData]);
+
+  const [activeUsers, setActiveUsers] = useState([{
+    id: "0",
+    avatar_url: "",
+    full_name: "",
+    username: "",
+    email: "",
+  }]);
 
   const [inactiveUsers, setInactiveUsers] = useState([
-    {
-      id: "5",
-      avatar_url: "/avatars/charlie.png",
-      full_name: "Charlie Brown",
-      username: "charlieb",
-      email: "charlie@example.com",
-    },
-    {
-      id: "6",
-      avatar_url: "/avatars/david.png",
-      full_name: "David Wilson",
-      username: "davidw",
-      email: "david@example.com",
-    },
   ]);
 
   const [allUsers, setAllUsers] = useState<UserData[]>([...activeUsers, ...inactiveUsers]);

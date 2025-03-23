@@ -33,6 +33,7 @@ const PlannerChat = ({
   return (
     <div className="flex-grow overflow-y-auto p-4 max-h-[70vh]">
       {messages.map((msg, index) => {
+        if (!msg.user) return null;
         const isCurrentUser = msg.user.id === currentUserId;
 
         return (

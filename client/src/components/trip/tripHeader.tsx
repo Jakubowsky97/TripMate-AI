@@ -68,7 +68,7 @@ export default function TripHeader({ mapRef, tripId, socket, localData, allUsers
                     alt="Avatar"
                     width={50}
                     height={50}
-                    className="avatar rounded-full w-12 h-12"
+                    className="avatar rounded-full w-10 h-10"
                 />
             </div>
           </div>

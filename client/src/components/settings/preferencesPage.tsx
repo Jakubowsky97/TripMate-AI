@@ -32,15 +32,26 @@ export default function PreferencesPage() {
                 return;
             }
             try {
-              const response = await fetch(`http://localhost:5000/api/profile/getPreferences?user_id=${userId}`);
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getPreferences?user_id=${userId}`);
           
               if (!response.ok) {
                 throw new Error("Failed to fetch preferences");
               }
           
               const data = await response.json();
-
-              setPreferences(data.data[0]);
+            
+            // Ensure data is valid and not undefined
+            if (data?.data?.length > 0) {
+                setPreferences(data.data[0]);
+            } else {
+                setPreferences({
+                    travel_interests: [],
+                    travel_style: [],
+                    preferred_transport: [],
+                    preferred_accommodation: [],
+                    favorite_types_of_attractions: [],
+                });
+            }
             } catch (error) {
               console.error("Error fetching preferences:", error);
             } finally {

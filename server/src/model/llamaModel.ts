@@ -23,6 +23,6 @@ export async function generateText(prompt: string) {
     
    
     } catch (error) {
-        console.log(error,"api jest chujowe")
+        console.log(error," ")
     }
 }

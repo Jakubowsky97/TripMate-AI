@@ -12,7 +12,9 @@ export const pc = new Pinecone({
     apiKey: PINECONE_API_KEY,
 });
 
-export const indexName = 'travel-dataset';
+
+
+ const indexName = 'travel-dataset';
 
 async function createPineconeIndex() {
     try {
@@ -42,7 +44,7 @@ async function createPineconeIndex() {
         // Utwórz indeks
         await pc.createIndex({
             name: indexName,
-            dimension: 256,
+            dimension: 384,
             metric: 'cosine',
             spec: {
                 serverless: {

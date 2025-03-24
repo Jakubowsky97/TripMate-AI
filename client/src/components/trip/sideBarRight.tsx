@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoIosSend } from "react-icons/io";
 import UserAvatars from "../ui/UserAvatars";
 import SmallScreenChat from "../ui/smallScreenChat";
@@ -15,10 +15,18 @@ interface UserData {
 }
 
 export default function SidebarRight({ activeUsers, localData } : { activeUsers: any[]; localData: UserData }) {
-  const [messages, setMessages] = useState([
-    { user: activeUsers[0], text: "Hey, where are we going first?" },
-    { user: activeUsers[1], text: "Let's start with the hotel check-in." },
-  ]);
+  const [messages, setMessages] = useState<{ user: UserData; text: string }[]>([]);
+
+  useEffect(() => {
+    setMessages([
+      { user: activeUsers[0], text: "Hello, how can I help you?" },
+      { user: localData, text: "Hi, I'm looking for a travel buddy" },
+      { user: activeUsers[1], text: "I'm interested, where are you planning to go?" },
+      { user: localData, text: "I'm planning to go to Spain, Barcelona" },
+      { user: activeUsers[2], text: "Great! I've always wanted to go there" },
+
+    ])
+  }, [activeUsers, localData]);
   const [newMessage, setNewMessage] = useState("");
 
   const sendMessage = () => {

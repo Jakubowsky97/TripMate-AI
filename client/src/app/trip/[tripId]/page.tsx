@@ -44,7 +44,7 @@ export default function TripPage() {
     image: "",
     type_of_trip: "",
     owner_id: "",
-    friends_list: [],
+    friends_list: [""],
   });
 
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -74,11 +74,14 @@ export default function TripPage() {
         const user = data.data[0] || null;
         setUserData(user);
 
-        const { data: avatarData, error } = await supabase.storage.from('avatars').download(user.avatar_url)
+        const { data: avatarData, error } = await supabase.storage
+          .from("avatars")
+          .download(user.avatar_url);
         if (error) {
           throw error;
         }
-        const url = URL.createObjectURL(avatarData)
+
+        const url = URL.createObjectURL(avatarData);
 
         if (user) {
           setLocalData({
@@ -88,7 +91,6 @@ export default function TripPage() {
             email: user.email || "",
             avatar_url: url || "",
           });
-          setAllUsers([...allUsers, user]);
         }
       } catch (err) {
         setError(
@@ -130,7 +132,7 @@ export default function TripPage() {
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchUserData();
     getTripData();
@@ -138,34 +140,46 @@ export default function TripPage() {
 
   useEffect(() => {
     const getFriendsData = async () => {
-      if (tripData.friends_list.length == 0) {
-      return;
-    }
-  
-    try {
-      const response = fetchFriendsData(tripData.friends_list);
-      const friendsData = await response;
-      setActiveUsers(friendsData);
-    } catch (err) {
-      console.error("Error fetching friends data:", err);
-    }
-    }
+      if (!tripData.friends_list || tripData.friends_list[0] === "") {
+        return;
+      }
+
+      try {
+        const response = fetchFriendsData(tripData.friends_list);
+        const friendsData = await response;
+        console.log(friendsData);
+        friendsData.map(async (friend: UserData) => {
+          const { data: avatarData, error } = await supabase.storage
+            .from("avatars")
+            .download(friend.avatar_url);
+          if (error) {
+            throw error;
+          }
+          const url = URL.createObjectURL(avatarData);
+          setActiveUsers((prev) => [...prev, { ...friend, avatar_url: url }]);
+        });
+      } catch (err) {
+        console.error("Error fetching friends data:", err);
+      }
+    };
     getFriendsData();
   }, [tripData]);
 
-  const [activeUsers, setActiveUsers] = useState([{
-    id: "0",
-    avatar_url: "",
-    full_name: "",
-    username: "",
-    email: "",
-  }]);
+  const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
 
-  const [inactiveUsers, setInactiveUsers] = useState([
+  useEffect(() => {
+    if (localData.id) {
+      setActiveUsers([localData]); // Dodaj użytkownika do aktywnych
+    }
+  }, [localData]);
+
+  const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
+
+  const [allUsers, setAllUsers] = useState<UserData[]>([
+    ...activeUsers,
+    ...inactiveUsers,
   ]);
 
-  const [allUsers, setAllUsers] = useState<UserData[]>([...activeUsers, ...inactiveUsers]);
-  
   const [selectedPlaces, setSelectedPlaces] = useState([
     {
       name: "Paris, France",
@@ -196,7 +210,6 @@ export default function TripPage() {
       coordinates: [52.52, 13.405],
     },
   ]);
-  
 
   if (!tripId) return <p>Ładowanie...</p>;
 

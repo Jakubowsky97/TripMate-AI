@@ -64,7 +64,7 @@ export default function TripHeader({ mapRef, tripId, socket, localData, allUsers
                 <IoMdNotifications size={24} />
 
                 <Image
-                    src={localData.avatar_url || '/default.png'}
+                    src={localData.avatar_url || '/img/default.png'}
                     alt="Avatar"
                     width={50}
                     height={50}

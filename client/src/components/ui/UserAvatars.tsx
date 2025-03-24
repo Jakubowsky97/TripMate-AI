@@ -29,7 +29,7 @@ export default function UserAvatars({ users, size }: UserAvatarsProps) {
           }}
         >
           <Image
-            src={user.avatar_url || "/default.png"}
+            src={user.avatar_url || "/img/default.png"}
             alt={user.full_name}
             width={40}
             height={40}

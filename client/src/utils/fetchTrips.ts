@@ -36,9 +36,6 @@ export const fetchTrips = async (userId: string) => {
         // Pobieramy dane właściciela
         const owner = await fetchOwnerData(userId);
 
-        // Użyj pustej tablicy, jeśli friends_list jest undefined
-        const friendsData = await fetchFriendsData(item.friends_list || []);
-
         return {
           id: item.travel_data.id,
           title: item.travel_data.title,
@@ -46,7 +43,7 @@ export const fetchTrips = async (userId: string) => {
           startDate: item.travel_data.start_date,
           endDate: item.travel_data.end_date,
           image: imageUrl || "/img/default.jpg",
-          friendsList: friendsData,
+          friendsList: item.travel_data.friends_list || [],
           owner, // Dodajemy dane o właścicielu
         };
       })
@@ -102,9 +99,6 @@ export const fetchTripsFromFriends = async (userId: string) => {
         // Pobieramy dane właściciela
         const owner = await fetchOwnerData(item.profiles_travel_data[0].profiles.id);
 
-        // Użyj pustej tablicy, jeśli friends_list jest undefined
-        const friendsData = await fetchFriendsData(item.friends_list || []);
-
         return {
           id: item.id,
           title: item.title,
@@ -112,20 +106,21 @@ export const fetchTripsFromFriends = async (userId: string) => {
           startDate: item.start_date,
           endDate: item.end_date,
           image: imageUrl || "/img/default.jpg",
-          friendsList: friendsData,
+          friendsList: item.friends_list || [],
           owner, // Dodajemy dane o właścicielu
         };
       })
     );
-
-    console.log(mappedTrips);
     return mappedTrips;
   }
 };
 
 
 export const fetchFriendsData = async (friendsList: string[]) => {
-  if (!Array.isArray(friendsList) || friendsList.length === 0) return [];
+  if (!friendsList || friendsList.length === 0 || friendsList[0] === "") {
+    console.error("Friends list is empty");
+    return;
+  }
 
   const friendsQuery = friendsList.join(",");
   const response = await fetch(

@@ -57,15 +57,6 @@ const PlannerChat = ({
             >
               <span>{msg.text}</span>
             </div>
-            {isCurrentUser && (
-              <Image
-                src={msg.user.avatar_url || "/img/default.jpg"}
-                alt={msg.user.full_name}
-                width={40}
-                height={40}
-                className="w-9 h-9 object-cover rounded-full"
-              />
-            )}
           </div>
         );
       })}

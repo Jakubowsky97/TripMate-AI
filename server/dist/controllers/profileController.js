@@ -1,12 +1,18 @@
-import supabase from "../utils/supabase";
-export const updateUserProfile = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFriendsData = exports.updatePreferences = exports.getPreferences = exports.getUserProfile = exports.updateUserProfile = void 0;
+const supabase_1 = __importDefault(require("../utils/supabase"));
+const updateUserProfile = async (req, res) => {
     try {
         const { user_id, username, avatar_url, email, full_name } = req.body;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;
         }
-        const { data: userData, error: userError } = await supabase
+        const { data: userData, error: userError } = await supabase_1.default
             .from("profiles")
             .select("*")
             .eq("id", user_id);
@@ -25,12 +31,12 @@ export const updateUserProfile = async (req, res) => {
             return;
         }
         updateFields.updated_at = new Date();
-        const { data, error } = await supabase
+        const { data, error } = await supabase_1.default
             .from("profiles")
             .update(updateFields)
             .eq("id", user_id);
         if (updateFields.email) {
-            const { data, error } = await supabase.auth.admin.updateUserById(user_id, {
+            const { data, error } = await supabase_1.default.auth.admin.updateUserById(user_id, {
                 email: updateFields.email
             });
             if (error) {
@@ -48,14 +54,15 @@ export const updateUserProfile = async (req, res) => {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
-export const getUserProfile = async (req, res) => {
+exports.updateUserProfile = updateUserProfile;
+const getUserProfile = async (req, res) => {
     try {
         const { user_id } = req.query;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabase_1.default
             .from("profiles")
             .select("*")
             .eq("id", user_id);
@@ -69,14 +76,15 @@ export const getUserProfile = async (req, res) => {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
-export const getPreferences = async (req, res) => {
+exports.getUserProfile = getUserProfile;
+const getPreferences = async (req, res) => {
     try {
         const { user_id } = req.query;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id parameter" });
             return;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabase_1.default
             .from("user_travel_preferences")
             .select("travel_interests, travel_style, preferred_transport, preferred_accommodation, favorite_types_of_attractions")
             .eq("id", user_id);
@@ -90,7 +98,8 @@ export const getPreferences = async (req, res) => {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
-export const updatePreferences = async (req, res) => {
+exports.getPreferences = getPreferences;
+const updatePreferences = async (req, res) => {
     try {
         const { user_id, ...updatedPreferences } = req.body;
         if (!user_id || typeof user_id !== "string") {
@@ -101,17 +110,72 @@ export const updatePreferences = async (req, res) => {
             res.status(400).json({ error: "No fields to update" });
             return;
         }
-        const { data, error } = await supabase
+        // Check if the record exists for the user_id
+        const { data: existingData, error: findError } = await supabase_1.default
             .from("user_travel_preferences")
-            .update(updatedPreferences)
-            .eq("id", user_id);
-        if (error) {
-            res.status(500).json({ error: "Error updating preferences", details: error.message });
+            .select("id")
+            .eq("id", user_id)
+            .single(); // Ensure only a single row is returned
+        if (findError && findError.code !== "PGRST116") {
+            // Handle errors other than "no rows" (PGRST116)
+            res.status(500).json({ error: "Error checking for existing record", details: findError.message });
             return;
         }
-        res.status(200).json({ message: "Preferences updated successfully", data });
+        if (existingData) {
+            // Record exists, update it
+            const { data, error } = await supabase_1.default
+                .from("user_travel_preferences")
+                .update(updatedPreferences)
+                .eq("id", user_id);
+            if (error) {
+                res.status(500).json({ error: "Error updating preferences", details: error.message });
+                return;
+            }
+            res.status(200).json({ message: "Preferences updated successfully", data });
+        }
+        else {
+            // Record doesn't exist, create it
+            const { data, error } = await supabase_1.default
+                .from("user_travel_preferences")
+                .insert([{ id: user_id, ...updatedPreferences }]);
+            if (error) {
+                res.status(500).json({ error: "Error creating preferences", details: error.message });
+                return;
+            }
+            res.status(201).json({ message: "Preferences created successfully", data });
+        }
     }
     catch (err) {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
+exports.updatePreferences = updatePreferences;
+const getFriendsData = async (req, res) => {
+    try {
+        const { friends_list } = req.query;
+        if (!friends_list || typeof friends_list !== "string") {
+            res.status(400).json({ error: "Missing or invalid friends_list parameter" });
+            return;
+        }
+        // Rozdziel listę ID po przecinku i usuń ewentualne białe znaki
+        const friendsIds = friends_list.split(",").map(id => id.trim());
+        if (friendsIds.length === 0) {
+            res.status(200).json({ message: "No friends found", data: [] });
+            return;
+        }
+        // Pobranie danych użytkowników na podstawie przekazanych ID
+        const { data: friendsData, error: friendsError } = await supabase_1.default
+            .from("profiles")
+            .select("*")
+            .in("id", friendsIds);
+        if (friendsError) {
+            res.status(500).json({ error: "Error fetching friends data", details: friendsError.message });
+            return;
+        }
+        res.status(200).json({ message: "Friends data retrieved successfully", data: friendsData });
+    }
+    catch (err) {
+        res.status(500).json({ error: "Internal server error", details: err });
+    }
+};
+exports.getFriendsData = getFriendsData;

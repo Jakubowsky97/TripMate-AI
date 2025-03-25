@@ -1,7 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_KEY } from "../env";
-if (!SUPABASE_URL || !SUPABASE_KEY) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const supabase_js_1 = require("@supabase/supabase-js");
+const env_1 = require("../env");
+if (!env_1.SUPABASE_URL || !env_1.SUPABASE_KEY) {
     throw new Error("Supabase URL and Key must be defined");
 }
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-export default supabase;
+const supabase = (0, supabase_js_1.createClient)(env_1.SUPABASE_URL, env_1.SUPABASE_KEY);
+exports.default = supabase;

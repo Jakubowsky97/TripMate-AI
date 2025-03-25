@@ -22,7 +22,7 @@ export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white text-gray-800 dark:bg-gray-900 dark:text-white">
       <h1 className="text-6xl font-bold">404</h1>
-      <p className="text-xl mt-4">Oops! The page you're looking for doesn't exist.</p>
+      <p className="text-xl mt-4">Oops! The page you&apos;re looking for doesn&apos;t exist.</p>
       <p className="mt-2">Redirecting to the homepage in {countdown} seconds...</p>
       <Link
         href="/"

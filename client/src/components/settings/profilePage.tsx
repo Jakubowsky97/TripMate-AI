@@ -38,7 +38,7 @@ export default function ProfilePage() {
             return;
           }
           try {
-            const response = await fetch(`http://localhost:5000/api/profile/getUser?user_id=${userId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${userId}`);
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Failed to fetch user data");
     
@@ -74,7 +74,7 @@ export default function ProfilePage() {
           setUploading(true);
           if (!event.target.files?.length) throw new Error("You must select an image to upload.");
     
-          const response = await fetch("http://localhost:5000/api/profile/updateUser", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/updateUser`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -106,7 +106,7 @@ export default function ProfilePage() {
         }
     
         try {
-          const response = await fetch("http://localhost:5000/api/profile/updateUser", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/updateUser`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

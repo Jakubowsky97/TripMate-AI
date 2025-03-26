@@ -1,23 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import io from 'socket.io-client';  
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { SearchBox } from '@mapbox/search-js-react';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg';
-const socket = io('http://localhost:5000');
 
-export default function TripMap({ tripId }: { tripId: string }) {
+export default function TripMap({ tripId, mapRef, socket }: { tripId: string, mapRef: React.MutableRefObject<mapboxgl.Map | null>, socket: any }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
-  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
-    if (mapRef.current || !mapContainerRef.current) return;
+    if (!mapContainerRef.current) return;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -26,85 +19,42 @@ export default function TripMap({ tripId }: { tripId: string }) {
       zoom: 10,
     });
 
+    mapRef.current = map;
+
     map.on('load', () => {
-      mapRef.current = map;
-      setIsMapLoaded(true);
       if (tripId) {
         socket.emit('joinTrip', tripId);
       }
     });
 
-    socket.on('existingMarkers', (markers) => {
-      markers.forEach((marker: { lng: number, lat: number }) => {
-        const newMarker = new mapboxgl.Marker()
-          .setLngLat([marker.lng, marker.lat])
-          .addTo(mapRef.current!);
-        setMarkers((prevMarkers) => [...prevMarkers, newMarker]);
+    // Odbieranie istniejących markerów (gdy użytkownik dołącza)
+    socket.on('existingMarkers', (markers: { lng: number; lat: number; }[]) => {
+      markers.forEach(({ lng, lat }: { lng: number; lat: number }) => {
+        new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
       });
     });
 
-    socket.on('newMarker', (data) => {
-      if (data && typeof data.lng === 'number' && typeof data.lat === 'number') {
-        const newMarker = new mapboxgl.Marker()
-          .setLngLat([data.lng, data.lat])
-          .addTo(mapRef.current!);
-        setMarkers((prevMarkers) => [...prevMarkers, newMarker]);
-      }
+    // Odbieranie nowych markerów (dodanych przez innych użytkowników)
+    socket.on('newMarker', (marker: { lng: number; lat: number }) => {
+      new mapboxgl.Marker().setLngLat([marker.lng, marker.lat]).addTo(map);
     });
 
+    // Dodawanie nowego markera na kliknięcie mapy
     map.on('click', (event) => {
-      if (!event.lngLat) {
-        console.error('Event lngLat is null');
-        return;
-      }
+      if (!event.lngLat) return;
       const { lng, lat } = event.lngLat;
-      if (mapRef.current) {
-        const newMarker = new mapboxgl.Marker()
-          .setLngLat([lng, lat])
-          .addTo(mapRef.current);
 
-        if (tripId) {
-          socket.emit('addMarker', { tripId, marker: { lng, lat } });
-        }
+      new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
 
-        setMarkers((prevMarkers) => [...prevMarkers, newMarker]);
-      }
+      if (tripId) socket.emit('addMarker', { tripId, marker: { lng, lat } });
     });
 
     return () => {
+      socket.off('existingMarkers');
+      socket.off('newMarker');
       map.remove();
     };
-  }, [tripId]);
+  }, [tripId, mapRef, socket]);
 
-  return (
-    <div>
-            {/* {isMapLoaded && (
-        <SearchBox
-          accessToken={mapboxgl.accessToken || ''}
-          map={mapRef.current || undefined}
-          mapboxgl={mapboxgl}
-          value={inputValue}
-          onChange={(d) => setInputValue(d)}
-          onRetrieve={(result) => {
-            const { coordinates } = result.features[0].geometry;
-            const [lng, lat] = coordinates;
-
-            if (mapRef.current) {
-              const newMarker = new mapboxgl.Marker()
-                .setLngLat([lng, lat])
-                .addTo(mapRef.current);
-
-              if (tripId) {
-                socket.emit('addMarker', { tripId, marker: { lng, lat } });
-              }
-
-              setMarkers((prevMarkers) => [...prevMarkers, newMarker]);
-            }
-          }}
-          marker
-        />
-      )} */}
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100vh' }} />
-    </div>
-  );
+  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />;
 }

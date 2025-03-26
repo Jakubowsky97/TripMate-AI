@@ -24,7 +24,7 @@ const ResetPasswordContent = () => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/auth/reset-password?token_hash=${token_hash}&next=${next}&user_id=${user_id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password?token_hash=${token_hash}&next=${next}&user_id=${user_id}`
                 );
 
                 const data = await response.json();

@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
     redirect('/error')
   }
 
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export async function sendResetPassword(email: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `http://localhost:3000/auth/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_PAGE_URL}/auth/reset-password`,
   });
 
   if (error) {

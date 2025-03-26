@@ -6,7 +6,7 @@ import InviteFriends from "@/components/trip/creator/InviteScreen";
 import ReviewAndSave from "@/components/trip/creator/ReviewAndSave";
 import TripDetails from "@/components/trip/creator/TripDetals";
 
-const steps = ["Trip Details", "Invite Friends", "Review & Save"];
+const steps = ["Trip Details", "Review & Save", "Invite Friends",];
 
 export default function TripCreationFlow() {
     const { darkMode } = useDarkMode();
@@ -20,9 +20,9 @@ export default function TripCreationFlow() {
             case 0:
                 return <TripDetails nextStep={nextStep} />;
             case 1:
-                return <InviteFriends nextStep={nextStep} prevStep={prevStep} />;
+                return <ReviewAndSave nextStep={nextStep} prevStep={prevStep} />;
             case 2:
-                return <ReviewAndSave prevStep={prevStep} />;
+                return <InviteFriends />;
             default:
                 return null;
         }

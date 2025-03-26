@@ -10,7 +10,12 @@ const ConfirmPageContent = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const user_id = localStorage.getItem("user_id");
+    const [user_id, setUser_id] = useState<string | null>(null);
+
+    useEffect(() => {
+        setUser_id(localStorage.getItem('user_id'));
+    }, []);
+  
 
     useEffect(() => {
         const confirmEmail = async () => {
@@ -26,7 +31,7 @@ const ConfirmPageContent = () => {
 
             try {
                 const response = await fetch(
-                    `http://localhost:5000/api/auth/confirm?token_hash=${token_hash}&type=${type}&next=${next}&user_id=${user_id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/confirm?token_hash=${token_hash}&type=${type}&next=${next}&user_id=${user_id}`
                 );
 
                 const data = await response.json();

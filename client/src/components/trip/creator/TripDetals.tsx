@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectGroup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 interface TripDetailsProps {
     nextStep: () => void;
@@ -16,6 +16,7 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
     const [tripType, setTripType] = useState('');
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
   
     const tripTypes =  ['Solo', 'Family', 'Friends', 'Group'];
 
@@ -36,6 +37,30 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
         setImagePreview(sessionStorage.getItem('image') as string);
       }
     }, []);
+
+    async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+      if (!event.target.files || event.target.files.length === 0) return;
+  
+      const file = event.target.files[0];
+      const fileType = file.type; // Pobieramy typ pliku (np. image/webp)
+      const previewUrl = URL.createObjectURL(file);
+  
+      setImagePreview(previewUrl);
+      sessionStorage.setItem("imagePreview", previewUrl);
+      sessionStorage.setItem("imageFile", await convertFileToBase64(file)); 
+      sessionStorage.setItem("imageFileType", fileType); // Zapisujemy typ pliku
+  }
+  
+  // Konwersja pliku na Base64
+  const convertFileToBase64 = (file: File) => {
+      return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+      });
+  };
+  
   
     const handleNext = () => {
         if (!tripName || !startDate || !endDate || !tripType) return alert('Please fill all fields');
@@ -58,9 +83,11 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
     };
 
   
+    if(uploading) return "Uploading...";
+
     return (
       <div className="flex flex-col gap-6 p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-lg">
-        <div className="flex flex-row gap-24 justify-between items-start">
+        <div className="flex flex-col gap-6 justify-between items-start md:flex-row md:gap-24">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <Label className="text-xl font-bold text-gray-900 dark:text-white">Title</Label>
@@ -111,19 +138,15 @@ const TripDetails: React.FC<TripDetailsProps> = ({ nextStep }) => {
               </Select>
             </div>
           </div>
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-2 md:items-center">
             <Label className="text-xl font-bold text-gray-900 dark:text-white">Cover image</Label>
             <Input
               type="file"
               accept="image/*"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setImage(file);
-                  setImagePreview(URL.createObjectURL(file));
-                }
+                handleImageChange(e);
               }}
-              className="w-fit"
+              className="md:w-fit"
             />
             {imagePreview && (
               <Image src={imagePreview} width={384} height={256} alt="trip cover" className="object-cover rounded-lg" />

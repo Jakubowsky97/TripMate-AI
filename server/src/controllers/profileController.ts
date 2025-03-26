@@ -111,31 +111,93 @@ export const getPreferences = async (req: Request, res: Response): Promise<void>
 
   export const updatePreferences = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { user_id, ...updatedPreferences } = req.body;
+        const { user_id, ...updatedPreferences } = req.body;
 
+        if (!user_id || typeof user_id !== "string") {
+            res.status(400).json({ error: "Missing or invalid user_id" });
+            return;
+        }
 
-      if (!user_id || typeof user_id !== "string") {
-        res.status(400).json({ error: "Missing or invalid user_id" });
-        return;
-      }
+        if (Object.keys(updatedPreferences).length === 0) {
+            res.status(400).json({ error: "No fields to update" });
+            return;
+        }
 
-      if (Object.keys(updatedPreferences).length === 0) {
-        res.status(400).json({ error: "No fields to update" });
-        return;
-      }
-      const { data, error } = await supabase
-        .from("user_travel_preferences")
-        .update(updatedPreferences) 
-        .eq("id", user_id);
+        // Check if the record exists for the user_id
+        const { data: existingData, error: findError } = await supabase
+            .from("user_travel_preferences")
+            .select("id")
+            .eq("id", user_id)
+            .single(); // Ensure only a single row is returned
 
-      if (error) {
-        res.status(500).json({ error: "Error updating preferences", details: error.message });
-        return;
-      }
+        if (findError && findError.code !== "PGRST116") {
+            // Handle errors other than "no rows" (PGRST116)
+            res.status(500).json({ error: "Error checking for existing record", details: findError.message });
+            return;
+        }
 
-      res.status(200).json({ message: "Preferences updated successfully", data });
+        if (existingData) {
+            // Record exists, update it
+            const { data, error } = await supabase
+                .from("user_travel_preferences")
+                .update(updatedPreferences)
+                .eq("id", user_id);
 
+            if (error) {
+                res.status(500).json({ error: "Error updating preferences", details: error.message });
+                return;
+            }
+
+            res.status(200).json({ message: "Preferences updated successfully", data });
+        } else {
+            // Record doesn't exist, create it
+            const { data, error } = await supabase
+                .from("user_travel_preferences")
+                .insert([{ id: user_id, ...updatedPreferences }]);
+
+            if (error) {
+                res.status(500).json({ error: "Error creating preferences", details: error.message });
+                return;
+            }
+
+            res.status(201).json({ message: "Preferences created successfully", data });
+        }
     } catch (err) {
-      res.status(500).json({ error: "Internal server error", details: err });
+        res.status(500).json({ error: "Internal server error", details: err });
     }
-  };
+};
+
+
+export const getFriendsData = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { friends_list } = req.query;
+
+        if (!friends_list || typeof friends_list !== "string") {
+            res.status(400).json({ error: "Missing or invalid friends_list parameter" });
+            return;
+        }
+
+        // Rozdziel listę ID po przecinku i usuń ewentualne białe znaki
+        const friendsIds = friends_list.split(",").map(id => id.trim());
+
+        if (friendsIds.length === 0) {
+            res.status(200).json({ message: "No friends found", data: [] });
+            return;
+        }
+
+        // Pobranie danych użytkowników na podstawie przekazanych ID
+        const { data: friendsData, error: friendsError } = await supabase
+            .from("profiles")
+            .select("*")
+            .in("id", friendsIds);
+
+        if (friendsError) {
+            res.status(500).json({ error: "Error fetching friends data", details: friendsError.message });
+            return;
+        }
+
+        res.status(200).json({ message: "Friends data retrieved successfully", data: friendsData });
+    } catch (err) {
+        res.status(500).json({ error: "Internal server error", details: err });
+    }
+};

@@ -1,17 +1,24 @@
-import express from "express";
-import cors from "cors";
-import { PORT } from "./env";
-import { createServer } from 'node:http';
-import authRoutes from './routes/auth';
-import profileRoutes from './routes/profile';
-import { Server } from "socket.io";
-const app = express();
-const server = createServer(app);
-app.use(cors({ origin: "http://localhost:3000" }));
-app.use(express.json());
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-const io = new Server(server, {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const env_1 = require("./env");
+const node_http_1 = require("node:http");
+const auth_1 = __importDefault(require("./routes/auth"));
+const profile_1 = __importDefault(require("./routes/profile"));
+const trip_1 = __importDefault(require("./routes/trip"));
+const socket_io_1 = require("socket.io");
+const app = (0, express_1.default)();
+const server = (0, node_http_1.createServer)(app);
+app.use((0, cors_1.default)({ origin: "http://localhost:3000" }));
+app.use(express_1.default.json());
+app.use('/api/auth', auth_1.default);
+app.use('/api/profile', profile_1.default);
+app.use('/api/trip', trip_1.default);
+const io = new socket_io_1.Server(server, {
     cors: {
         origin: 'http://localhost:3000',
         methods: ['GET', 'POST']
@@ -33,18 +40,21 @@ io.on('connection', (socket) => {
     });
     socket.on('addMarker', ({ tripId, marker }) => {
         if (marker && typeof marker.lng === 'number' && typeof marker.lat === 'number') {
-            trips[tripId].push(marker); // Save marker
+            if (!trips[tripId]) {
+                trips[tripId] = []; // Upewnij się, że tripId istnieje
+            }
+            trips[tripId].push(marker); // Zapisz marker
+            // Powiadom wszystkich użytkowników w tej samej podróży o nowym markerze
             io.to(tripId).emit('newMarker', marker);
-            console.log(marker);
         }
         else {
-            console.error('Invalid marker data:', marker);
+            console.error('Nieprawidłowe dane markera:', marker);
         }
     });
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
     });
 });
-server.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+server.listen(env_1.PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${env_1.PORT}`);
 });

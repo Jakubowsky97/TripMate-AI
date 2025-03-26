@@ -4,20 +4,22 @@ import { PORT } from "./env";
 import { createServer } from 'node:http';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
+import tripRoutes from './routes/trip';
 import { Server } from "socket.io";
 
 const app = express();
 const server = createServer(app);
 
-app.use(cors({ origin: "http://localhost:3000" }  ));
+app.use(cors({ origin: `${process.env.NEXT_PUBLIC_APP_URL}` }  ));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/trip', tripRoutes);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: `${process.env.NEXT_PUBLIC_APP_URL}`,
     methods: ['GET', 'POST']
   }
 });
@@ -50,14 +52,20 @@ io.on('connection', (socket) => {
 
   socket.on('addMarker', ({ tripId, marker }) => {
     if (marker && typeof marker.lng === 'number' && typeof marker.lat === 'number') {
-      trips[tripId].push(marker); // Save marker
+      if (!trips[tripId]) {
+        trips[tripId] = []; // Upewnij się, że tripId istnieje
+      }
+  
+      trips[tripId].push(marker); // Zapisz marker
+  
+      // Powiadom wszystkich użytkowników w tej samej podróży o nowym markerze
       io.to(tripId).emit('newMarker', marker);
-      console.log(marker);
+  
     } else {
-      console.error('Invalid marker data:', marker);
+      console.error('Nieprawidłowe dane markera:', marker);
     }
   });
-
+  
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
   });

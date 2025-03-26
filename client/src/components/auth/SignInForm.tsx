@@ -34,7 +34,7 @@ export function SignInForm() {
                 router.push("/dashboard?user_id=" + signInData?.user.id);
               }
 
-              const responseLogin = await fetch("http://localhost:5000/api/auth/loginGoogle", {
+              const responseLogin = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/loginGoogle`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

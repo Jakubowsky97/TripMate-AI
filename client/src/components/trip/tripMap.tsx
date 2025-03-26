@@ -54,7 +54,7 @@ export default function TripMap({ tripId, mapRef, socket }: { tripId: string, ma
       socket.off('newMarker');
       map.remove();
     };
-  }, [tripId]);
+  }, [tripId, mapRef, socket]);
 
   return <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />;
 }

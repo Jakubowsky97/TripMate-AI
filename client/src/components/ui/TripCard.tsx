@@ -55,7 +55,7 @@ export default function TripCard({
       setOwnerAvatar(url);
     };
     fetchOwnerAvatar();
-  }, []);
+  }, [owner.avatar_url]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

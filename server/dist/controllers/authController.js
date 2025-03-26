@@ -1,5 +1,11 @@
-import supabase from "../utils/supabase";
-export const confirmEmail = async (req, res) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.loginWithGoogle = exports.login = exports.saveUserPreferences = exports.checkEmailVerification = exports.confirmEmail = void 0;
+const supabase_1 = __importDefault(require("../utils/supabase"));
+const confirmEmail = async (req, res) => {
     try {
         const { token_hash, type, next, user_id } = req.query;
         if (!user_id) {
@@ -10,7 +16,7 @@ export const confirmEmail = async (req, res) => {
             res.status(400).json({ error: "Missing token_hash or type" });
             return;
         }
-        const { error } = await supabase.auth.verifyOtp({
+        const { error } = await supabase_1.default.auth.verifyOtp({
             type: type,
             token_hash: token_hash,
         });
@@ -19,7 +25,7 @@ export const confirmEmail = async (req, res) => {
             return;
         }
         // Aktualizacja statusu potwierdzenia
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabase_1.default
             .from("profiles")
             .update({ isConfirmed: true })
             .eq("id", user_id);
@@ -33,10 +39,11 @@ export const confirmEmail = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
-export const checkEmailVerification = async (req, res) => {
+exports.confirmEmail = confirmEmail;
+const checkEmailVerification = async (req, res) => {
     try {
         const { user_id } = req.query;
-        const { data, error } = await supabase
+        const { data, error } = await supabase_1.default
             .from("profiles")
             .select("isConfirmed")
             .eq("id", user_id);
@@ -56,14 +63,15 @@ export const checkEmailVerification = async (req, res) => {
         return;
     }
 };
-export const saveUserPreferences = async (req, res) => {
+exports.checkEmailVerification = checkEmailVerification;
+const saveUserPreferences = async (req, res) => {
     try {
         const { userId, preferences } = req.body;
         if (!userId || !preferences) {
             res.status(400).json({ error: "Missing user ID or preferences" });
             return;
         }
-        const { data, error } = await supabase
+        const { data, error } = await supabase_1.default
             .from('user_travel_preferences')
             .upsert([
             {
@@ -86,14 +94,15 @@ export const saveUserPreferences = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
-export const login = async (req, res) => {
+exports.saveUserPreferences = saveUserPreferences;
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
             res.status(400).json({ error: "Missing email or password" });
             return;
         }
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase_1.default.auth.signInWithPassword({
             email,
             password,
         });
@@ -110,10 +119,11 @@ export const login = async (req, res) => {
         res.status(500).json({ error: "Internal server error", details: err });
     }
 };
-export const loginWithGoogle = async (req, res) => {
+exports.login = login;
+const loginWithGoogle = async (req, res) => {
     const { response } = req.body;
     try {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithIdToken({
+        const { data: signInData, error: signInError } = await supabase_1.default.auth.signInWithIdToken({
             provider: "google",
             token: response.credential,
         });
@@ -128,3 +138,4 @@ export const loginWithGoogle = async (req, res) => {
         res.status(500).json({ error: "Error signing in with Google", details: error });
     }
 };
+exports.loginWithGoogle = loginWithGoogle;

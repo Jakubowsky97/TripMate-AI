@@ -20,7 +20,7 @@ const ReviewAndSave = ({ nextStep, prevStep }: ReviewAndSaveProps) => {
 
     const uploadData = async () => {
         try {
-            let publicUrl = null; // Ustawienie domyślnej wartości dla obrazu
+            const publicUrl = null; // Ustawienie domyślnej wartości dla obrazu
     
             const base64Image = sessionStorage.getItem("imageFile");
             const fileType = sessionStorage.getItem("imageFileType");

@@ -124,7 +124,7 @@ export default function PreferencesPage() {
                 setLoading(false);
                 return;
             }
-            fetch(`http://localhost:5000/api/profile/updatePreferences`, {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/updatePreferences`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

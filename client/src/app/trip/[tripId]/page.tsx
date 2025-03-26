@@ -18,7 +18,7 @@ interface UserData {
   email: string;
 }
 
-const socket = io("http://localhost:5000");
+const socket = io(process.env.NEXT_PUBLIC_API_URL);
 
 // Lazy load TripHeader to prevent SSR issues
 const TripHeader = dynamic(() => import("@/components/trip/tripHeader"), {
@@ -80,7 +80,7 @@ export default function TripPage() {
       }
       try {
         const response = await fetch(
-          `http://localhost:5000/api/profile/getUser?user_id=${userId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${userId}`
         );
         const data = await response.json();
         if (!response.ok)
@@ -151,7 +151,7 @@ export default function TripPage() {
 
     fetchUserData();
     getTripData();
-  }, [searchParams]);
+  }, [searchParams, tripId, userId]);
 
   useEffect(() => {
     const getFriendsData = async () => {

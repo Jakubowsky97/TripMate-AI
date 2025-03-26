@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { IoMdNotifications } from "react-icons/io";
 import UserAvatars from '../ui/UserAvatars';
+import { SearchBoxProps } from '@mapbox/search-js-react/dist/components/SearchBox';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg';
 
@@ -19,6 +20,7 @@ interface UserData {
 export default function TripHeader({ mapRef, tripId, socket, localData, allUsers }: { mapRef: React.MutableRefObject<mapboxgl.Map | null>, tripId: string, socket: any, localData: UserData, allUsers: any[] }) {
     const [inputValue, setInputValue] = useState("");
     const [showUserList, setShowUserList] = useState(false);
+    const SearchBoxComponent = SearchBox as React.FC<SearchBoxProps>;
 
     const handleSearch = (result: any) => {
         if (!mapRef.current) {
@@ -43,17 +45,17 @@ export default function TripHeader({ mapRef, tripId, socket, localData, allUsers
             <div className='flex flex-row gap-9'>
                 <div className="text-3xl font-bold text-orange-500">TripMate</div>
                 {mapRef.current && (
-                    <SearchBox
-                        accessToken={mapboxgl.accessToken || ''}
-                        map={mapRef.current}
-                        mapboxgl={mapboxgl}
-                        value={inputValue}
-                        onChange={(d) => setInputValue(d)}
-                        onRetrieve={handleSearch}
-                        marker
-                        placeholder='Search for a place...'
-                        theme={{cssText: '.Input {width: 350px;} ' }}
-                    />
+                    <SearchBoxComponent
+                    accessToken={mapboxgl.accessToken || ''}
+                    map={mapRef.current}
+                    mapboxgl={mapboxgl}
+                    value={inputValue}
+                    onChange={(d) => setInputValue(d)}
+                    onRetrieve={handleSearch}
+                    marker
+                    placeholder="Search for a place..."
+                    theme={{ cssText: '.Input {width: 350px;} ' }}
+                  />
                 )}
             </div>
           

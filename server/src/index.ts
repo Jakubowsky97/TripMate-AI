@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { PORT } from "./env";
+import { APP_URL, PORT } from "./env";
 import { createServer } from 'node:http';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
@@ -10,7 +10,14 @@ import { Server } from "socket.io";
 const app = express();
 const server = createServer(app);
 
-app.use(cors({ origin: `${process.env.NEXT_PUBLIC_APP_URL}` }  ));
+const corsOptions = {
+  origin: `${APP_URL}`,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -19,7 +26,7 @@ app.use('/api/trip', tripRoutes);
 
 const io = new Server(server, {
   cors: {
-    origin: `${process.env.NEXT_PUBLIC_APP_URL}`,
+    origin: `${APP_URL}`,
     methods: ['GET', 'POST']
   }
 });

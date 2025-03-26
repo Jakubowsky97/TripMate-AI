@@ -56,6 +56,21 @@ export default function TripPage() {
     avatar_url: "",
   });
 
+
+// Socket connection cleanup
+  useEffect(() => {
+    
+    socket.on("connect", () => {
+      console.log("Connected to the server");
+    });
+  
+    return () => {
+      socket.off("connect");
+      socket.disconnect();
+    };
+  }, []);
+  
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userId) {
@@ -136,11 +151,11 @@ export default function TripPage() {
 
     fetchUserData();
     getTripData();
-  }, [searchParams, supabase.storage, tripId, userId]);
+  }, [searchParams, tripId, userId]);
 
   useEffect(() => {
     const getFriendsData = async () => {
-      if (!tripData.friends_list || tripData.friends_list[0] === "") {
+      if (!tripData.friends_list || tripData.friends_list[0] === "" || tripData.friends_list.includes(localData.id)) {
         return;
       }
 
@@ -163,22 +178,21 @@ export default function TripPage() {
       }
     };
     getFriendsData();
-  }, [tripData, supabase.storage]);
+  }, [tripData]);
 
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
+  const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);  
 
   useEffect(() => {
     if (localData.id) {
       setActiveUsers([localData]); // Dodaj użytkownika do aktywnych
     }
+    setAllUsers([...activeUsers, ...inactiveUsers]);
   }, [localData]);
 
-  const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
+  const [allUsers, setAllUsers] = useState<UserData[]>([]);
 
-  const [allUsers, setAllUsers] = useState<UserData[]>([
-    ...activeUsers,
-    ...inactiveUsers,
-  ]);
+  console.log(allUsers);
 
   const [selectedPlaces, setSelectedPlaces] = useState([
     {

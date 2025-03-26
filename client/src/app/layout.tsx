@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "@/app/globals.css"
 import { DarkModeProvider } from "@/components/ui/DarkModeContext";
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: "TripMate AI – Smart Travel Planner | AI-Powered Trip Planning",
@@ -19,6 +21,8 @@ export default function RootLayout({
       <body>
           <DarkModeProvider>
               {children}
+              <Analytics />
+              <SpeedInsights/>
           </DarkModeProvider>
       </body>
     </html>

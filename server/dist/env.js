@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PORT = exports.SUPABASE_KEY = exports.SUPABASE_URL = void 0;
+exports.APP_URL = exports.PORT = exports.SUPABASE_KEY = exports.SUPABASE_URL = void 0;
 const dotenv = __importStar(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const envPath = path_1.default.resolve(__dirname, "../.env"); // Adjust the path if needed
@@ -51,3 +51,4 @@ else {
 exports.SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 exports.SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 exports.PORT = process.env.PORT || 5001;
+exports.APP_URL = process.env.NEXT_PUBLIC_APP_URL;

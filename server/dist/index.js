@@ -13,14 +13,19 @@ const trip_1 = __importDefault(require("./routes/trip"));
 const socket_io_1 = require("socket.io");
 const app = (0, express_1.default)();
 const server = (0, node_http_1.createServer)(app);
-app.use((0, cors_1.default)({ origin: "http://localhost:3000" }));
+const corsOptions = {
+    origin: `${env_1.APP_URL}`,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    optionsSuccessStatus: 200,
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use('/api/auth', auth_1.default);
 app.use('/api/profile', profile_1.default);
 app.use('/api/trip', trip_1.default);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: `${env_1.APP_URL}`,
         methods: ['GET', 'POST']
     }
 });

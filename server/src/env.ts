@@ -14,3 +14,4 @@ if (result.error) {
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 export const PORT = process.env.PORT || 5001;
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL;

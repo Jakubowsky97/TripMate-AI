@@ -9,12 +9,12 @@ import {
   } from "react-icons/fa";
   
   interface TripTimeLineInterface {
-    selectedPlaces: {
+    selectedPlaces: { 
       name: string;
       type: string;
       date: string;
-      weather: { temp: string; condition: string };
-      places: [string, string]; // Hotel i Restauracja
+      weather?: { temp: string; condition: string };
+      places?: string[]; // Make it optional
       coordinates: number[];
     }[];
   }
@@ -117,11 +117,11 @@ import {
                     <div className="flex items-center gap-2 text-sm sm:text-base mt-2">
                       <div className="flex items-center gap-1 p-1 px-2 bg-white rounded-full">
                         <FaBuilding className="text-[#c2410c]" />
-                        <span>{place.places[0]}</span> {/* Nazwa hotelu */}
+                        <span>{place.places?.[0] ?? "N/A"}</span> {/* Nazwa hotelu */}
                       </div>
                       <div className="flex items-center gap-1 p-1 px-2 bg-white rounded-full">
                         <FaUtensils className="text-[#c2410c]" />
-                        <span>{place.places[1]}</span> {/* Liczba restauracji */}
+                        <span>{place.places?.[1] ?? "N/A"}</span> {/* Liczba restauracji */}
                       </div>
                     </div>
                   )}

@@ -10,7 +10,7 @@ import { Server } from "socket.io";
 const app = express();
 const server = createServer(app);
 
-app.use(cors({ origin: "http://localhost:3000" }  ));
+app.use(cors({ origin: `${process.env.NEXT_PUBLIC_APP_URL}` }  ));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -19,7 +19,7 @@ app.use('/api/trip', tripRoutes);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: `${process.env.NEXT_PUBLIC_APP_URL}`,
     methods: ['GET', 'POST']
   }
 });

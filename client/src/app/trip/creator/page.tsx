@@ -8,7 +8,7 @@ export default function TripCreationFlow() {
 
   return (
     <div
-      className={`min-h-screen ${
+      className={` ${
         darkMode
           ? "bg-gradient-to-br from-[#131a29] to-[#1e2836]"
           : "bg-gradient-to-b from-[#f0f9ff] to-[#fffbeb]"

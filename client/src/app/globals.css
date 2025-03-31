@@ -15,6 +15,17 @@ body {
     line-height: 1;
 }
 
+/* Ukrywa pasek przewijania w WebKit (Chrome, Edge, Safari) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ukrywa pasek przewijania w Firefox */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+
 
 
 @layer base {

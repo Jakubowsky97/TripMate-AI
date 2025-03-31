@@ -2,16 +2,20 @@
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
-import { sendMessageToServer } from "@/app/api/chatApi";
+import { fetchChatHistory, sendMessageToServer } from "@/app/api/chatApi";
 import { FaPaperPlane } from "react-icons/fa";
 import { FaRegImage } from "react-icons/fa6";
+import { useSearchParams } from "next/navigation";
 
 const Chatbot = () => {
   const [userMessage, setUserMessage] = useState("");
+  const [tripId, setTripId] = useState("");
+  const [userId, setUserId] = useState("");
+  const searchParams = useSearchParams();
   const [chatHistory, setChatHistory] = useState<
     {
       text: string;
-      sender: "user" | "ai";
+      sender: "user" | "assistant";
       type?: "message" | "options" | "cards";
     }[]
   >([]);
@@ -20,8 +24,31 @@ const Chatbot = () => {
   useEffect(() => {
     const welcomeMessage =
       "**Cześć!** Jestem Twoim asystentem podróży. W czym mogę Ci pomóc?";
-    setChatHistory([{ text: welcomeMessage, sender: "ai", type: "message" }]);
+    setChatHistory([{ text: welcomeMessage, sender: "assistant", type: "message" }]);
   }, []);
+
+  useEffect(() => {
+    const newTripId = searchParams.get("trip_id") || "";
+    const newUserId = searchParams.get("user_id") || "";
+  
+    if (newTripId !== tripId) setTripId(newTripId);
+    if (newUserId !== userId) setUserId(newUserId);
+  }, [searchParams, tripId, userId]);
+  
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const history = await fetchChatHistory(userId, tripId);
+        setChatHistory(history);
+      } catch (error) {
+        console.error("Błąd pobierania historii:", error);
+      }
+    };
+  
+    loadChatHistory();
+  }, [userId, tripId]); 
+  
 
   const handleUserMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -35,11 +62,11 @@ const Chatbot = () => {
 
     setTimeout(async () => {
       try {
-        const response = await sendMessageToServer(text);
+        const response = await sendMessageToServer(text, tripId, userId);
         // Dodajemy pustą wiadomość AI, którą później zaktualizujemy
         setChatHistory((prev) => [
           ...prev,
-          { text: "", sender: "ai", type: "message" },
+          { text: "", sender: "assistant", type: "message" },
         ]);
         animateText(response.message);
       } catch {
@@ -47,7 +74,7 @@ const Chatbot = () => {
           ...prev,
           {
             text: "**Coś poszło nie tak.** Spróbuj ponownie.",
-            sender: "ai",
+            sender: "assistant",
             type: "message",
           },
         ]);

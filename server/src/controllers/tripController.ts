@@ -6,17 +6,17 @@ export const createTripData = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id, title, start_date, end_date, type_of_trip, image } =
+    const { user_id } =
       req.body;
 
-    if (!user_id || !start_date || !end_date || !title || !type_of_trip) {
-      res.status(400).json({ error: "Missing required fields" });
+    if (!user_id ) {
+      res.status(400).json({ error: "Missing user_id" });
       return;
     }
 
     const { data: travelData, error: travelError } = await supabase
       .from("travel_data")
-      .insert([{ title, start_date, end_date, type_of_trip, image }])
+      .insert([{ title: "New Trip", status: "draft" }])
       .select()
       .single();
 
@@ -28,7 +28,7 @@ export const createTripData = async (
 
     if (linkError) throw linkError;
 
-    res.status(201).json({ message: "Trip added successfully", travelData });
+    res.status(201).json({ message: "Trip added successfully as Draft", travelData });
   } catch (error) {
     res.status(500).json({ error });
   }

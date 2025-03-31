@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import TripCard from "@/components/ui/TripCard";
 import { useDarkMode } from "@/components/ui/DarkModeContext";
-import CreateTripCard from "@/components/ui/CreateTripCard";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
@@ -21,7 +20,7 @@ interface Owner {
 const TripsPage = () => {
   const { darkMode } = useDarkMode();
   const searchParams = useSearchParams();
-  const userId = searchParams.get("user_id");
+  const user_id = searchParams.get("user_id");
   const supabase = createClient();
   const [trips, setTrips] = useState<
     {
@@ -42,11 +41,11 @@ const TripsPage = () => {
   useEffect(() => {
     const loadTrips = async () => {
       try {
-        if (!userId) {
+        if (!user_id) {
           throw new Error("User ID is required to fetch trips");
         }
-        const userTrips = await fetchTrips(userId);
-        const friendsTrips = await fetchTripsFromFriends(userId);
+        const userTrips = await fetchTrips(user_id);
+        const friendsTrips = await fetchTripsFromFriends(user_id);
         setTrips([...(userTrips || []), ...(friendsTrips || [])]);
       } catch (err) {
         setError("Failed to fetch trips");
@@ -57,14 +56,28 @@ const TripsPage = () => {
     };
 
     loadTrips();
-  }, [userId]);
+  }, [user_id]);
 
-  const handleCreateTrip = () => {
-    router.push(`/trip/creator?user_id=${userId}`);
+  const handleCreateTrip = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/createTrip`,{
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create trip");
+      }
+      const data = await response.json();
+      router.push(`/trip/creator?user_id=${user_id}&trip_id=${data.travelData.id}`);
+    } catch (err) { 
+      console.log("Failed to create trip", err);
+    }
   };
 
   const handleFilterClick = () => {
-    router.push(`/trip/filter?user_id=${userId}`);
+    router.push(`/trip/filter?user_id=${user_id}`);
   };
 
   if (loading)
@@ -125,7 +138,7 @@ const TripsPage = () => {
             owner={trip.owner}
             friendsList={trip.friendsList || []}
             darkMode={darkMode}
-            onClick={() => router.push(`/trip/${trip.id}?user_id=${userId}`)}
+            onClick={() => router.push(`/trip/${trip.id}?user_id=${user_id}`)}
           />
         ))}
       </div>

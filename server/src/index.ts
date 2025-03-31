@@ -6,7 +6,7 @@ import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import tripRoutes from './routes/trip';
 import { Server } from "socket.io";
-import { chatController } from "./controllers/chatController";
+import chatRoutes from "./routes/chat";
 
 const app = express();
 const server = createServer(app);
@@ -24,7 +24,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/trip', tripRoutes);
-app.post('/api/chat', chatController);
+app.use('/api/chat', chatRoutes);
 
 const io = new Server(server, {
   cors: {

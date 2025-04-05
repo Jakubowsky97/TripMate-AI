@@ -5,7 +5,7 @@ const TripCreatorLayout = ({ children }: { children: React.ReactNode }) => {
     return (
         <div>
             {/* Header */}
-            <div className="flex flex-row justify-between px-5 md:px-12 xl:px-32 py-3">
+            <div className="fixed top-0 left-0 right-0 flex flex-row justify-between px-5 md:px-12 xl:px-32 py-3 bg-white shadow-md z-50">
                 <div className="flex flex-row items-center gap-2">
                     <FaCompass size={28} className="text-[#f97316]"/>
                     <h1 className="text-2xl font-bold text-[#1f2937]">TripMate AI</h1>
@@ -19,11 +19,13 @@ const TripCreatorLayout = ({ children }: { children: React.ReactNode }) => {
                     </button>
                 </div>
             </div>
-            <hr />
-             {/* Chat */}
-            {children}
+
+            {/* Dodanie paddingu, aby treść nie nachodziła na nagłówek */}
+            <div className="pt-14">
+                {children}
+            </div>
         </div>
-    )
+    );
 }
 
 export default TripCreatorLayout;

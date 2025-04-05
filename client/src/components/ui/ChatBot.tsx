@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import { fetchChatHistory, sendMessageToServer } from "@/app/api/chatApi";
@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 
 const Chatbot = () => {
   const [userMessage, setUserMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [tripId, setTripId] = useState("");
   const [userId, setUserId] = useState("");
   const searchParams = useSearchParams();
@@ -16,7 +17,7 @@ const Chatbot = () => {
     {
       text: string;
       sender: "user" | "assistant";
-      type?: "message" | "options" | "cards";
+      type?: "message";
     }[]
   >([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -24,20 +25,22 @@ const Chatbot = () => {
   useEffect(() => {
     const welcomeMessage =
       "**Cześć!** Jestem Twoim asystentem podróży. W czym mogę Ci pomóc?";
-    setChatHistory([{ text: welcomeMessage, sender: "assistant", type: "message" }]);
+    setChatHistory([
+      { text: welcomeMessage, sender: "assistant", type: "message" },
+    ]);
   }, []);
 
   useEffect(() => {
     const newTripId = searchParams.get("trip_id") || "";
     const newUserId = searchParams.get("user_id") || "";
-  
+
     if (newTripId !== tripId) setTripId(newTripId);
     if (newUserId !== userId) setUserId(newUserId);
   }, [searchParams, tripId, userId]);
-  
 
   useEffect(() => {
     const loadChatHistory = async () => {
+      if(!userId || !tripId) return;
       try {
         const history = await fetchChatHistory(userId, tripId);
         setChatHistory(history);
@@ -45,10 +48,9 @@ const Chatbot = () => {
         console.error("Błąd pobierania historii:", error);
       }
     };
-  
+
     loadChatHistory();
-  }, [userId, tripId]); 
-  
+  }, [userId, tripId]);
 
   const handleUserMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -83,6 +85,22 @@ const Chatbot = () => {
       }
     }, 1500);
   };
+  
+    // Funkcja do przewijania na dół
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
+      }
+    };
+  
+    // Wywołanie scrollowania przy każdej zmianie wiadomości
+    useEffect(() => {
+      scrollToBottom();
+    }, [chatHistory]);
 
   const animateText = (text: string) => {
     let i = 0;
@@ -91,7 +109,9 @@ const Chatbot = () => {
       setChatHistory((prev) => {
         const updatedHistory = [...prev];
         // Zmieniamy tylko tekst ostatniej wiadomości AI
-        updatedHistory[updatedHistory.length - 1].text = words.slice(0, i + 1).join(" ");
+        updatedHistory[updatedHistory.length - 1].text = words
+          .slice(0, i + 1)
+          .join(" ");
         return updatedHistory;
       });
       i++;
@@ -103,7 +123,7 @@ const Chatbot = () => {
 
   return (
     <div className="flex flex-col items-center justify-between h-full pt-4 overflow-y-hidden">
-      <div className="w-full max-w-4xl flex flex-col h-[84vh] overflow-y-auto space-y-3 p-2 scrollbar-hide">
+      <div className="w-full max-w-4xl flex flex-col overflow-y-auto space-y-3 p-2 scrollbar-hide pb-12">
         {chatHistory.map((msg, index) => (
           <motion.div
             key={index}
@@ -131,8 +151,10 @@ const Chatbot = () => {
           </motion.div>
         )}
       </div>
-      <div className="flex items-center justify-center w-full bg-white p-4 pb-2">
-        <div className="flex items-center gap-4 w-full max-w-3xl">
+
+      {/* Input field */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 pb-3 shadow-lg">
+        <div className="flex items-center gap-4 w-full max-w-3xl mx-auto">
           <button className="text-[#9ca3af]">
             <FaRegImage size={24} />
           </button>

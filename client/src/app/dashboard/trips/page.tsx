@@ -123,7 +123,7 @@ const TripsPage = () => {
       </div>
 
       <div
-        className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 rounded-3xl ${darkMode ? "" : "text-black"
+        className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 rounded-3xl ${darkMode ? "" : "text-black"
           }`}
       >
         {/* {<CreateTripCard darkMode={darkMode} onCreateTrip={handleCreateTrip} />} */}

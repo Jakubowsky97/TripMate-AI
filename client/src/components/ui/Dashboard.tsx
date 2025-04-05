@@ -120,7 +120,7 @@ export default function Dashboard({ user, access_token, refresh_token }: Dashboa
 
       <div className={`p-6 rounded-xl shadow-lg bg-opacity-30 backdrop-blur-lg mt-6 ${darkMode ? "bg-gray-900 text-white" : "bg-blue-100 text-gray-900"}`}>
         <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
           {trips.map((trip) => (
             <TripCard key={trip.id} {...trip} image={trip.image || "/default-image.jpg"} friendsList={trip.friendsList || []} owner={trip.owner} darkMode={darkMode} onClick={() => router.push(`/trip/${trip.id}?user_id=${userId}`)}/>
           ))}

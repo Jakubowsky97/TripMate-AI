@@ -25,6 +25,7 @@
     "@langchain/core": "^0.3.43",
     "@langchain/deepseek": "^0.0.1",
     "@supabase/supabase-js": "^2.48.1",
+    "amadeus": "^11.0.0",
     "cors": "^2.8.5",
     "deepseek": "^0.0.2",
     "dotenv": "^16.4.7",

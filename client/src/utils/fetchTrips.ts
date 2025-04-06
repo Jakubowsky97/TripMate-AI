@@ -44,6 +44,7 @@ export const fetchTrips = async (userId: string) => {
           endDate: item.travel_data.end_date,
           image: imageUrl || "/img/default.jpg",
           friendsList: item.travel_data.friends_list || [],
+          status: item.travel_data.status,
           owner, // Dodajemy dane o właścicielu
         };
       })

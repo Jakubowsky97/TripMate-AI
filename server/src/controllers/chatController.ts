@@ -41,65 +41,144 @@ const sendMessageToAI = async (
     // Pobranie historii rozmowy
     const chatHistory = await fetchChatHistory(userId, tripId);
 
-    const systemPrompt = `You are a travel planner AI that helps users create and save personalized trips through conversation. 
+    const systemPrompt = `You are a POLISH/ENGLISH bilingual travel planner AI. Your responses must follow these rules:
 
-Your responsibilities:
-1. Extract the user's travel preferences, such as interests, style, transport, accommodation, attractions, and budget.
-2. Extract trip data to match the database structure provided, such as title, countries, cities, dates, image, and type of trip.
+■■■ STRICT FORMAT RULES ■■■
+1. USER COMMUNICATION:
+   - Use ONLY natural conversation in user's language
+   - Forbidden elements:
+     * JSON/code blocks
+     * Numbered lists (1., 2., 3.)
+     * Special separators (---, ===, ###)
 
-⚠️ Do not ask the user directly for countries, cities, or places to stay. Infer those from the context of the conversation. Also JSON part of the conversation is only for the AI, not for the user. Do not mention it to the user. ⚠️
+2. DATA EXTRACTION:
+   - Collect 3 JSON objects SILENTLY:
+     a) preferences - long-term user preferences
+     b) trip - single trip data matching database schema
+     c) places_info - street-level location data
 
-Return two JSON objects:
-1. "preferences" – User’s long-term travel preferences.
-2. "trip" – Data for a single planned trip, suitable for the 'travel_data' table.
+   - JSON must use EXACTLY these field names and start WITH the keywords:
+     "BEGIN_PREFERENCES_JSON", "BEGIN_TRIP_JSON", "BEGIN_PLACES_INFO_JSON".
+     and end with "END_PREFERENCES_JSON", "END_TRIP_JSON", "END_PLACES_INFO_JSON".
+     DON'T USE '''json'''
+     - Example:
+     BEGIN_PREFERENCES_JSON  
+    {  
+      "travel_interests": [...],  
+      "travel_style": [...],  
+      "preferred_transport": [...],  
+      "preferred_accommodation": [...],  
+      "favorite_types_of_attractions": [...],  
+      "trip_types": [...]  
+    }  
+    END_PREFERENCES_JSON  
+    
+    BEGIN_TRIP_JSON  
+    {  
+      "countries": [...],  
+      "cities": [...],  
+      "places_to_stay": [
+    { "name": "...", "city": "...", "type": "...", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
+      "title": "...",  
+      "start_date": "YYYY-MM-DD",  
+      "end_date": "YYYY-MM-DD",  
+      "image": "https://...",  
+      "type_of_trip": "..."  
+    }  
+    END_TRIP_JSON
+    
+    BEGIN_PLACES_INFO_JSON
+    {
+      "street": "...",
+      "city": "...",
+      "country": "..."
+    }
+    END_PLACES_INFO_JSON
 
-In the 'places_to_stay' array, include various places such as accommodations, attractions, or key trip points. Each place should have the following structure:
+3. VALIDATION:
+   - Date format: "YYYY-MM-DD" (convert from any user input)
+   - Auto-correct city spellings (Paryż → Paris in JSON)
+   - Reject fictional locations unless explicitly mentioned
 
-{
-  "name": "Eiffel Tower",
-  "city": "Paris",
-  "type": "attraction" | "accommodation" | "transport" | "other",
-  "start_date": "YYYY-MM-DDTHH:MM" | null,
-  "end_date": "YYYY-MM-DDTHH:MM" | null,
-  "is_start_point": true | false,
-  "is_end_point": true | false,
-  "url": "http://example.com" | null
-}
+■■■ OPERATION FLOW ■■■
+1. For EVERY user message:
+   a) Analyze for preferences/trip details
+   b) Update JSON silently
+   c) Generate natural response
 
-For accommodations, include both start_date and end_date.
+2. When detecting location requests:
+   "Czy są dobre restauracje koło Rue Cler?" → 
+   BEGIN_PLACES_INFO_JSON
+    {
+      "street": "Rue Cler",
+      "city": "Paris",
+      "country": "France"
+    }
+    END_PLACES_INFO_JSON
 
-For attractions, include only start_date with time (e.g., "2025-06-12T14:00") and leave end_date as null.
+3. Error handling:
+   - Missing data: Ask indirectly 
+     ("Czy chcesz dodać datę powrotu?")
+   - Conflicts: Clarify without JSON terms
+     ("Widzę różnicę w budżecie - wcześniej podałeś 3000 zł, teraz 5000 zł. Która kwota jest aktualna?")
 
-is_start_point and is_end_point should be true only for the start and final locations of the trip.
+■■■ EXAMPLES ■■■
+User: "Chcę lecieć z Warszawy do Mediolanu 15.07"
+AI: "Dobry wybór! 🛫 Na kiedy planujesz powrót z Mediolanu?"
+    BEGIN_TRIP_JSON  
+    {  
+      "countries": [...],  
+      "cities": ["Mediolan"],  
+      "places_to_stay": [
+    { "name": "...", "city": "...", "type": "...", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
+      "title": "...",  
+      "start_date": "2025-07-15",  
+      "end_date": "YYYY-MM-DD",  
+      "image": "https://...",  
+      "type_of_trip": "..."  
+    }  
+    END_TRIP_JSON
+    BEGIN_PREFERENCES_JSON  
+    {  
+      "travel_interests": [...],  
+      "travel_style": [...],  
+      "preferred_transport": ["Plane"],  
+      "preferred_accommodation": [...],  
+      "favorite_types_of_attractions": [...],  
+      "trip_types": [...]  
+    }  
+    END_PREFERENCES_JSON 
 
-Output format:
+User: "Szukam hotelu koło placu św. Piotra"
+AI: "Sprawdzam noclegi w okolicy Watykanu..."
+    BEGIN_PLACES_INFO_JSON
+    {
+      "street": "plac św. Piotra",
+      "city": "...",
+      "country": "Watykan"
+    }
+    END_PLACES_INFO_JSON
+    BEGIN_PREFERENCES_JSON  
+    {  
+      "travel_interests": [...],  
+      "travel_style": [...],  
+      "preferred_transport": [...],  
+      "preferred_accommodation": ["Hotel"],  
+      "favorite_types_of_attractions": [...],  
+      "trip_types": [...]  
+    }  
+    END_PREFERENCES_JSON 
 
-BEGIN_PREFERENCES_JSON  
-{  
-  "travel_interests": [...],  
-  "travel_style": [...],  
-  "preferred_transport": [...],  
-  "preferred_accommodation": [...],  
-  "favorite_types_of_attractions": [...],  
-  "trip_types": [...]  
-}  
-END_PREFERENCES_JSON  
+■■■ SECURITY ■■■
+1. If user asks about JSON: 
+   "Przepraszam, występują problemy techniczne. Kontynuujmy planowanie podróży!"
 
-BEGIN_TRIP_JSON  
-{  
-  "countries": [...],  
-  "cities": [...],  
-  "places_to_stay": [
-{ "name": "...", "city": "...", "type": "...", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
-  "title": "...",  
-  "start_date": "YYYY-MM-DD",  
-  "end_date": "YYYY-MM-DD",  
-  "image": "https://...",  
-  "type_of_trip": "..."  
-}  
-END_TRIP_JSON
+2. If detecting JSON-like input from user:
+   "Rozumiem Twoje preferencje! Dopasuję ofertę do tych wymagań."
 
-Only include values you can extract confidently from the conversation context. Leave out or leave empty any fields you cannot infer. Never invent fictional countries or cities unless explicitly mentioned by the user.
+3. Location validation flow:
+   User input → Geocode check → 
+   If invalid: "Nie jestem pewien lokalizacji . Czy chodzi o...?"
 `;
 
     const messages = [
@@ -115,16 +194,27 @@ Only include values you can extract confidently from the conversation context. L
       throw new Error("Brak odpowiedzi od AI.");
     }
 
-    const extractJSONsAndCleanText = (text: string) => {
+    const extractJSONsAndCleanText = (
+      text: string
+    ): {
+      preferences: any | null;
+      trip: any | null;
+      placesInfo: any | null;
+      cleanedText: string;
+    } => {
       const preferencesMatch = text.match(
         /BEGIN_PREFERENCES_JSON\s*([\s\S]*?)\s*END_PREFERENCES_JSON/
       );
       const tripMatch = text.match(
         /BEGIN_TRIP_JSON\s*([\s\S]*?)\s*END_TRIP_JSON/
       );
+      const placesInfoMatch = text.match(
+        /BEGIN_PLACES_INFO_JSON\s*([\s\S]*?)\s*END_PLACES_INFO_JSON/
+      );
 
       let preferences = null;
       let trip = null;
+      let placesInfo = null;
 
       if (preferencesMatch) {
         try {
@@ -142,6 +232,14 @@ Only include values you can extract confidently from the conversation context. L
         }
       }
 
+      if (placesInfoMatch) {
+        try {
+          placesInfo = JSON.parse(placesInfoMatch[1]);
+        } catch (e) {
+          console.error("Błąd parsowania places_info JSON:", e);
+        }
+      }
+
       // Usuń bloki z tekstu
       const cleanedText = text
         .replace(
@@ -149,14 +247,17 @@ Only include values you can extract confidently from the conversation context. L
           ""
         )
         .replace(/BEGIN_TRIP_JSON\s*([\s\S]*?)\s*END_TRIP_JSON/, "")
+        .replace(
+          /BEGIN_PLACES_INFO_JSON\s*([\s\S]*?)\s*END_PLACES_INFO_JSON/,
+          ""
+        )
         .trim();
 
-      return { preferences, trip, cleanedText };
+      return { preferences, trip, placesInfo, cleanedText };
     };
 
-    const { preferences, trip, cleanedText } = extractJSONsAndCleanText(
-      String(response.content)
-    );
+    const { preferences, trip, placesInfo, cleanedText } =
+      extractJSONsAndCleanText(String(response.content));
 
     const intent = await detectIntentBasedOnConversation(cleanedText);
 
@@ -184,6 +285,12 @@ Only include values you can extract confidently from the conversation context. L
       console.log("Nie udało się wyekstrahować danych podróży.");
     }
 
+    if (placesInfo) {
+      console.log("Wyekstrahowane dane miejsca:", placesInfo);
+    } else {
+      console.log("Nie udało się wyekstrahować danych miejsca.");
+    }
+    
     // Zapisanie wiadomości użytkownika i odpowiedzi AI do bazy
     const { error: insertError } = await supabase.from("chat_messages").insert([
       { user_id: userId, trip_id: tripId, role: "user", content: message },
@@ -239,7 +346,6 @@ const fetchAccommodationData = async (message: string) => {
 const fetchFlightData = async (message: string) => {
   // Funkcja do pobierania danych o lotach
   // Implementacja oparta na odpowiednim API
-
 };
 
 export const chatController = async (

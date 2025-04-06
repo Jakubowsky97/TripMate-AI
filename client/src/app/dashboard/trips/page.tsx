@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import TripCard from "@/components/ui/TripCard";
-import { useDarkMode } from "@/components/ui/DarkModeContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { FaFilter, FaPlus } from "react-icons/fa";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface Owner {
   id: string; // Unikalny identyfikator właściciela
@@ -31,6 +31,7 @@ const TripsPage = () => {
       endDate: string;
       image: string | null;
       friendsList: { id: string; full_name: string }[];
+      status?: string;
       owner: Owner;
     }[]
   >([]);
@@ -138,7 +139,13 @@ const TripsPage = () => {
             owner={trip.owner}
             friendsList={trip.friendsList || []}
             darkMode={darkMode}
-            onClick={() => router.push(`/trip/${trip.id}?user_id=${user_id}`)}
+            onClick={() => {
+              if(trip.status == "draft") {
+                router.push('/trip/creator?user_id=' + user_id + '&trip_id=' + trip.id);
+              } else {
+                router.push(`/trip/${trip.id}?user_id=${user_id}`)
+              }
+            }}
           />
         ))}
       </div>

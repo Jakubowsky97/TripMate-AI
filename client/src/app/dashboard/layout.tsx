@@ -5,13 +5,14 @@ import Link from "next/link";
 import { createClient } from "../../utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { DarkModeProvider, useDarkMode } from "../../components/ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
+import { Providers } from "@/store/providers";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <DarkModeProvider>
+    <Providers>
       <LayoutContent>{children}</LayoutContent>
-    </DarkModeProvider>
+    </Providers>
   );
 }
 

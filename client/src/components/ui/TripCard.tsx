@@ -67,7 +67,7 @@ export default function TripCard({
       <Card
         className={`${
           darkMode
-            ? "bg-[#1a1e1f] text-white shadow-lg shadow-white/10 border-[#2D2D2D]"
+            ? "bg-[#1a1e1f] text-white shadow-lg border-[#2D2D2D]"
             : "bg-[#f8f8f8] text-black"
         } rounded-3xl shadow-xl overflow-hidden transition-all transform hover:scale-105`}
       >

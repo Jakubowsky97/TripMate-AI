@@ -164,6 +164,8 @@ const Chatbot = () => {
             AI pisze...
           </motion.div>
         )}
+
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input field */}

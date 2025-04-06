@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PreferenceCard from "../auth/PreferenceCard";
 import { useSearchParams } from "next/navigation";
-import { useDarkMode } from "../ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface Preferences {
     [key: string]: string[];

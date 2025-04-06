@@ -2,7 +2,7 @@ import { sendResetPassword } from "@/app/auth/actions";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Avatar from "../ui/Avatar";
-import { useDarkMode } from "../ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface UserData {
     avatar_url: string;

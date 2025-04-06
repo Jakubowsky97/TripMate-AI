@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
-import { useDarkMode } from "@/components/ui/DarkModeContext";
 import Chatbot from "@/components/ui/ChatBot";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 export default function TripCreationFlow() {
   const { darkMode } = useDarkMode();

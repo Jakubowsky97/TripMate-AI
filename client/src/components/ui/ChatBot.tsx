@@ -121,9 +121,23 @@ const Chatbot = () => {
     }, 150); // Co 150 ms pokazujemy jeden wyraz
   };
 
+  const renderers = {
+    a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      <a
+        href={href || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "#1E90FF", textDecoration: "underline", cursor: "pointer" }}
+        {...props}
+      >
+        {children}
+      </a>
+    )
+  };
+
   return (
     <div className="flex flex-col items-center justify-between h-full pt-4 overflow-y-hidden">
-      <div className="w-full max-w-4xl flex flex-col overflow-y-auto space-y-3 p-2 scrollbar-hide pb-12">
+      <div className="w-full max-w-4xl flex flex-col h-[84vh] overflow-y-auto space-y-3 p-2 scrollbar-hide pb-12">
         {chatHistory.map((msg, index) => (
           <motion.div
             key={index}
@@ -136,7 +150,7 @@ const Chatbot = () => {
                 : "bg-white text-gray-700 self-start rounded-tl-none"
             }`}
           >
-            <ReactMarkdown>{msg.text}</ReactMarkdown>
+            <ReactMarkdown components={renderers}>{msg.text}</ReactMarkdown>
           </motion.div>
         ))}
 

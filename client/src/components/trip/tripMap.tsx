@@ -10,6 +10,17 @@ export default function TripMap({ tripId, mapRef, socket }: { tripId: string, ma
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        mapRef.current?.setCenter([longitude, latitude]);
+      }, (error) => {
+        console.error("Error getting location: ", error);
+      });
+    }
+  }, [mapRef])
+
+  useEffect(() => {
     if (!mapContainerRef.current) return;
 
     const map = new mapboxgl.Map({
@@ -56,5 +67,5 @@ export default function TripMap({ tripId, mapRef, socket }: { tripId: string, ma
     };
   }, [tripId, mapRef, socket]);
 
-  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={mapContainerRef} className='h-screen' />;
 }

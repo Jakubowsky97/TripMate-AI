@@ -2,6 +2,8 @@ import { ChatDeepSeek } from "@langchain/deepseek";
 import { Request, Response } from "express";
 import supabase from "../utils/supabase";
 import Amadeus from "amadeus";
+import { updateUserPreferences } from "./preferencesController";
+import { updateTravelData } from "./tripController";
 
 const chatModel = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -57,7 +59,14 @@ const sendMessageToAI = async (
      b) trip - single trip data matching database schema
      c) places_info - street-level location data
 
-   - JSON must use EXACTLY these field names and start WITH the keywords:
+    - if place in places_to_stay is starting point it must have only one date.
+
+    - Remember that cities in TRIP_JSON should be from starting point to destination.
+    Example:
+    User: "Chcę lecieć z Warszawy do Mediolanu i zrobić postój w Paryżu"
+    { "countries": ["Poland", "France", "Italy"], "cities": ["Warszawa", "Paris", "Mediolan"] }
+
+   - JSON must use EXACTLY these field names, not more, not less, JSON must look like below and start WITH the keywords:
      "BEGIN_PREFERENCES_JSON", "BEGIN_TRIP_JSON", "BEGIN_PLACES_INFO_JSON".
      and end with "END_PREFERENCES_JSON", "END_TRIP_JSON", "END_PLACES_INFO_JSON".
      DON'T USE '''json'''
@@ -98,6 +107,7 @@ const sendMessageToAI = async (
 3. VALIDATION:
    - Date format: "YYYY-MM-DD" (convert from any user input)
    - Auto-correct city spellings (Paryż → Paris in JSON)
+   - If user inputed city in other language change it to English.
    - Reject fictional locations unless explicitly mentioned
 
 ■■■ OPERATION FLOW ■■■
@@ -275,12 +285,14 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
 
     if (preferences) {
       console.log("Wyekstrahowane preferencje:", preferences);
+      await updateUserPreferences(userId, preferences);
     } else {
       console.log("Nie udało się wyekstrahować danych preferencji.");
     }
 
     if (trip) {
       console.log("Wyekstrahowane dane podróży:", trip);
+      await updateTravelData(tripId, trip)
     } else {
       console.log("Nie udało się wyekstrahować danych podróży.");
     }

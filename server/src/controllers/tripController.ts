@@ -192,6 +192,9 @@ export const getTripById = async (
       .select(
         `
         id,
+        countries,
+        cities,
+        places_to_stay,
         title,
         start_date,
         end_date,
@@ -235,4 +238,29 @@ export const getTripById = async (
         details: (err as Error).message,
       });
   }
+};
+
+interface TravelData {
+  trip_id: string;
+  [key: string]: any;
+}
+
+export const updateTravelData = async (trip_id: string, { ...travelData }: TravelData): Promise<void> => {
+  if (!trip_id || typeof trip_id !== "string") {
+    throw new Error("Missing or invalid trip_id");
+  }
+
+  if (Object.keys(travelData).length === 0) {
+    throw new Error("No travel data provided");
+  }
+
+  const { data, error } = await supabase
+    .from("travel_data")
+    .upsert([{ id: trip_id, ...travelData, status: "confirmed" }], { onConflict: "id" });
+
+  if (error) {
+    throw new Error(`Error saving travel data: ${error.message}`);
+  }
+
+  console.log("Travel data saved successfully", data);
 };

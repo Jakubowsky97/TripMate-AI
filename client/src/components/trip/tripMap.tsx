@@ -4,9 +4,15 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN as string;
 
-export default function TripMap({ tripId, mapRef, socket }: { tripId: string, mapRef: React.MutableRefObject<mapboxgl.Map | null>, socket: any }) {
+export default function TripMap({ tripId, mapRef, socket, selectedPlaces }: { tripId: string, mapRef: React.MutableRefObject<mapboxgl.Map | null>, socket: any, selectedPlaces: {
+  name: string;
+  type: string;
+  date: string;
+  weather: { temp: string; condition: string };
+  coordinates: any[];
+}[]; }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,15 +56,7 @@ export default function TripMap({ tripId, mapRef, socket }: { tripId: string, ma
       new mapboxgl.Marker().setLngLat([marker.lng, marker.lat]).addTo(map);
     });
 
-    // Dodawanie nowego markera na kliknięcie mapy
-    map.on('click', (event) => {
-      if (!event.lngLat) return;
-      const { lng, lat } = event.lngLat;
-
-      new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-
-      if (tripId) socket.emit('addMarker', { tripId, marker: { lng, lat } });
-    });
+    mapRef.current.addControl(new mapboxgl.NavigationControl());
 
     return () => {
       socket.off('existingMarkers');
@@ -67,5 +65,34 @@ export default function TripMap({ tripId, mapRef, socket }: { tripId: string, ma
     };
   }, [tripId, mapRef, socket]);
 
-  return <div ref={mapContainerRef} className='h-screen' />;
+  useEffect(() => {
+    if (!mapRef.current || !selectedPlaces) return;
+  
+    selectedPlaces.forEach((place) => {
+      if (!place.coordinates || place.coordinates.length !== 2 || typeof place.coordinates[0] !== 'number' || typeof place.coordinates[1] !== 'number') return;
+
+      const color =
+  place.type === 'Start'
+    ? '#f59e0b' // kolor startowy
+    : place.type === 'End'
+    ? '#f43f5e' // kolor końcowy
+    : '#f97316'; // normalny
+  
+      new mapboxgl.Marker({ color: color }) // Możesz ustawić inne kolory np. dla "Start", "End" itp.
+        .setLngLat(place.coordinates as [number, number])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <h3>${place.name}</h3>
+            <p><strong>Type:</strong> ${place.type}</p>
+            <p><strong>Date:</strong> ${place.date}</p>
+            <p><strong>Weather:</strong> ${place.weather.temp}, ${place.weather.condition}</p>
+          `)
+        )
+        .addTo(mapRef.current!);
+    });
+  }, [selectedPlaces, mapRef]);
+  
+
+  return <div ref={mapContainerRef} className='h-[92vh]' />;
 }
+

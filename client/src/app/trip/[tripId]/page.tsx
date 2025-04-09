@@ -231,29 +231,54 @@ export default function TripPage() {
         `https://api.openweathermap.org/data/2.5/weather?q=${place.city}&appid=17364394130fee8e7efd3f7ae2d533c5&units=metric`
       );
       const weather = weatherResponse.data;
+      const start_date = new Date(place.start_date);
+      const end_date = new Date(place.end_date);
 
       const newPlace = {
         name: place.city,
         type: place.type,
         date: "",
         weather: {
-          temp: `${weather.main.temp}°C`,
-          condition: weather.weather[0].description.charAt(0).toUpperCase() +
+          temp: `${weather.main.temp.toFixed(1)}°C`,
+          condition:
+            weather.weather[0].description.charAt(0).toUpperCase() +
             weather.weather[0].description.slice(1),
         },
         coordinates: [], // Dodaj, jeśli masz
       };
 
-      if (place.is_start_point) { 
+      const coordinatesResponse = await axios.get(`https://api.mapbox.com/search/geocode/v6/forward?q=${place.city}&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`);
+
+      const coordinates = coordinatesResponse.data.features[0].geometry.coordinates;
+      newPlace.coordinates = coordinates;
+
+      if (place.is_start_point) {
         newPlace.type = "Start";
+        newPlace.date =
+          start_date.toLocaleString("en-GB", {
+            month: "long",
+          }) + ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
       } else if (place.is_end_point) {
-        newPlace.date = place.end_date;
+        newPlace.date =
+          end_date.toLocaleString("en-GB", {
+            month: "long",
+          }) + ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
         newPlace.type = "End";
       } else if (place.start_date && place.end_date) {
-        newPlace.date = `${place.start_date} - ${place.end_date}`;
+        if (start_date.toLocaleDateString("en-GB", {month: "long"}) == end_date.toLocaleDateString("en-GB", {month: "long"})) {
+          newPlace.date =
+            start_date.toLocaleString("en-GB", {
+              month: "long",
+            }) + ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+        } else {
+          newPlace.date = start_date.toLocaleString("en-GB", {
+            month: "long",
+          }) + ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {month: "long"})} ${end_date.getDate()}, ${start_date.getFullYear()}`;
+        }
       }
 
       newPlace.name = `${place.city}, ${place.country}`;
+
 
       setSelectedPlaces((prev) => [...prev, newPlace]);
     } catch (error) {
@@ -275,29 +300,15 @@ export default function TripPage() {
 
   console.log(allUsers);
 
-  const [selectedPlaces, setSelectedPlaces] = useState([
+  const [selectedPlaces, setSelectedPlaces] = useState<
     {
-      name: "Paris, France",
-      type: "Start",
-      date: "June 15, 2025 - 09:00 AM",
-      weather: { temp: "24°C", condition: "Sunny" },
-      coordinates: [48.8566, 2.3522],
-    },
-    {
-      name: "Amsterdam, Netherlands",
-      type: "2 days",
-      date: "June 18-20, 2025",
-      places: ["Grand Hotel", "3 Restaurants"],
-      coordinates: [52.3676, 4.9041],
-    },
-    {
-      name: "Berlin, Germany",
-      type: "End",
-      date: "June 22, 2025 - 18:00 PM",
-      weather: { temp: "22°C", condition: "Partly Cloudy" },
-      coordinates: [52.52, 13.405],
-    },
-  ]);
+      name: string;
+      type: string;
+      date: string;
+      weather: { temp: string; condition: string };
+      coordinates: any[];
+    }[]
+  >([]);
 
   if (!tripId) return <p>Ładowanie...</p>;
 
@@ -315,8 +326,8 @@ export default function TripPage() {
       />
       <div className="flex flex-1">
         <SidebarLeft selectedPlaces={selectedPlaces} />
-        <div className="flex-grow h-full">
-          <TripMap tripId={tripId} mapRef={mapRef} socket={socket} />
+        <div className="flex-grow h-full pt-18">
+          <TripMap tripId={tripId} mapRef={mapRef} socket={socket} selectedPlaces={selectedPlaces} />
         </div>
         <SidebarRight activeUsers={activeUsers} localData={localData} />
       </div>

@@ -130,7 +130,7 @@ export default function TripCard({
                   darkMode ? "text-gray-300" : "text-gray-600"
                 } text-sm`}
               >
-                {typeOfTrip}
+                {typeOfTrip.at(0)?.toUpperCase() + typeOfTrip.slice(1)}
               </p>
             </div>
 

@@ -159,12 +159,22 @@ export default function TripPage() {
             ? JSON.parse(data.data.places_to_stay)
             : data.data.places_to_stay;
 
+            const initialPlaces = cities.map((city: string, index: number) => ({
+              city,
+              country: countries[index] || "",
+              places: [],
+            }));
+            
+            setSelectedPlaces(initialPlaces);
+            
+
         for (const place of places) {
           const countryIndex = cities.indexOf(place.city);
           const country = countries[countryIndex] || "";
 
           await addPlaceWithWeather({
             city: place.city,
+            name: place.name,
             is_start_point: place.is_start_point,
             is_end_point: place.is_end_point,
             start_date: place.start_date,
@@ -219,6 +229,7 @@ export default function TripPage() {
 
   const addPlaceWithWeather = async (place: {
     city: string;
+    name: string;
     type: string;
     end_date: string;
     start_date: string;
@@ -231,60 +242,80 @@ export default function TripPage() {
         `https://api.openweathermap.org/data/2.5/weather?q=${place.city}&appid=17364394130fee8e7efd3f7ae2d533c5&units=metric`
       );
       const weather = weatherResponse.data;
+  
+      const coordinatesResponse = await axios.get(
+        `https://api.mapbox.com/search/geocode/v6/forward?q=${place.city}&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`
+      );
+      const coordinates = coordinatesResponse.data.features[0].geometry.coordinates;
+  
       const start_date = new Date(place.start_date);
       const end_date = new Date(place.end_date);
-
-      const newPlace = {
-        name: place.city,
-        type: place.type,
-        date: "",
+  
+      let date = "";
+      if (place.is_start_point) {
+        date = start_date.toLocaleString("en-GB", {
+          month: "long",
+        }) + ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+        place.type = "Start";
+      } else if (place.is_end_point) {
+        date = end_date.toLocaleString("en-GB", {
+          month: "long",
+        }) + ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
+        place.type = "End";
+      } else if (place.start_date && place.end_date) {
+        if (
+          start_date.toLocaleDateString("en-GB", { month: "long" }) ===
+          end_date.toLocaleDateString("en-GB", { month: "long" })
+        ) {
+          date =
+            start_date.toLocaleString("en-GB", {
+              month: "long",
+            }) +
+            ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+        } else {
+          date =
+            start_date.toLocaleString("en-GB", {
+              month: "long",
+            }) +
+            ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
+              month: "long",
+            })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
+        }
+      }
+  
+      const fullPlace = {
+        ...place,
         weather: {
           temp: `${weather.main.temp.toFixed(1)}°C`,
           condition:
             weather.weather[0].description.charAt(0).toUpperCase() +
             weather.weather[0].description.slice(1),
         },
-        coordinates: [], // Dodaj, jeśli masz
+        coordinates,
+        date,
       };
-
-      const coordinatesResponse = await axios.get(`https://api.mapbox.com/search/geocode/v6/forward?q=${place.city}&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`);
-
-      const coordinates = coordinatesResponse.data.features[0].geometry.coordinates;
-      newPlace.coordinates = coordinates;
-
-      if (place.is_start_point) {
-        newPlace.type = "Start";
-        newPlace.date =
-          start_date.toLocaleString("en-GB", {
-            month: "long",
-          }) + ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
-      } else if (place.is_end_point) {
-        newPlace.date =
-          end_date.toLocaleString("en-GB", {
-            month: "long",
-          }) + ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
-        newPlace.type = "End";
-      } else if (place.start_date && place.end_date) {
-        if (start_date.toLocaleDateString("en-GB", {month: "long"}) == end_date.toLocaleDateString("en-GB", {month: "long"})) {
-          newPlace.date =
-            start_date.toLocaleString("en-GB", {
-              month: "long",
-            }) + ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+  
+      setSelectedPlaces((prev) => {
+        const updated = [...prev];
+        const index = updated.findIndex((p) => p.city === place.city);
+  
+        if (index !== -1) {
+          updated[index].places.push(fullPlace);
         } else {
-          newPlace.date = start_date.toLocaleString("en-GB", {
-            month: "long",
-          }) + ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {month: "long"})} ${end_date.getDate()}, ${start_date.getFullYear()}`;
+          updated.push({
+            city: place.city,
+            country: place.country,
+            places: [fullPlace],
+          });
         }
-      }
-
-      newPlace.name = `${place.city}, ${place.country}`;
-
-
-      setSelectedPlaces((prev) => [...prev, newPlace]);
+  
+        return updated;
+      });
     } catch (error) {
-      console.error(`Nie udało się pobrać pogody dla ${place.city}:`, error);
+      console.error(`Nie udało się pobrać pogody lub współrzędnych dla ${place.city}:`, error);
     }
   };
+  
 
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
   const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
@@ -301,14 +332,25 @@ export default function TripPage() {
   console.log(allUsers);
 
   const [selectedPlaces, setSelectedPlaces] = useState<
-    {
+  {
+    city: string;
+    country: string;
+    places: {
+      city: string;
       name: string;
       type: string;
-      date: string;
+      start_date: string;
+      end_date: string;
+      is_start_point: boolean;
+      is_end_point: boolean;
+      country: string;
       weather: { temp: string; condition: string };
       coordinates: any[];
-    }[]
-  >([]);
+      date: string;
+    }[];
+  }[]
+>([]);
+
 
   if (!tripId) return <p>Ładowanie...</p>;
 

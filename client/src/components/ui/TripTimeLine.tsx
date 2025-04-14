@@ -30,9 +30,10 @@ interface CityPlaces {
 
 interface TripTimeLineInterface {
   selectedPlaces: CityPlaces[];
+  mapRef: React.MutableRefObject<any>;
 }
 
-const TripTimeLine = ({ selectedPlaces }: TripTimeLineInterface) => {
+const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
   return (
     <div className="relative">
       <h2 className="text-xl font-semibold mb-4">Trip Timeline</h2>
@@ -76,13 +77,20 @@ const TripTimeLine = ({ selectedPlaces }: TripTimeLineInterface) => {
 
                     {/* Treść miejsca */}
                     <div
-                      className={`p-4 rounded-lg w-full ${
+                      className={`p-4 rounded-lg w-full cursor-pointer ${
                         place.type === "Start"
                           ? "bg-[#fffbeb]"
                           : place.type === "End"
                           ? "bg-[#fff1f2]"
                           : "bg-[#fff7ed]"
                       }`}
+                      onClick={() => {
+                        mapRef.current?.flyTo({
+                          center: place.coordinates,
+                          zoom: 16,
+                          essential: true,
+                        });
+                      }}
                     >
                       <div className="flex flex-col sm:flex-row items-start justify-between mb-2 sm:mb-4">
                         <p

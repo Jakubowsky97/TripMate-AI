@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import axios from 'axios';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN as string;
 
@@ -42,17 +43,60 @@ export default function TripMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          mapRef.current?.setCenter([longitude, latitude]);
-        },
-        (error) => {
-          console.error("Error getting location: ", error);
+    if(selectedPlaces.length === 0) return;
+
+    mapRef.current?.flyTo({
+      center: selectedPlaces[0].places[0].coordinates as [number, number],
+      zoom: 10,
+      speed: 1.2,
+    })
+
+    async function getDirections() {
+      try {
+        const response = await axios.get("https://api.mapbox.com/directions/v5/mapbox/driving/" + selectedPlaces[0].places[0]?.coordinates[0] + "," + selectedPlaces[0].places[0].coordinates[1] + ";" + selectedPlaces[selectedPlaces.length - 1].places[selectedPlaces[selectedPlaces.length - 1].places.length - 1].coordinates[0] + "," + selectedPlaces[selectedPlaces.length - 1].places[selectedPlaces[selectedPlaces.length - 1].places.length - 1].coordinates[1] + "?geometries=geojson&access_token=" + process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN)
+      
+        const route = response.data.routes[0].geometry.coordinates;
+        const routeGeoJSON: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: route,
+              },
+              properties: {},
+            },
+          ],
+        };
+
+        const map = mapRef.current;
+        if (map) {
+          map.addSource('route', {
+            type: 'geojson',
+            data: routeGeoJSON,
+          });
+
+          map.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#888',
+              'line-width': 8,
+            },
+          });
         }
-      );
+      } catch (error) {
+        console.error("Error flying to coordinates:", error);
+      }
     }
+
+    getDirections();
   }, [mapRef]);
 
   useEffect(() => {
@@ -129,7 +173,9 @@ export default function TripMap({
           .addTo(mapRef.current!);
       });
     });
+    console.log(selectedPlaces);
   }, [selectedPlaces, mapRef]);
+
   
   return <div ref={mapContainerRef} className='h-[92vh]' />;
 }

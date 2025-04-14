@@ -159,14 +159,13 @@ export default function TripPage() {
             ? JSON.parse(data.data.places_to_stay)
             : data.data.places_to_stay;
 
-            const initialPlaces = cities.map((city: string, index: number) => ({
-              city,
-              country: countries[index] || "",
-              places: [],
-            }));
-            
-            setSelectedPlaces(initialPlaces);
-            
+        const initialPlaces = cities.map((city: string, index: number) => ({
+          city,
+          country: countries[index] || countries[0] || "",
+          places: [],
+        }));
+
+        setSelectedPlaces(initialPlaces);
 
         for (const place of places) {
           const countryIndex = cities.indexOf(place.city);
@@ -238,51 +237,74 @@ export default function TripPage() {
     country: string;
   }) => {
     try {
+      // 1. Pogoda z OpenWeather
       const weatherResponse = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?q=${place.city}&appid=17364394130fee8e7efd3f7ae2d533c5&units=metric`
       );
       const weather = weatherResponse.data;
   
-      const coordinatesResponse = await axios.get(
-        `https://api.mapbox.com/search/geocode/v6/forward?q=${place.city}&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`
-      );
-      const coordinates = coordinatesResponse.data.features[0].geometry.coordinates;
+      // 2. Współrzędne z Google Maps
+      const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
+      const coordinatesResponse = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json`,
+        {
+          params: {
+            address: `${place.name}, ${place.city}, ${place.country}`,
+            key: googleApiKey,
+          },
+        }
+      );
+  
+      if (
+        coordinatesResponse.data.status !== "OK" ||
+        coordinatesResponse.data.results.length === 0
+      ) {
+        throw new Error("Nie udało się pobrać współrzędnych z Google Maps");
+      }
+  
+      const location = coordinatesResponse.data.results[0].geometry.location;
+      const coordinates = [location.lng, location.lat]; // dopasowane do mapRef
+  
+      // 3. Przetwarzanie daty
       const start_date = new Date(place.start_date);
       const end_date = new Date(place.end_date);
   
       let date = "";
       if (place.is_start_point) {
-        date = start_date.toLocaleString("en-GB", {
-          month: "long",
-        }) + ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+        date =
+          start_date.toLocaleString("en-GB", { month: "long" }) +
+          ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
         place.type = "Start";
       } else if (place.is_end_point) {
-        date = end_date.toLocaleString("en-GB", {
-          month: "long",
-        }) + ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
+        date =
+          end_date.toLocaleString("en-GB", { month: "long" }) +
+          ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
         place.type = "End";
       } else if (place.start_date && place.end_date) {
         if (
           start_date.toLocaleDateString("en-GB", { month: "long" }) ===
           end_date.toLocaleDateString("en-GB", { month: "long" })
         ) {
-          date =
-            start_date.toLocaleString("en-GB", {
-              month: "long",
-            }) +
-            ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+          if (start_date.getDate() === end_date.getDate()) {
+            date =
+              start_date.toLocaleString("en-GB", { month: "long" }) +
+              ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+          } else {
+            date =
+              start_date.toLocaleString("en-GB", { month: "long" }) +
+              ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+          }
         } else {
           date =
-            start_date.toLocaleString("en-GB", {
-              month: "long",
-            }) +
+            start_date.toLocaleString("en-GB", { month: "long" }) +
             ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
               month: "long",
             })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
         }
       }
   
+      // 4. Finalny obiekt miejsca
       const fullPlace = {
         ...place,
         weather: {
@@ -295,12 +317,18 @@ export default function TripPage() {
         date,
       };
   
+      // 5. Aktualizacja wybranych miejsc
       setSelectedPlaces((prev) => {
         const updated = [...prev];
-        const index = updated.findIndex((p) => p.city === place.city);
+        const cityIndex = updated.findIndex((p) => p.city === place.city);
   
-        if (index !== -1) {
-          updated[index].places.push(fullPlace);
+        if (cityIndex !== -1) {
+          const existingPlaceIndex = updated[cityIndex].places.findIndex(
+            (p) => p.name === place.name
+          );
+          if (existingPlaceIndex === -1) {
+            updated[cityIndex].places.push(fullPlace);
+          }
         } else {
           updated.push({
             city: place.city,
@@ -309,13 +337,17 @@ export default function TripPage() {
           });
         }
   
+        updated.sort((a, b) => a.city.localeCompare(b.city));
+  
         return updated;
       });
     } catch (error) {
-      console.error(`Nie udało się pobrać pogody lub współrzędnych dla ${place.city}:`, error);
+      console.error(
+        `Nie udało się pobrać pogody lub współrzędnych dla ${place.city}:`,
+        error
+      );
     }
-  };
-  
+  };  
 
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
   const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
@@ -329,28 +361,25 @@ export default function TripPage() {
 
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
 
-  console.log(allUsers);
-
   const [selectedPlaces, setSelectedPlaces] = useState<
-  {
-    city: string;
-    country: string;
-    places: {
+    {
       city: string;
-      name: string;
-      type: string;
-      start_date: string;
-      end_date: string;
-      is_start_point: boolean;
-      is_end_point: boolean;
       country: string;
-      weather: { temp: string; condition: string };
-      coordinates: any[];
-      date: string;
-    }[];
-  }[]
->([]);
-
+      places: {
+        city: string;
+        name: string;
+        type: string;
+        start_date: string;
+        end_date: string;
+        is_start_point: boolean;
+        is_end_point: boolean;
+        country: string;
+        weather: { temp: string; condition: string };
+        coordinates: any[];
+        date: string;
+      }[];
+    }[]
+  >([]);
 
   if (!tripId) return <p>Ładowanie...</p>;
 
@@ -367,9 +396,14 @@ export default function TripPage() {
         allUsers={allUsers}
       />
       <div className="flex flex-1">
-        <SidebarLeft selectedPlaces={selectedPlaces} />
+        <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef}/>
         <div className="flex-grow h-full pt-18">
-          <TripMap tripId={tripId} mapRef={mapRef} socket={socket} selectedPlaces={selectedPlaces} />
+          <TripMap
+            tripId={tripId}
+            mapRef={mapRef}
+            socket={socket}
+            selectedPlaces={selectedPlaces}
+          />
         </div>
         <SidebarRight activeUsers={activeUsers} localData={localData} />
       </div>

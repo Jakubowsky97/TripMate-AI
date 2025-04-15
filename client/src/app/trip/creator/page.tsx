@@ -2,8 +2,19 @@
 import { motion } from "framer-motion";
 import Chatbot from "@/components/ui/ChatBot";
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { checkSessionOrRedirect } from "@/app/auth/actions";
+import { useEffect } from "react";
 
 export default function TripCreationFlow() {
+  const access_token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
+  const refresh_token = typeof window !== 'undefined' ? localStorage.getItem("refresh_token") : null;
+
+    useEffect(() => {
+        const checkSession = async () => {
+             await checkSessionOrRedirect({ accessToken: access_token || "", refreshToken: refresh_token || "" });
+        }
+        checkSession();
+    }, [access_token, refresh_token]);
   const { darkMode } = useDarkMode();
 
   return (

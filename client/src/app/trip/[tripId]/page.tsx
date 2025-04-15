@@ -10,6 +10,7 @@ import SidebarRight from "@/components/trip/sideBarRight";
 import { createClient } from "@/utils/supabase/client";
 import { fetchFriendsData } from "@/utils/fetchTrips";
 import axios from "axios";
+import { checkSessionOrRedirect } from "@/app/auth/actions";
 
 interface UserData {
   id: string;
@@ -27,6 +28,25 @@ const TripHeader = dynamic(() => import("@/components/trip/tripHeader"), {
 });
 
 export default function TripPage() {
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const access_token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const refresh_token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("refresh_token")
+      : null;
+
+  useEffect(() => {
+    const checkSession = async () => {
+      await checkSessionOrRedirect({
+        accessToken: access_token || "",
+        refreshToken: refresh_token || "",
+      });
+      setSessionChecked(true);
+    };
+    checkSession();
+  }, [access_token, refresh_token]);
+
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = Array.isArray(params?.tripId)
@@ -242,10 +262,10 @@ export default function TripPage() {
         `https://api.openweathermap.org/data/2.5/weather?q=${place.city}&appid=17364394130fee8e7efd3f7ae2d533c5&units=metric`
       );
       const weather = weatherResponse.data;
-  
+
       // 2. Współrzędne z Google Maps
       const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  
+
       const coordinatesResponse = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json`,
         {
@@ -255,21 +275,21 @@ export default function TripPage() {
           },
         }
       );
-  
+
       if (
         coordinatesResponse.data.status !== "OK" ||
         coordinatesResponse.data.results.length === 0
       ) {
         throw new Error("Nie udało się pobrać współrzędnych z Google Maps");
       }
-  
+
       const location = coordinatesResponse.data.results[0].geometry.location;
       const coordinates = [location.lng, location.lat]; // dopasowane do mapRef
-  
+
       // 3. Przetwarzanie daty
       const start_date = new Date(place.start_date);
       const end_date = new Date(place.end_date);
-  
+
       let date = "";
       if (place.is_start_point) {
         date =
@@ -303,7 +323,7 @@ export default function TripPage() {
             })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
         }
       }
-  
+
       // 4. Finalny obiekt miejsca
       const fullPlace = {
         ...place,
@@ -316,12 +336,12 @@ export default function TripPage() {
         coordinates,
         date,
       };
-  
+
       // 5. Aktualizacja wybranych miejsc
       setSelectedPlaces((prev) => {
         const updated = [...prev];
         const cityIndex = updated.findIndex((p) => p.city === place.city);
-  
+
         if (cityIndex !== -1) {
           const existingPlaceIndex = updated[cityIndex].places.findIndex(
             (p) => p.name === place.name
@@ -336,9 +356,9 @@ export default function TripPage() {
             places: [fullPlace],
           });
         }
-  
+
         updated.sort((a, b) => a.city.localeCompare(b.city));
-  
+
         return updated;
       });
     } catch (error) {
@@ -347,7 +367,7 @@ export default function TripPage() {
         error
       );
     }
-  };  
+  };
 
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
   const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
@@ -381,8 +401,8 @@ export default function TripPage() {
     }[]
   >([]);
 
+  if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;
   if (!tripId) return <p>Ładowanie...</p>;
-
   if (loading) return <p>Loading user data...</p>;
   if (error) return <p>Error: {error}</p>;
 
@@ -396,7 +416,7 @@ export default function TripPage() {
         allUsers={allUsers}
       />
       <div className="flex flex-1">
-        <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef}/>
+        <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef} />
         <div className="flex-grow h-full pt-18">
           <TripMap
             tripId={tripId}

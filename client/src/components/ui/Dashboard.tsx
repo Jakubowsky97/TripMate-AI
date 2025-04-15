@@ -1,11 +1,11 @@
 "use client";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
-import { FaChartPie, FaMap, FaPlane, FaTrophy } from "react-icons/fa";
+import { FaChartPie, FaMap, FaTrophy } from "react-icons/fa";
 import TripCard from "./TripCard";
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";;
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { checkSessionOrRedirect } from "@/app/auth/actions";
 
 interface DashboardProps {
   user: any;
@@ -47,6 +47,15 @@ export default function Dashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      await checkSessionOrRedirect(
+        { accessToken: access_token, refreshToken: refresh_token }
+      );
+    }
+    checkSession();
+  },[access_token, refresh_token]);
 
   useEffect(() => {
     const loadTrips = async () => {

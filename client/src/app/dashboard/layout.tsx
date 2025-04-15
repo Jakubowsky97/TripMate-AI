@@ -28,9 +28,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if(document.body.clientWidth > 768) setIsOpen(true);
   }, []); 
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
     const { error } = supabase.auth.signOut();
-    if (!error) router.push("/");
+    if (!error) router.push("/auth/login");
   };  
 
   return (

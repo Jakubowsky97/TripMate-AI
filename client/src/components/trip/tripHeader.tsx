@@ -13,6 +13,7 @@ mapboxgl.accessToken =
   "pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg";
 
 interface UserData {
+  id: string;
   avatar_url: string;
   full_name: string;
   username: string;
@@ -62,7 +63,7 @@ export default function TripHeader({
       <div className="flex flex-row gap-9">
         <div
           className="flex flex-row items-center gap-2 hover:cursor-pointer"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/dashboard?user_id=" + localData.id)}
         >
           <FaCompass size={28} className="text-[#f97316]" />
           <h1 className="text-2xl font-bold text-[#1f2937]">TripMate AI</h1>

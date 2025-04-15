@@ -1,88 +1,95 @@
-'use server'
-import { redirect } from 'next/navigation'
+"use server";
+import { redirect } from "next/navigation";
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from "@/utils/supabase/server";
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
   const dataUser = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  }
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+  };
 
-  const { data: signinData, error } = await supabase.auth.signInWithPassword(dataUser)
+  const { data: signinData, error } = await supabase.auth.signInWithPassword(
+    dataUser
+  );
 
   if (error) {
-    redirect('/error')
+    redirect("/error");
   }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            email: dataUser.email,
-            password: dataUser.password,
-        }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: dataUser.email,
+        password: dataUser.password,
+      }),
     }
+  );
 
-  redirect('/dashboard?user_id=' + signinData?.user?.id);
+  const data = await response.json();
+
+  console.log("Login response:", data);
+  if (!response.ok) {
+    throw new Error(data.error || "Login failed");
+  }
+
+  redirect("/dashboard?user_id=" + signinData?.user?.id);
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  if(formData.get('password') != formData.get('confirmPassword')) {
-    redirect('/error')
+  if (formData.get("password") != formData.get("confirmPassword")) {
+    redirect("/error");
   }
-  console.log("Password Matched")
+  console.log("Password Matched");
 
-  const fullName = `${formData.get('fname')} ${formData.get('lname')}`
+  const fullName = `${formData.get("fname")} ${formData.get("lname")}`;
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
   const dataUser = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
     options: {
       data: {
         full_name: fullName,
-        email: formData.get('email') as string,
-      }
-    }
-  }
+        email: formData.get("email") as string,
+      },
+    },
+  };
 
-  const { data, error } = await supabase.auth.signUp(dataUser)
+  const { data, error } = await supabase.auth.signUp(dataUser);
 
   if (error) {
-    redirect('/error')
+    redirect("/error");
   }
 
-  redirect('/auth/register/step-3?user_id=' + data?.user?.id);
+  redirect("/auth/register/step-3?user_id=" + data?.user?.id);
 }
 
-export async function resendEmailVerification(formData: FormData) { 
+export async function resendEmailVerification(formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email: formData.get('email') as string,
-  })
-  
+    type: "signup",
+    email: formData.get("email") as string,
+  });
+
   if (error) {
-    redirect('/auth/register/step-3?error=' + error.message.replace(/ /g, '+'));
+    redirect("/auth/register/step-3?error=" + error.message.replace(/ /g, "+"));
   }
 
-  redirect('/auth/register/step-3');
+  redirect("/auth/register/step-3");
 }
 
 export async function sendResetPassword(email: string) {
@@ -93,7 +100,58 @@ export async function sendResetPassword(email: string) {
   });
 
   if (error) {
-      return{ error };
+    return { error };
   }
   return { data };
 }
+
+export const checkSessionOrRedirect = async ({
+  accessToken,
+  refreshToken,
+}: {
+  accessToken: string;
+  refreshToken: string;
+}) => {
+  const supabase = await createClient();
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`,
+    {
+      credentials: 'include'
+    }
+  );
+
+  if (res.status === 401 || res.status === 403) {
+    const refreshRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include'
+      }
+    );
+
+    console.log(
+      "Refresh response:",
+      refreshRes.ok,
+      refreshRes.status,
+      refreshRes.statusText
+    );
+    const responseBody = await refreshRes.json();
+    console.log("Refresh response body:", responseBody);
+
+    if (!refreshRes.ok) {
+      // Refresh token failed, logout
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+        method: "POST",
+      });
+      // supabase.auth.signOut();
+      // redirect("/auth/login");
+    } else {
+      const data = await refreshRes.json();
+      // Store new access token
+      localStorage.setItem("access_token", data.access_token);
+    }
+  }
+};

@@ -2,48 +2,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-
-export async function login(formData: FormData) {
-  const supabase = await createClient();
-
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const dataUser = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
-
-  const { data: signinData, error } = await supabase.auth.signInWithPassword(
-    dataUser
-  );
-
-  if (error) {
-    redirect("/error");
-  }
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: dataUser.email,
-        password: dataUser.password,
-      }),
-    }
-  );
-
-  const data = await response.json();
-
-  console.log("Login response:", data);
-  if (!response.ok) {
-    throw new Error(data.error || "Login failed");
-  }
-
-  redirect("/dashboard?user_id=" + signinData?.user?.id);
-}
+import { cookies } from "next/headers";
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
@@ -105,53 +64,17 @@ export async function sendResetPassword(email: string) {
   return { data };
 }
 
-export const checkSessionOrRedirect = async ({
-  accessToken,
-  refreshToken,
-}: {
-  accessToken: string;
-  refreshToken: string;
-}) => {
+export const logout = async () => { 
   const supabase = await createClient();
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`,
-    {
-      credentials: 'include'
-    }
-  );
 
-  if (res.status === 401 || res.status === 403) {
-    const refreshRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include'
-      }
-    );
+  const cookieStore = await cookies()
+  cookieStore.delete('access_token');
 
-    console.log(
-      "Refresh response:",
-      refreshRes.ok,
-      refreshRes.status,
-      refreshRes.statusText
-    );
-    const responseBody = await refreshRes.json();
-    console.log("Refresh response body:", responseBody);
+  const { error } = await supabase.auth.signOut();
 
-    if (!refreshRes.ok) {
-      // Refresh token failed, logout
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-        method: "POST",
-      });
-      // supabase.auth.signOut();
-      // redirect("/auth/login");
-    } else {
-      const data = await refreshRes.json();
-      // Store new access token
-      localStorage.setItem("access_token", data.access_token);
-    }
+  if (error) {
+    redirect("/error");
   }
-};
+
+  redirect("/auth/login");
+}

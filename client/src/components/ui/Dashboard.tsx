@@ -5,7 +5,6 @@ import TripCard from "./TripCard";
 import { useEffect, useState } from "react";;
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { checkSessionOrRedirect } from "@/app/auth/actions";
 
 interface DashboardProps {
   user: any;
@@ -29,8 +28,7 @@ export default function Dashboard({
   refresh_token,
 }: DashboardProps) {
   const { darkMode } = useDarkMode();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("user_id");
+  const userId = user?.id;
   const [trips, setTrips] = useState<
     {
       id: number;
@@ -48,14 +46,6 @@ export default function Dashboard({
   const [error, setError] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      await checkSessionOrRedirect(
-        { accessToken: access_token, refreshToken: refresh_token }
-      );
-    }
-    checkSession();
-  },[access_token, refresh_token]);
 
   useEffect(() => {
     const loadTrips = async () => {
@@ -64,7 +54,7 @@ export default function Dashboard({
           throw new Error("User ID is required to fetch trips");
         }
         const userTrips = await fetchTrips(userId);
-        const friendsTrips = await fetchTripsFromFriends(userId);
+        const friendsTrips = await fetchTripsFromFriends();
         const allTrips = [...(userTrips || []), ...(friendsTrips || [])];
         setTrips(allTrips.slice(0, 4));
       } catch (err) {

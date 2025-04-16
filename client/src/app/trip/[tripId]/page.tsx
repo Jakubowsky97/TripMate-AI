@@ -10,7 +10,6 @@ import SidebarRight from "@/components/trip/sideBarRight";
 import { createClient } from "@/utils/supabase/client";
 import { fetchFriendsData } from "@/utils/fetchTrips";
 import axios from "axios";
-import { checkSessionOrRedirect } from "@/app/auth/actions";
 
 interface UserData {
   id: string;
@@ -29,23 +28,6 @@ const TripHeader = dynamic(() => import("@/components/trip/tripHeader"), {
 
 export default function TripPage() {
   const [sessionChecked, setSessionChecked] = useState(false);
-  const access_token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-  const refresh_token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("refresh_token")
-      : null;
-
-  useEffect(() => {
-    const checkSession = async () => {
-      await checkSessionOrRedirect({
-        accessToken: access_token || "",
-        refreshToken: refresh_token || "",
-      });
-      setSessionChecked(true);
-    };
-    checkSession();
-  }, [access_token, refresh_token]);
 
   const params = useParams();
   const searchParams = useSearchParams();
@@ -101,7 +83,10 @@ export default function TripPage() {
       }
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${userId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser`,
+          {
+            credentials: "include",
+          }
         );
         const data = await response.json();
         if (!response.ok)
@@ -145,7 +130,10 @@ export default function TripPage() {
       }
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripById/${tripId}?user_id=${userId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripById/${tripId}`,
+          {
+            credentials: "include",
+          }
         );
         const data = await response.json();
         if (!response.ok) {

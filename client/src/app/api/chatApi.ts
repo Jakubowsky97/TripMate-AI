@@ -4,7 +4,10 @@ export const sendMessageToServer = async (message: string, tripId: string, userI
   try {
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/api/chat/sendMessage`,
-      { userId, message, tripId }
+      { message, tripId },
+      {
+        withCredentials: true,
+      }
     );
     return response.data;
   } catch (error) {
@@ -15,7 +18,9 @@ export const sendMessageToServer = async (message: string, tripId: string, userI
 
 export const fetchChatHistory = async (userId: string, tripId: string) => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/history?userId=${userId}&tripId=${tripId}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/history?tripId=${tripId}`, {
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error("Nie udało się pobrać historii czatu");
     }

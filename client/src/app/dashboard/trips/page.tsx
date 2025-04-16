@@ -6,7 +6,6 @@ import { createClient } from "@/utils/supabase/client";
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { FaFilter, FaPlus } from "react-icons/fa";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { checkSessionOrRedirect } from "@/app/auth/actions";
 
 interface Owner {
   id: string; // Unikalny identyfikator właściciela
@@ -20,9 +19,7 @@ interface Owner {
 
 const TripsPage = () => {
   const { darkMode } = useDarkMode();
-  const searchParams = useSearchParams();
-  const user_id = searchParams.get("user_id");
-  const supabase = createClient();
+  const [user_id, setUser_id] = useState<string | null>(null);
   const [trips, setTrips] = useState<
     {
       id: number;
@@ -39,22 +36,10 @@ const TripsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
-  const access_token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-  const refresh_token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("refresh_token")
-      : null;
 
   useEffect(() => {
-    const checkSession = async () => {
-      await checkSessionOrRedirect({
-        accessToken: access_token || "",
-        refreshToken: refresh_token || "",
-      });
-    };
-    checkSession();
-  }, [access_token, refresh_token]);
+    setUser_id(localStorage.getItem("user_id"));
+  }, []); 
 
   useEffect(() => {
     const loadTrips = async () => {
@@ -63,7 +48,7 @@ const TripsPage = () => {
           throw new Error("User ID is required to fetch trips");
         }
         const userTrips = await fetchTrips(user_id);
-        const friendsTrips = await fetchTripsFromFriends(user_id);
+        const friendsTrips = await fetchTripsFromFriends();
         setTrips([...(userTrips || []), ...(friendsTrips || [])]);
       } catch (err) {
         setError("Failed to fetch trips");
@@ -73,7 +58,9 @@ const TripsPage = () => {
       }
     };
 
-    loadTrips();
+    if (user_id) {
+      loadTrips();
+    }
   }, [user_id]);
 
   const handleCreateTrip = async () => {
@@ -83,7 +70,7 @@ const TripsPage = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id }),
+          credentials: "include",
         }
       );
 
@@ -168,10 +155,10 @@ const TripsPage = () => {
             onClick={() => {
               if (trip.status == "draft") {
                 router.push(
-                  "/trip/creator?user_id=" + user_id + "&trip_id=" + trip.id
+                  "/trip/creator?&trip_id=" + trip.id
                 );
               } else {
-                router.push(`/trip/${trip.id}?user_id=${user_id}`);
+                router.push(`/trip/${trip.id}`);
               }
             }}
           />

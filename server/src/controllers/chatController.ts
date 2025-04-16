@@ -1,9 +1,12 @@
+//File: server/src/controllers/chatController.ts
+
 import { ChatDeepSeek } from "@langchain/deepseek";
 import { Request, Response } from "express";
 import supabase from "../utils/supabase";
 import Amadeus from "amadeus";
 import { updateUserPreferences } from "./preferencesController";
 import { updateTravelData } from "./tripController";
+import { AuthenticatedRequest } from "../middleware/auth";
 
 const chatModel = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -361,11 +364,12 @@ const fetchFlightData = async (message: string) => {
 };
 
 export const chatController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { userId, message, tripId } = req.body;
+    const { message, tripId } = req.body;
+    const userId = req.user?.sub; // Pobieranie userId z tokena
     if (!userId || !message || !tripId) {
       res.status(400).json({ message: "Missing required fields." });
       return;
@@ -390,11 +394,12 @@ export const chatController = async (
 };
 
 export const getChatHistory = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { userId, tripId } = req.query; // Pobieranie userId i tripId z query params
+    const { tripId } = req.query; // Pobieranie tripId z query params
+    const userId = req.user?.sub; // Pobieranie userId z tokena
 
     if (!userId || !tripId) {
       res.status(400).json({ message: "Brak wymaganych parametrów." });

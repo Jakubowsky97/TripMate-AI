@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { Providers } from "@/store/providers";
+import { logout } from "../auth/actions";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,12 +30,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, []); 
 
   const handleSignOut = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const { error } = supabase.auth.signOut();
-    if (!error) router.push("/auth/login");
+    localStorage.removeItem("user_id");
+    logout();
   };  
 
   return (

@@ -32,7 +32,9 @@ export default function PreferencesPage() {
                 return;
             }
             try {
-              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getPreferences?user_id=${userId}`);
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getPreferences`, {
+                credentials: "include",
+              });
           
               if (!response.ok) {
                 throw new Error("Failed to fetch preferences");
@@ -130,9 +132,9 @@ export default function PreferencesPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    user_id: userId,
                     ...updatedPreferences,
                 }),
+                credentials: "include",
             });
         } catch (error) {
             console.error("Error updating preferences:", error);

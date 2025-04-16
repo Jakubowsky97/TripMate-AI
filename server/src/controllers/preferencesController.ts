@@ -1,3 +1,5 @@
+//File: server/src/controllers/preferencesController.ts
+
 import supabase from "../utils/supabase";
 
 export const updateUserPreferences = async (userId: string, newPrefs: any) => {

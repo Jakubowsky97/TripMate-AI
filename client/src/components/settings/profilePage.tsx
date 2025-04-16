@@ -38,7 +38,9 @@ export default function ProfilePage() {
             return;
           }
           try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${userId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser`, {
+              credentials: "include",
+            });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Failed to fetch user data");
     
@@ -78,9 +80,9 @@ export default function ProfilePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              user_id: searchParams.get("user_id"),
               avatar_url: url,
             }),
+            credentials: "include",
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Failed to upload avatar");
@@ -110,11 +112,11 @@ export default function ProfilePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              user_id: searchParams.get("user_id"),
               full_name: `${localData.firstName} ${localData.lastName}`,
               username: localData.username,
               email: localData.email,
             }),
+            credentials: "include",
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Failed to update user data");

@@ -7,10 +7,7 @@ interface Preferences {
     [key: string]: string[];
   }
 
-
-  // TODO: wyswitlac preferencje dodane przez uzytkownika
 export default function PreferencesPage() {
-    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
@@ -22,10 +19,14 @@ export default function PreferencesPage() {
         favorite_types_of_attractions: [],
       });  
     const { darkMode }= useDarkMode();
-    
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+      setUserId(localStorage.getItem("user_id"));
+    }, []);
+
     useEffect(() => {
         const fetchPreferences = async () => {
-            const userId = searchParams.get("user_id");
             if (!userId) {
                 setError("Missing or invalid user_id");
                 setLoading(false);
@@ -60,9 +61,11 @@ export default function PreferencesPage() {
                 setLoading(false);
             }
         };
-
-        fetchPreferences();
-    }, [searchParams]);
+        
+        if(userId) {
+          fetchPreferences();
+        }
+    }, [userId]);
 
     
       const handlePreferenceChange = (category: string, option: string) => { 
@@ -120,7 +123,6 @@ export default function PreferencesPage() {
         
         try {
             setLoading(true);
-            const userId = searchParams.get("user_id");
             if (!userId) {
                 setError("Missing or invalid user_id");
                 setLoading(false);

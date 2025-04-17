@@ -35,7 +35,7 @@ export default function TripPage() {
     ? params.tripId[0]
     : params?.tripId;
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const userId = searchParams.get("user_id");
+  const [userId, setUser_id] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const supabase = createClient();
@@ -61,6 +61,10 @@ export default function TripPage() {
     email: "",
     avatar_url: "",
   });
+
+  useEffect(() => {
+    setUser_id(localStorage.getItem("user_id"));
+  }, []); 
 
   // Socket connection cleanup
   useEffect(() => {
@@ -199,8 +203,11 @@ export default function TripPage() {
       }
     };
 
-    fetchUserData();
-    getTripData();
+    if(userId) {
+      fetchUserData();
+      getTripData();
+    }
+
   }, [searchParams, tripId, userId]);
 
   useEffect(() => {
@@ -216,7 +223,6 @@ export default function TripPage() {
       try {
         const response = fetchFriendsData(tripData.friends_list);
         const friendsData = await response;
-        console.log(friendsData);
         friendsData.map(async (friend: UserData) => {
           const { data: avatarData, error } = await supabase.storage
             .from("avatars")

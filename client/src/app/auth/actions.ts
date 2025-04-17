@@ -32,8 +32,7 @@ export async function signup(formData: FormData) {
   if (error) {
     redirect("/error");
   }
-
-  redirect("/auth/register/step-3?user_id=" + data?.user?.id);
+  return data;
 }
 
 export async function resendEmailVerification(formData: FormData) {

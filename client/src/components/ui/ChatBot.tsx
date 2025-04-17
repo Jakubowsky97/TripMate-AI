@@ -32,7 +32,7 @@ const Chatbot = () => {
 
   useEffect(() => {
     const newTripId = searchParams.get("trip_id") || "";
-    const newUserId = searchParams.get("user_id") || "";
+    const newUserId = localStorage.getItem("user_id") || "";
 
     if (newTripId !== tripId) setTripId(newTripId);
     if (newUserId !== userId) setUserId(newUserId);

@@ -224,9 +224,9 @@ export default function Dashboard({
               darkMode={darkMode}
               onClick={() => {
                 if(trip.status == "draft") {
-                  router.push('/trip/creator?user_id=' + userId + '&trip_id=' + trip.id);
+                  router.push('/trip/creator?trip_id=' + trip.id);
                 } else {
-                  router.push(`/trip/${trip.id}?user_id=${userId}`)
+                  router.push(`/trip/${trip.id}`)
                 }
               }}
             />

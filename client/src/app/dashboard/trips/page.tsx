@@ -79,7 +79,7 @@ const TripsPage = () => {
       }
       const data = await response.json();
       router.push(
-        `/trip/creator?user_id=${user_id}&trip_id=${data.travelData.id}`
+        `/trip/creator?trip_id=${data.travelData.id}`
       );
     } catch (err) {
       console.log("Failed to create trip", err);
@@ -87,7 +87,7 @@ const TripsPage = () => {
   };
 
   const handleFilterClick = () => {
-    router.push(`/trip/filter?user_id=${user_id}`);
+    router.push(`/trip/filter`);
   };
 
   if (loading)

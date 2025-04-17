@@ -1,9 +1,8 @@
 "use client";
-import { use, useEffect, useState } from "react";
-import { FaBars, FaTimes, FaUser, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOutAlt } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaBars, FaTimes, FaMoon, FaSun, FaHome, FaMap, FaCog, FaSignOutAlt } from "react-icons/fa";
 import Link from "next/link";
 import { createClient } from "../../utils/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { Providers } from "@/store/providers";
@@ -21,8 +20,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [isOpen, setIsOpen] = useState(false);
   const [supabase, setSupabase] = useState<any>(null); 
-  const router = useRouter();
-  const userId = useSearchParams().get("user_id");
   
   useEffect(() => {
     setSupabase(createClient());
@@ -50,13 +47,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
         {/* Sidebar Links */}
         <nav className="flex-1 px-2">
-          <Link href={`/dashboard?user_id=${userId}`} className={`flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded`}>
+          <Link href={`/dashboard`} className={`flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded`}>
             <FaHome className={`${isOpen ? "mr-3" : "mr-0"} `} /> {isOpen && "Dashboard"}
           </Link>
-          <Link href={`/dashboard/trips?user_id=${userId}`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
+          <Link href={`/dashboard/trips`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
             <FaMap className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "My Trips"}
           </Link>
-          <Link href={`/dashboard/settings?user_id=${userId}`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
+          <Link href={`/dashboard/settings`} className="flex items-center p-3 transition-colors duration-300 hover:bg-[#4B5563] rounded">
             <FaCog className={`${isOpen ? "mr-3" : "mr-0"}`} /> {isOpen && "Settings"}
           </Link>
         </nav>

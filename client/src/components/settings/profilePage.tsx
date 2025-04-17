@@ -28,10 +28,14 @@ export default function ProfilePage() {
         email: "",
         avatarUrl: "",
       });
+      const [userId, setUserId] = useState<string | null>(null);
+
+      useEffect(() => {
+        setUserId(localStorage.getItem("user_id"));
+      }, []);
 
       useEffect(() => {
         const fetchUserData = async () => {
-          const userId = searchParams.get("user_id");
           if (!userId) {
             setError("Missing or invalid user_id");
             setLoading(false);
@@ -63,9 +67,11 @@ export default function ProfilePage() {
           }
           
         };
-    
-        fetchUserData();
-      }, [searchParams]);
+        
+        if(userId) {
+          fetchUserData();
+        }
+      }, [userId]);
     
       const handleChange = (field: string, value: string) => {
         setLocalData((prev) => ({ ...prev, [field]: value }));

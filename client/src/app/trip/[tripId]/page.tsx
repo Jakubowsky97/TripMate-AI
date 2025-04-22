@@ -64,6 +64,18 @@ export default function TripPage() {
 
   useEffect(() => {
     setUser_id(localStorage.getItem("user_id"));
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error checking session:", error.message);
+        setError("Error checking session");
+      } else if (data.session) {
+        setSessionChecked(true);
+      } else {
+        setSessionChecked(false);
+      }
+    };
+    checkSession();
   }, []); 
 
   // Socket connection cleanup

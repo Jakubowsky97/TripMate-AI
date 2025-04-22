@@ -41,7 +41,7 @@ const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
         selectedPlaces.map((cityObj, cityIndex) => (
           <div key={cityIndex} className="mb-6">
             <h3 className="text-lg font-bold mb-2">
-              {cityObj.city}, {cityObj.country}
+              {cityIndex + 1}. {cityObj.city}, {cityObj.country}
             </h3>
             {cityObj.places.length > 0 ? (
               cityObj.places.map((place, index) => {

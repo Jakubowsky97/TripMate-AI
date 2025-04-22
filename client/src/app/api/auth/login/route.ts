@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: async () => (await cookies()).getAll(),
-        setAll: () => {}, // Nie ustawiamy tu cookies — zrobimy to ręcznie niżej
-      },
-    }
-  );
+  const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -40,5 +32,6 @@ export async function POST(req: Request) {
     maxAge: 60 * 60 * 24, // 1 dzień
   });
 
-  return {response, user: data.user}; // Zwracamy odpowiedź z danymi użytkownika
+  response.headers.set("X-user-id", data.user.id); 
+  return response;
 }

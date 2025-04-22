@@ -32,7 +32,7 @@ export function SignInForm() {
               }
 
               if (signInData?.session?.access_token) {
-                await fetch('/api/auth/loginGoogle/', {
+                await fetch('/api/auth/loginGoogle', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ token: signInData.session.access_token }),
@@ -49,14 +49,16 @@ export function SignInForm() {
 
       const handleLogin = async (formData: FormData) => {
         console.log("Logging in with email and password");
-        const res = await fetch("/api/auth/login/", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           body: formData,
         });
-      
+        
+        console.log("Response from login API:", res);
         if (res.ok) {
           const data = await res.json();
-          localStorage.setItem("user_id", data.user.id);
+          const userId = res.headers.get("X-user-id");
+          localStorage.setItem("user_id", userId || "");
           window.location.href = "/dashboard";
         } else {
           alert("Błędne dane logowania");

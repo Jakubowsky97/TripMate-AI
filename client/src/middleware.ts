@@ -11,7 +11,8 @@ export async function middleware(request: NextRequest) {
     "/auth/register/step-1", "/auth/register/step-2",
     "/auth/register/step-3", "/auth/register/step-4",
     "/api/auth/checkVerification", "/api/auth/savePreferences",
-    "/auth/confirm", "/auth/reset-password/"
+    "/auth/confirm", "/auth/reset-password/", "/api/auth/login", "api/auth/loginGoogle",
+    "/api/auth/checkVerification"
   ]
 
   // Pobieramy sesję użytkownika

@@ -85,12 +85,13 @@ const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
                           : "bg-[#fff7ed]"
                       }`}
                       onClick={() => {
-                        mapRef.current?.flyTo({
-                          center: place.coordinates,
-                          zoom: 16,
-                          essential: true,
-                        });
+                        if (mapRef.current && place.coordinates?.length === 2) {
+                          const latLng = new google.maps.LatLng(place.coordinates[0], place.coordinates[1]);
+                          mapRef.current.panTo(latLng);
+                          mapRef.current.setZoom(16);
+                        }
                       }}
+                      
                     >
                       <div className="flex flex-col sm:flex-row items-start justify-between mb-2 sm:mb-4">
                         <p

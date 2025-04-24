@@ -28,13 +28,12 @@ const TripHeader = dynamic(() => import("@/components/trip/tripHeader"), {
 
 export default function TripPage() {
   const [sessionChecked, setSessionChecked] = useState(false);
-
+  const mapRef = useRef<google.maps.Map>(null);
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = Array.isArray(params?.tripId)
     ? params.tripId[0]
     : params?.tripId;
-  const mapRef = useRef<mapboxgl.Map | null>(null);
   const [userId, setUser_id] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

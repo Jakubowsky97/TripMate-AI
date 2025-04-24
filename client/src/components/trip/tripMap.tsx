@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import axios from "axios";
-
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN as string;
+import { Loader } from "@googlemaps/js-api-loader";
 
 interface Place {
   city: string;
@@ -17,7 +13,7 @@ interface Place {
   is_end_point: boolean;
   country: string;
   weather: { temp: string; condition: string };
-  coordinates: any[]; // ewentualnie [number, number]
+  coordinates: number[];
   date: string;
 }
 
@@ -29,7 +25,7 @@ interface CityPlaces {
 
 interface TripMapProps {
   tripId: string;
-  mapRef: React.MutableRefObject<mapboxgl.Map | null>;
+  mapRef: React.MutableRefObject<google.maps.Map | null>;
   socket: any;
   selectedPlaces: CityPlaces[];
 }
@@ -45,149 +41,121 @@ export default function TripMap({
   useEffect(() => {
     if (selectedPlaces.length === 0) return;
 
-    mapRef.current?.flyTo({
-      center: selectedPlaces[0].places[0].coordinates as [number, number],
-      zoom: 10,
-      speed: 1.2,
+    const loader = new Loader({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
+      version: "weekly",
+      libraries: ["places"],
     });
 
-    async function getDirections() {
-      try {
-        const startPlace = selectedPlaces[0]?.places[0];
-        const lastCity = selectedPlaces[selectedPlaces.length - 1];
-        const endPlace = lastCity?.places[lastCity.places.length - 1];
+    loader.load().then(() => {
+      const firstPlace = selectedPlaces[0]?.places[0];
+      if (!firstPlace || firstPlace.coordinates.length !== 2) return;
 
-        if (!startPlace || !endPlace) {
-          console.warn("Brakuje punktów startowych lub końcowych");
-          return;
-        }
-
-        const startCoords = startPlace.coordinates;
-        const endCoords = endPlace.coordinates;
-
-        const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`;
-
-        const response = await axios.get(directionsUrl);
-
-        const route = response.data.routes[0].geometry.coordinates;
-        const routeGeoJSON: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
-          type: "FeatureCollection",
-          features: [
-            {
-              type: "Feature",
-              geometry: {
-                type: "LineString",
-                coordinates: route,
-              },
-              properties: {},
-            },
-          ],
-        };
-
-        const map = mapRef.current;
-        if (map) {
-          map.addSource("route", {
-            type: "geojson",
-            data: routeGeoJSON,
-          });
-
-          map.addLayer({
-            id: "route",
-            type: "line",
-            source: "route",
-            layout: {
-              "line-join": "round",
-              "line-cap": "round",
-            },
-            paint: {
-              "line-color": "#888",
-              "line-width": 8,
-            },
-          });
-        }
-      } catch (error) {
-        console.error("Error flying to coordinates:", error);
-      }
-    }
-
-    getDirections();
-  }, [mapRef]);
-
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: [19.94498, 50.06465], // Kraków
-      zoom: 10,
-    });
-
-    mapRef.current = map;
-
-    map.on("load", () => {
-      if (tripId) {
-        socket.emit("joinTrip", tripId);
-      }
-    });
-
-    // Odbieranie istniejących markerów (gdy użytkownik dołącza)
-    socket.on("existingMarkers", (markers: { lng: number; lat: number }[]) => {
-      markers.forEach(({ lng, lat }) => {
-        new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+      const map = new google.maps.Map(mapContainerRef.current!, {
+        center: {
+          lat: firstPlace.coordinates[1],
+          lng: firstPlace.coordinates[0],
+        },
+        zoom: 10,
       });
-    });
 
-    // Odbieranie nowych markerów (dodanych przez innych użytkowników)
-    socket.on("newMarker", (marker: { lng: number; lat: number }) => {
-      new mapboxgl.Marker().setLngLat([marker.lng, marker.lat]).addTo(map);
-    });
+      mapRef.current = map;
 
-    mapRef.current.addControl(new mapboxgl.NavigationControl());
+      async function getDirections() {
+        try {
+          const startPlace = selectedPlaces[0]?.places[0];
+          const lastCity = selectedPlaces[selectedPlaces.length - 1];
+          const endPlace = lastCity?.places[lastCity.places.length - 1];
 
-    return () => {
-      socket.off("existingMarkers");
-      socket.off("newMarker");
-      map.remove();
-    };
-  }, [tripId, mapRef, socket]);
+          if (!startPlace || !endPlace) {
+            console.warn("Brakuje punktów startowych lub końcowych");
+            return;
+          }
 
-  useEffect(() => {
-    if (!mapRef.current || !selectedPlaces) return;
+          const directionsService = new google.maps.DirectionsService();
+          const directionsRenderer = new google.maps.DirectionsRenderer();
+          directionsRenderer.setMap(map);
 
-    // Iterujemy najpierw po miastach, a następnie po miejscach
-    selectedPlaces.forEach((cityObj) => {
-      cityObj.places.forEach((place) => {
-        if (
-          !place.coordinates ||
-          place.coordinates.length !== 2 ||
-          typeof place.coordinates[0] !== "number" ||
-          typeof place.coordinates[1] !== "number"
-        )
-          return;
+          const request = {
+            origin: {
+              lat: startPlace.coordinates[1],
+              lng: startPlace.coordinates[0],
+            },
+            destination: {
+              lat: endPlace.coordinates[1],
+              lng: endPlace.coordinates[0],
+            },
+            travelMode: google.maps.TravelMode.DRIVING,
+          };
 
-        const color =
-          place.type === "Start"
-            ? "#f59e0b" // kolor startowy
-            : place.type === "End"
-            ? "#f43f5e" // kolor końcowy
-            : "#f97316"; // normalny
+          directionsService.route(request, (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK) {
+              directionsRenderer.setDirections(result);
+            } else {
+              console.error("Error with directions:", status);
+            }
+          });
+        } catch (error) {
+          console.error("Error getting directions:", error);
+        }
+      }
 
-        new mapboxgl.Marker({ color })
-          .setLngLat(place.coordinates as [number, number])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(`
-              <h3>${place.name}</h3>
-              <p><strong>Type:</strong> ${place.type}</p>
-              <p><strong>Date:</strong> ${place.date}</p>
-              <p><strong>Weather:</strong> ${place.weather.temp}, ${place.weather.condition}</p>
-            `)
+      getDirections();
+
+      // Obsługa socketów
+      socket.emit("joinTrip", tripId);
+
+      socket.on("existingMarkers", (markers: { lat: number; lng: number }[]) => {
+        markers.forEach(({ lat, lng }) => {
+          new google.maps.Marker({ position: { lat, lng }, map });
+        });
+      });
+
+      socket.on("newMarker", (marker: { lat: number; lng: number }) => {
+        new google.maps.Marker({ position: { lat: marker.lat, lng: marker.lng }, map });
+      });
+
+      // Markery z selectedPlaces
+      selectedPlaces.forEach((cityObj) => {
+        cityObj.places.forEach((place) => {
+          if (
+            !place.coordinates ||
+            place.coordinates.length !== 2 ||
+            typeof place.coordinates[0] !== "number" ||
+            typeof place.coordinates[1] !== "number"
           )
-          .addTo(mapRef.current!);
-      });
-    });
-    console.log(selectedPlaces);
-  }, [selectedPlaces, mapRef]);
+            return;
 
-  return <div ref={mapContainerRef} className="h-[92vh]" />;
+          const color =
+            place.type === "Start"
+              ? "#f59e0b"
+              : place.type === "End"
+              ? "#f43f5e"
+              : "#f97316";
+
+          new google.maps.Marker({
+            position: { lat: place.coordinates[1], lng: place.coordinates[0] },
+            map,
+            title: place.name,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: color,
+              fillOpacity: 1,
+              scale: 8,
+              strokeColor: "white",
+              strokeWeight: 2,
+            },
+          });
+        });
+      });
+
+      return () => {
+        socket.off("existingMarkers");
+        socket.off("newMarker");
+        mapRef.current = null;
+      };
+    });
+  }, [selectedPlaces, tripId, mapRef, socket]);
+
+  return <div ref={mapContainerRef} className="h-[92vh] w-full" />;
 }

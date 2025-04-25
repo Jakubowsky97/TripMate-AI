@@ -9,6 +9,6 @@
       "strict": true,
       "types": ["node", "express"]
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "@types/**/*"],
   }
   

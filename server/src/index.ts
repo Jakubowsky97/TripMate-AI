@@ -6,6 +6,8 @@ import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import tripRoutes from './routes/trip';
 import { Server } from "socket.io";
+import chatRoutes from "./routes/chat";
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const server = createServer(app);
@@ -14,15 +16,17 @@ const corsOptions = {
   origin: `${APP_URL}`,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   optionsSuccessStatus: 200,
+  credentials: true,  
 };
 
 app.use(cors(corsOptions));
-
+app.use(cookieParser()); 
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/trip', tripRoutes);
+app.use('/api/chat', chatRoutes);
 
 const io = new Server(server, {
   cors: {

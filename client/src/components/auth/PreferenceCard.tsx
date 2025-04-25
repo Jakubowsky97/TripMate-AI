@@ -1,4 +1,5 @@
-import { useDarkMode } from "../ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
+
 
 interface PreferenceCardInterface {
     option: string;

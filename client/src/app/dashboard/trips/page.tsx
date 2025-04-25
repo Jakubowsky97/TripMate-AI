@@ -1,12 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import TripCard from "@/components/ui/TripCard";
-import { useDarkMode } from "@/components/ui/DarkModeContext";
-import CreateTripCard from "@/components/ui/CreateTripCard";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { FaFilter, FaPlus } from "react-icons/fa";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface Owner {
   id: string; // Unikalny identyfikator właściciela
@@ -20,9 +19,7 @@ interface Owner {
 
 const TripsPage = () => {
   const { darkMode } = useDarkMode();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("user_id");
-  const supabase = createClient();
+  const [user_id, setUser_id] = useState<string | null>(null);
   const [trips, setTrips] = useState<
     {
       id: number;
@@ -32,6 +29,7 @@ const TripsPage = () => {
       endDate: string;
       image: string | null;
       friendsList: { id: string; full_name: string }[];
+      status?: string;
       owner: Owner;
     }[]
   >([]);
@@ -40,13 +38,17 @@ const TripsPage = () => {
   const router = useRouter();
 
   useEffect(() => {
+    setUser_id(localStorage.getItem("user_id"));
+  }, []); 
+
+  useEffect(() => {
     const loadTrips = async () => {
       try {
-        if (!userId) {
+        if (!user_id) {
           throw new Error("User ID is required to fetch trips");
         }
-        const userTrips = await fetchTrips(userId);
-        const friendsTrips = await fetchTripsFromFriends(userId);
+        const userTrips = await fetchTrips(user_id);
+        const friendsTrips = await fetchTripsFromFriends();
         setTrips([...(userTrips || []), ...(friendsTrips || [])]);
       } catch (err) {
         setError("Failed to fetch trips");
@@ -56,15 +58,36 @@ const TripsPage = () => {
       }
     };
 
-    loadTrips();
-  }, [userId]);
+    if (user_id) {
+      loadTrips();
+    }
+  }, [user_id]);
 
-  const handleCreateTrip = () => {
-    router.push(`/trip/creator?user_id=${userId}`);
+  const handleCreateTrip = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/trip/createTrip`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create trip");
+      }
+      const data = await response.json();
+      router.push(
+        `/trip/creator?trip_id=${data.travelData.id}`
+      );
+    } catch (err) {
+      console.log("Failed to create trip", err);
+    }
   };
 
   const handleFilterClick = () => {
-    router.push(`/trip/filter?user_id=${userId}`);
+    router.push(`/trip/filter`);
   };
 
   if (loading)
@@ -79,39 +102,43 @@ const TripsPage = () => {
     <div className="p-1 md:p-8 md:pt-4">
       <div className="flex justify-between items-center mb-8">
         <h1
-          className={`font-semibold text-3xl ${darkMode ? "text-white" : "text-black"
-            }`}
+          className={`font-semibold text-3xl ${
+            darkMode ? "text-white" : "text-black"
+          }`}
         >
           My Trips
         </h1>
         <div className="flex space-x-4">
           <button
             onClick={handleFilterClick}
-            className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${darkMode
-                ? "bg-gray-600 hover:bg-gray-700 text-white"  // Ciemny tryb
-                : "bg-[#FFB703] hover:bg-[#FF7F50] text-white"  // Jasny tryb, pomarańczowy
-              } text-sm sm:text-base py-1 px-2`} 
+            className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${
+              darkMode
+                ? "bg-gray-600 hover:bg-gray-700 text-white" // Ciemny tryb
+                : "bg-[#FFB703] hover:bg-[#FF7F50] text-white" // Jasny tryb, pomarańczowy
+            } text-sm sm:text-base py-1 px-2`}
           >
             <FaFilter />
             <span>Filter</span>
           </button>
-        
-        <button
-          onClick={handleCreateTrip}
-          className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${darkMode
-              ? "bg-blue-600 hover:bg-blue-800 text-white"  // Ciemny tryb
-              : "bg-[#FF7F50] hover:bg-[#FF5733] text-white"  // Jasny tryb, pomarańczowy
-            } text-sm sm:text-base py-1 px-2`} 
-        >
-          <FaPlus />
-          <span>Create trip</span>
-        </button>
+
+          <button
+            onClick={handleCreateTrip}
+            className={`flex items-center justify-center space-x-2 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out ${
+              darkMode
+                ? "bg-blue-600 hover:bg-blue-800 text-white" // Ciemny tryb
+                : "bg-[#FF7F50] hover:bg-[#FF5733] text-white" // Jasny tryb, pomarańczowy
+            } text-sm sm:text-base py-1 px-2`}
+          >
+            <FaPlus />
+            <span>Create trip</span>
+          </button>
         </div>
       </div>
 
       <div
-        className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 rounded-3xl ${darkMode ? "" : "text-black"
-          }`}
+        className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 rounded-3xl ${
+          darkMode ? "" : "text-black"
+        }`}
       >
         {/* {<CreateTripCard darkMode={darkMode} onCreateTrip={handleCreateTrip} />} */}
         {trips.map((trip) => (
@@ -125,7 +152,15 @@ const TripsPage = () => {
             owner={trip.owner}
             friendsList={trip.friendsList || []}
             darkMode={darkMode}
-            onClick={() => router.push(`/trip/${trip.id}?user_id=${userId}`)}
+            onClick={() => {
+              if (trip.status == "draft") {
+                router.push(
+                  "/trip/creator?&trip_id=" + trip.id
+                );
+              } else {
+                router.push(`/trip/${trip.id}`);
+              }
+            }}
           />
         ))}
       </div>

@@ -2,7 +2,7 @@
 import { FaLock, FaMap, FaPlane, FaRegEnvelope, FaRegFlag } from "react-icons/fa";
 import PreferenceCard from "./PreferenceCard";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import Script from "next/script";
 import { createClient } from "@/utils/supabase/client";
 import { resendEmailVerification, signup } from "@/app/auth/actions";
@@ -42,7 +42,8 @@ export function SignUpForm({ onClick }: SignUpFormInterface) {
           if (signInError) {
             console.error("Error signing in with Google", signInError);
           } else {
-            router.push(`/auth/register/step-4?user_id=${signInData?.user?.id}`);
+            router.push(`/auth/register/step-4`);
+            localStorage.setItem("user_id", signInData.user.id);
           }
         } catch (error) {
           console.error("Error signing in with Google", error);
@@ -207,7 +208,10 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
     formData.append("fname", fname);
     formData.append("lname", lname);
 
-    await signup(formData);
+    const data = await signup(formData);
+    localStorage.setItem("user_id", data.user?.id as string);
+
+    redirect("/auth/register/step-3");
   };
 
   const handleConfirmPasswordChange = () => {
@@ -282,19 +286,6 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
       setError(errorParam);
     }
   }, []);
-
-  useEffect(() => {
-    // Get the user_id from the URL query parameters
-    const userId = new URLSearchParams(window.location.search).get('user_id')
-
-    if (userId) {
-      // Store user_id in localStorage
-      localStorage.setItem('user_id', userId)
-      console.log("User ID saved to localStorage:", userId)
-    } else {
-      // If there's no user_id, redirect to error or login page
-    }
-  }, [router]);
 
   const handleResendEmailVerification: React.MouseEventHandler<HTMLButtonElement> = async (event) => {
     event?.preventDefault();
@@ -371,14 +362,6 @@ export function ConfirmEmailForm({onClick} : SignUpFormInterface) {
   export function SignUpPrefForm({onClick} : SignUpFormInterface) {
     const router = useRouter();
     const [selectedPreferences, setSelectedPreferences] = useState<{ [key: string]: string[] }>({});
-
-    useEffect(() => {
-      const userId = new URLSearchParams(window.location.search).get("user_id");
-      if (userId) {
-        localStorage.setItem("user_id", userId);
-        console.log("User ID saved to localStorage:", userId);
-      }
-    }, [router]);
 
     const travelPreferences = [
       { category: "travel_interests", options: ["Adventure", "Cultural Exploration", "Food & Culinary", "Wildlife & Nature", "Relaxation", "History & Heritage"] },

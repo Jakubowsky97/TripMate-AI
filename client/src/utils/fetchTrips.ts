@@ -1,11 +1,14 @@
 import { createClient } from "@/utils/supabase/client";
-import { useState } from "react";
 
 const supabase = createClient();
 
+// Dodajemy userId jako argument funkcji
 export const fetchTrips = async (userId: string) => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getAllTrips/${userId}`
+    `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getAllTrips/`,
+    {
+      credentials: 'include', // Pamiętamy o ciasteczkach!
+    }
   );
   if (!response.ok) {
     throw new Error("Failed to fetch trips");
@@ -33,7 +36,7 @@ export const fetchTrips = async (userId: string) => {
           }
         }
 
-        // Pobieramy dane właściciela
+        // Pobieramy dane właściciela na podstawie userId
         const owner = await fetchOwnerData(userId);
 
         return {
@@ -44,6 +47,7 @@ export const fetchTrips = async (userId: string) => {
           endDate: item.travel_data.end_date,
           image: imageUrl || "/img/default.jpg",
           friendsList: item.travel_data.friends_list || [],
+          status: item.travel_data.status,
           owner, // Dodajemy dane o właścicielu
         };
       })
@@ -56,7 +60,10 @@ const fetchOwnerData = async (ownerId: string) => {
   if (!ownerId) return "Unknown Owner"; // Jeśli brak właściciela, zwróć 'Unknown Owner'
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${ownerId}`
+    `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser`,
+    {
+      credentials: 'include', // Pamiętamy o ciasteczkach!
+    }
   );
 
   if (!response.ok) {
@@ -65,12 +72,15 @@ const fetchOwnerData = async (ownerId: string) => {
   }
 
   const data = await response.json();
-  return data.data[0]; 
+  return data.data[0];
 };
 
-export const fetchTripsFromFriends = async (userId: string) => {
+export const fetchTripsFromFriends = async () => {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripsFromFriends/${userId}`
+    `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getTripsFromFriends`,
+    {
+      credentials: 'include', // Pamiętamy o ciasteczkach!
+    }
   );
   if (!response.ok) {
     throw new Error("Failed to fetch trips from friends");
@@ -115,7 +125,6 @@ export const fetchTripsFromFriends = async (userId: string) => {
   }
 };
 
-
 export const fetchFriendsData = async (friendsList: string[]) => {
   if (!friendsList || friendsList.length === 0 || friendsList[0] === "") {
     console.error("Friends list is empty");
@@ -124,7 +133,10 @@ export const fetchFriendsData = async (friendsList: string[]) => {
 
   const friendsQuery = friendsList.join(",");
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getFriendsData?friends_list=${friendsQuery}`
+    `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getFriendsData?friends_list=${friendsQuery}`,
+    {
+      credentials: 'include', // Pamiętamy o ciasteczkach!
+    }
   );
 
   if (!response.ok) {

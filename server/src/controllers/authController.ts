@@ -1,151 +1,125 @@
-import { Request, Response } from "express";
+// File: server/src/controllers/authController.ts
+import { Response } from "express";
 import supabase from "../utils/supabase";
 import { EmailOtpType } from "@supabase/supabase-js";
+import { AuthenticatedRequest } from "../middleware/auth";
 
-export const confirmEmail = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { token_hash, type, next, user_id } = req.query;
+// Potwierdzenie adresu e-mail
+export const confirmEmail = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { token_hash, type, next: nextQuery } = req.query;
+    const user_id = req.user?.sub; // Pobieramy user_id z JWT
 
-        if (!user_id) {
-            res.status(400).json({ error: "Unable to get user" });
-            return;
-        }
-
-        if (!token_hash || !type) {
-            res.status(400).json({ error: "Missing token_hash or type" });
-            return;
-        }
-
-        const { error } = await supabase.auth.verifyOtp({
-            type: type as EmailOtpType,
-            token_hash: token_hash as string,
-        });
-
-        if (error) {
-            res.status(400).json({ error: error.message });
-            return;
-        }
-
-                // Aktualizacja statusu potwierdzenia
-                const { error: updateError } = await supabase
-                .from("profiles")
-                .update({ isConfirmed: true })
-                .eq("id", user_id);
-        
-            if (updateError) {
-                console.error("Error updating email confirmation status:", updateError);
-                res.status(500).json({ message: "Failed to update confirmation status" });
-            }
-    
-        res.status(200).json({ message: "Email confirmed successfully", success: true, next: next || "/" });
-    } catch (err) {
-        res.status(500).json({ error: "Internal server error" });
-    }
-};
-
-export const checkEmailVerification = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { user_id } = req.query;
-            const { data, error } = await supabase
-            .from("profiles")
-            .select("isConfirmed")
-            .eq("id", user_id);
-    
-        if (error) {
-            console.error("Error fetching email confirmation status:", error);
-            res.status(500).json({ message: "Failed to fetch confirmation status" });
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            res.status(404).json({ message: "User not found" });
-            return;
-        }
-    
-        res.status(200).json({ isConfirmed: data[0].isConfirmed });
-    } catch (err) {
-      console.error("Error:", err);
+    if (!user_id) {
+      res.status(400).json({ error: "Unable to get user" });
       return;
     }
-  };
+    if (!token_hash || !type) {
+      res.status(400).json({ error: "Missing token_hash or type" });
+      return;
+    }
 
-export const saveUserPreferences = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { userId, preferences } = req.body;
+    const { error } = await supabase.auth.verifyOtp({
+      type: type as EmailOtpType,
+      token_hash: token_hash as string,
+    });
 
-        if (!userId || !preferences) {
-            res.status(400).json({ error: "Missing user ID or preferences" });
-            return;
-        }
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
 
-        const { data, error } = await supabase
-        .from('user_travel_preferences')
-        .upsert([
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ isConfirmed: true })
+      .eq("id", user_id);
+
+    if (updateError) {
+      console.error("Error updating email confirmation status:", updateError);
+      res.status(500).json({ message: "Failed to update confirmation status" });
+      return;
+    }
+
+    res.status(200).json({ message: "Email confirmed successfully", success: true, next: nextQuery || "/" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+    return ;
+  }
+};
+
+
+// Sprawdzenie statusu weryfikacji e-mail
+export const checkEmailVerification = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const user_id = req.user?.sub; // Pobieramy user_id z JWT
+
+    if (!user_id) {
+      res.status(400).json({ error: "Unable to get user" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("isConfirmed")
+      .eq("id", user_id);
+
+    if (error) {
+      console.error("Error fetching email confirmation status:", error);
+      res.status(500).json({ message: "Failed to fetch confirmation status" });
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ isConfirmed: data[0].isConfirmed });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+    return;
+  }
+};
+
+// Zapisanie preferencji użytkownika
+export const saveUserPreferences = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const user_id = req.user?.sub; // Pobieramy user_id z JWT
+    const { preferences } = req.body;
+
+    if (!user_id || !preferences) {
+      res.status(400).json({ error: "Missing user ID or preferences" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("user_travel_preferences")
+      .upsert(
+        [
           {
-            id: userId,
+            id: user_id,
             travel_interests: preferences.travel_interests || [],
             travel_style: preferences.travel_style || [],
             preferred_transport: preferences.preferred_transport || [],
             preferred_accommodation: preferences.preferred_accommodation || [],
             favorite_types_of_attractions: preferences.favorite_types_of_attractions || [],
-          }
-        ], { onConflict: 'id' });
+          },
+        ],
+        { onConflict: "id" }
+      );
 
-        if (error) {
-            console.error("Supabase Error: ", error);
-            res.status(500).json({ error: error.message || "Failed to save preferences" });
-            return;
-        }
-
-        res.status(200).json({ message: "Preferences saved successfully", data });
-    } catch (err) { 
-        res.status(500).json({ error: "Internal server error" });
+    if (error) {
+      console.error("Supabase Error: ", error);
+      res.status(500).json({ error: error.message || "Failed to save preferences" });
+      return;
     }
-};
 
-export const login = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            res.status(400).json({ error: "Missing email or password" });
-            return;
-        }
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        if (error) {
-            res.status(401).json({ error: error.message });
-            return;
-        }
-
-        // Zapisz tokeny w ciasteczkach, które będą dostępne w przyszłych żądaniach
-        res.cookie("access_token", data?.session?.access_token, { httpOnly: true, secure: true });
-        res.cookie("refresh_token", data?.session?.refresh_token, { httpOnly: true, secure: true });
-
-        res.status(200).json({ message: "Login successful", user: data.user });
-    } catch (err) {
-        res.status(500).json({ error: "Internal server error", details: err });
-    }
-};
-
-export const loginWithGoogle = async (req: Request, res: Response): Promise<void> => {
-    const { response } = req.body;
-    try {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithIdToken({
-          provider: "google",
-          token: response.credential,
-        });
-
-        if (signInError) {
-          res.status(500).json({error: "Error signing in with Google", details: signInError});
-        } else {
-            res.status(200).json({ message: "Login successful", user: signInData?.user });
-        }
-      } catch (error) {
-        res.status(500).json({error: "Error signing in with Google", details: error});
-      }
+    res.status(200).json({ message: "Preferences saved successfully", data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+    return;
+  }
 };

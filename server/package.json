@@ -12,9 +12,11 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/find-config": "^1.0.4",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.1",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
@@ -22,10 +24,17 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.43",
+    "@langchain/deepseek": "^0.0.1",
     "@supabase/supabase-js": "^2.48.1",
+    "amadeus": "^11.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "deepseek": "^0.0.2",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.19",
     "pg": "^8.13.1",
     "socket.io": "^4.8.1",
     "tripmateai": "file:.."

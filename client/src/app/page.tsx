@@ -3,8 +3,8 @@ import FeatureSection from "@/components/layout/feturesSection";
 import HeroSection from "@/components/layout/heroSection";
 import NavBar from "@/components/layout/navBar";
 import HowItWorksSection from "@/components/layout/howItWorksSection";
-import { useDarkMode } from "@/components/ui/DarkModeContext";
 import ImageCarousel from "@/components/layout/imageCarousel";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 export default function LandingPage() {
   const { darkMode, toggleDarkMode } = useDarkMode();

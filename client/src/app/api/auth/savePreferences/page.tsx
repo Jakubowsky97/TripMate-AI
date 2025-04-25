@@ -27,7 +27,8 @@ export default function SavePreferences() {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/savePreferences`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId, preferences }),
+                    body: JSON.stringify({ preferences }),
+                    credentials: "include",
                 });
 
                 const data = await response.json();
@@ -37,7 +38,7 @@ export default function SavePreferences() {
                 }
 
                 // Preferencje zapisane poprawnie → przekierowanie do dashboardu
-                router.push('/dashboard?user_id=' + userId);
+                router.push('/dashboard');
 
             } catch (err) {
                 if (err instanceof Error) {

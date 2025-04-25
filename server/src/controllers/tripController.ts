@@ -1,22 +1,24 @@
+//File: server/src/controllers/tripController.ts
+
+import { AuthenticatedRequest } from "../middleware/auth";
 import supabase from "../utils/supabase";
 import { Request, Response } from "express";
 
 export const createTripData = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id, title, start_date, end_date, type_of_trip, image } =
-      req.body;
+    const user_id = req.user?.sub; 
 
-    if (!user_id || !start_date || !end_date || !title || !type_of_trip) {
-      res.status(400).json({ error: "Missing required fields" });
+    if (!user_id ) {
+      res.status(400).json({ error: "Missing user_id" });
       return;
     }
 
     const { data: travelData, error: travelError } = await supabase
       .from("travel_data")
-      .insert([{ title, start_date, end_date, type_of_trip, image }])
+      .insert([{ title: "New Trip", status: "draft" }])
       .select()
       .single();
 
@@ -28,7 +30,7 @@ export const createTripData = async (
 
     if (linkError) throw linkError;
 
-    res.status(201).json({ message: "Trip added successfully", travelData });
+    res.status(201).json({ message: "Trip added successfully as Draft", travelData });
   } catch (error) {
     res.status(500).json({ error });
   }
@@ -60,11 +62,11 @@ export const getTripCodeById = async (
 };
 
 export const getAllTrips = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id } = req.params;
+    const user_id = req.user?.sub; 
 
     if (!user_id || typeof user_id !== "string") {
       res.status(400).json({ error: "Missing or invalid user_id parameter" });
@@ -89,43 +91,12 @@ export const getAllTrips = async (
   }
 };
 
-export const getLatestTrips = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { user_id } = req.params;
-
-    if (!user_id || typeof user_id !== "string") {
-      res.status(400).json({ error: "Missing or invalid user_id parameter" });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles_travel_data")
-      .select("travel_data(*)")
-      .eq("user_id", user_id)
-      .limit(4);
-
-    if (error) {
-      res
-        .status(500)
-        .json({ error: "Error fetching trip code", details: error.message });
-      return;
-    }
-
-    res.status(200).json({ message: "data fetch successful", data });
-  } catch (err) {
-    res.status(500).json({ error: "Internal server error", details: err });
-  }
-};
-
 export const getTripsForUser = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id } = req.params;
+    const user_id = req.user?.sub; 
 
     if (!user_id || typeof user_id !== "string") {
       res.status(400).json({ error: "Missing or invalid user_id parameter" });
@@ -173,12 +144,12 @@ export const getTripsForUser = async (
 };
 
 export const getTripById = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
   try {
     const { trip_id } = req.params;
-    const { user_id } = req.query;
+    const user_id = req.user?.sub; 
 
     // Sprawdzenie, czy wszystkie wymagane dane są dostępne
     if (!trip_id || !user_id) {
@@ -192,6 +163,9 @@ export const getTripById = async (
       .select(
         `
         id,
+        countries,
+        cities,
+        places_to_stay,
         title,
         start_date,
         end_date,
@@ -235,4 +209,29 @@ export const getTripById = async (
         details: (err as Error).message,
       });
   }
+};
+
+interface TravelData {
+  trip_id: string;
+  [key: string]: any;
+}
+
+export const updateTravelData = async (trip_id: string, { ...travelData }: TravelData): Promise<void> => {
+  if (!trip_id || typeof trip_id !== "string") {
+    throw new Error("Missing or invalid trip_id");
+  }
+
+  if (Object.keys(travelData).length === 0) {
+    throw new Error("No travel data provided");
+  }
+
+  const { data, error } = await supabase
+    .from("travel_data")
+    .upsert([{ id: trip_id, ...travelData, status: "confirmed" }], { onConflict: "id" });
+
+  if (error) {
+    throw new Error(`Error saving travel data: ${error.message}`);
+  }
+
+  console.log("Travel data saved successfully", data);
 };

@@ -2,7 +2,7 @@ import { sendResetPassword } from "@/app/auth/actions";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Avatar from "../ui/Avatar";
-import { useDarkMode } from "../ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface UserData {
     avatar_url: string;
@@ -28,17 +28,23 @@ export default function ProfilePage() {
         email: "",
         avatarUrl: "",
       });
+      const [userId, setUserId] = useState<string | null>(null);
+
+      useEffect(() => {
+        setUserId(localStorage.getItem("user_id"));
+      }, []);
 
       useEffect(() => {
         const fetchUserData = async () => {
-          const userId = searchParams.get("user_id");
           if (!userId) {
             setError("Missing or invalid user_id");
             setLoading(false);
             return;
           }
           try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser?user_id=${userId}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser`, {
+              credentials: "include",
+            });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Failed to fetch user data");
     
@@ -61,9 +67,11 @@ export default function ProfilePage() {
           }
           
         };
-    
-        fetchUserData();
-      }, [searchParams]);
+        
+        if(userId) {
+          fetchUserData();
+        }
+      }, [userId]);
     
       const handleChange = (field: string, value: string) => {
         setLocalData((prev) => ({ ...prev, [field]: value }));
@@ -78,9 +86,9 @@ export default function ProfilePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              user_id: searchParams.get("user_id"),
               avatar_url: url,
             }),
+            credentials: "include",
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Failed to upload avatar");
@@ -110,11 +118,11 @@ export default function ProfilePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              user_id: searchParams.get("user_id"),
               full_name: `${localData.firstName} ${localData.lastName}`,
               username: localData.username,
               email: localData.email,
             }),
+            credentials: "include",
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Failed to update user data");

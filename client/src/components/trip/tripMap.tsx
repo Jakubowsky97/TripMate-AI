@@ -1,60 +1,161 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useRef } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiamFjb2JuMHgiLCJhIjoiY204NmM2YjJkMDM2eDJqcXUxNGZrMHptYyJ9.2yh44mpmkTOS404uv3bxYg';
+interface Place {
+  city: string;
+  name: string;
+  type: string;
+  start_date: string;
+  end_date: string;
+  is_start_point: boolean;
+  is_end_point: boolean;
+  country: string;
+  weather: { temp: string; condition: string };
+  coordinates: number[];
+  date: string;
+}
 
-export default function TripMap({ tripId, mapRef, socket }: { tripId: string, mapRef: React.MutableRefObject<mapboxgl.Map | null>, socket: any }) {
+interface CityPlaces {
+  city: string;
+  country: string;
+  places: Place[];
+}
+
+interface TripMapProps {
+  tripId: string;
+  mapRef: React.MutableRefObject<google.maps.Map | null>;
+  socket: any;
+  selectedPlaces: CityPlaces[];
+}
+
+export default function TripMap({
+  tripId,
+  mapRef,
+  socket,
+  selectedPlaces,
+}: TripMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (selectedPlaces.length === 0) return;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [19.94498, 50.06465], // Kraków
-      zoom: 10,
+    const loader = new Loader({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
+      version: "weekly",
+      libraries: ["places"],
     });
 
-    mapRef.current = map;
+    loader.load().then(() => {
+      const firstPlace = selectedPlaces[0]?.places[0];
+      if (!firstPlace || firstPlace.coordinates.length !== 2) return;
 
-    map.on('load', () => {
-      if (tripId) {
-        socket.emit('joinTrip', tripId);
-      }
-    });
-
-    // Odbieranie istniejących markerów (gdy użytkownik dołącza)
-    socket.on('existingMarkers', (markers: { lng: number; lat: number; }[]) => {
-      markers.forEach(({ lng, lat }: { lng: number; lat: number }) => {
-        new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+      const map = new google.maps.Map(mapContainerRef.current!, {
+        center: {
+          lat: firstPlace.coordinates[1],
+          lng: firstPlace.coordinates[0],
+        },
+        zoom: 10,
       });
+
+      mapRef.current = map;
+
+      async function getDirections() {
+        try {
+          const startPlace = selectedPlaces[0]?.places[0];
+          const lastCity = selectedPlaces[selectedPlaces.length - 1];
+          const endPlace = lastCity?.places[lastCity.places.length - 1];
+
+          if (!startPlace || !endPlace) {
+            console.warn("Brakuje punktów startowych lub końcowych");
+            return;
+          }
+
+          const directionsService = new google.maps.DirectionsService();
+          const directionsRenderer = new google.maps.DirectionsRenderer();
+          directionsRenderer.setMap(map);
+
+          const request = {
+            origin: {
+              lat: startPlace.coordinates[1],
+              lng: startPlace.coordinates[0],
+            },
+            destination: {
+              lat: endPlace.coordinates[1],
+              lng: endPlace.coordinates[0],
+            },
+            travelMode: google.maps.TravelMode.DRIVING,
+          };
+
+          directionsService.route(request, (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK) {
+              directionsRenderer.setDirections(result);
+            } else {
+              console.error("Error with directions:", status);
+            }
+          });
+        } catch (error) {
+          console.error("Error getting directions:", error);
+        }
+      }
+
+      getDirections();
+
+      // Obsługa socketów
+      socket.emit("joinTrip", tripId);
+
+      socket.on("existingMarkers", (markers: { lat: number; lng: number }[]) => {
+        markers.forEach(({ lat, lng }) => {
+          new google.maps.Marker({ position: { lat, lng }, map });
+        });
+      });
+
+      socket.on("newMarker", (marker: { lat: number; lng: number }) => {
+        new google.maps.Marker({ position: { lat: marker.lat, lng: marker.lng }, map });
+      });
+
+      // Markery z selectedPlaces
+      selectedPlaces.forEach((cityObj) => {
+        cityObj.places.forEach((place) => {
+          if (
+            !place.coordinates ||
+            place.coordinates.length !== 2 ||
+            typeof place.coordinates[0] !== "number" ||
+            typeof place.coordinates[1] !== "number"
+          )
+            return;
+
+          const color =
+            place.type === "Start"
+              ? "#f59e0b"
+              : place.type === "End"
+              ? "#f43f5e"
+              : "#f97316";
+
+          new google.maps.Marker({
+            position: { lat: place.coordinates[1], lng: place.coordinates[0] },
+            map,
+            title: place.name,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: color,
+              fillOpacity: 1,
+              scale: 8,
+              strokeColor: "white",
+              strokeWeight: 2,
+            },
+          });
+        });
+      });
+
+      return () => {
+        socket.off("existingMarkers");
+        socket.off("newMarker");
+        mapRef.current = null;
+      };
     });
+  }, [selectedPlaces, tripId, mapRef, socket]);
 
-    // Odbieranie nowych markerów (dodanych przez innych użytkowników)
-    socket.on('newMarker', (marker: { lng: number; lat: number }) => {
-      new mapboxgl.Marker().setLngLat([marker.lng, marker.lat]).addTo(map);
-    });
-
-    // Dodawanie nowego markera na kliknięcie mapy
-    map.on('click', (event) => {
-      if (!event.lngLat) return;
-      const { lng, lat } = event.lngLat;
-
-      new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-
-      if (tripId) socket.emit('addMarker', { tripId, marker: { lng, lat } });
-    });
-
-    return () => {
-      socket.off('existingMarkers');
-      socket.off('newMarker');
-      map.remove();
-    };
-  }, [tripId, mapRef, socket]);
-
-  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={mapContainerRef} className="h-[92vh] w-full" />;
 }

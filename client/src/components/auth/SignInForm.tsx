@@ -1,12 +1,11 @@
 "use client";
-import { login } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/client";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { useEffect } from "react";
-import { FaPlane, FaRegFlag } from "react-icons/fa";
+import { FaPlane} from "react-icons/fa";
 
 export function SignInForm() {
     const router = useRouter();
@@ -30,33 +29,42 @@ export function SignInForm() {
     
               if (signInError) {
                 console.error("Error signing in with Google", signInError);
-              } else {
-                router.push("/dashboard?user_id=" + signInData?.user.id);
               }
 
-              const responseLogin = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/loginGoogle`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    response: response,
-                }),
-            });
-        
-            const data = await responseLogin.json();
-            if (!responseLogin.ok) {
-                throw new Error(data.error || "Login failed");
-            } else {
-              console.log("Login successful", data);
-            }       
-
+              if (signInData?.session?.access_token) {
+                await fetch('/api/auth/loginGoogle', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: signInData.session.access_token }),
+                });
+                localStorage.setItem("user_id", signInData.user.id);
+                router.push("/dashboard");
+              }
             } catch (error) {
               console.error("Error signing in with Google", error);
             }
           };
         }
       }, [router]);
+
+      const handleLogin = async (formData: FormData) => {
+        console.log("Logging in with email and password");
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          body: formData,
+        });
+        
+        console.log("Response from login API:", res);
+        if (res.ok) {
+          const data = await res.json();
+          const userId = res.headers.get("X-user-id");
+          localStorage.setItem("user_id", userId || "");
+          window.location.href = "/dashboard";
+        } else {
+          alert("Błędne dane logowania");
+        }
+      };
+      
   
     return (
               <div className="max-w-md w-full p-8">
@@ -102,7 +110,7 @@ export function SignInForm() {
                   <div className="border-t flex-grow border-[#C6D7C6]"></div>
                 </div>
           
-                <form>
+                <form onSubmit={(e) => { e.preventDefault(); handleLogin(new FormData(e.currentTarget)); }} className="space-y-4">
                   <div className="mb-4">
                     <label className="block text-sm font-bold text-[#142F32] mb-1">Email*</label>
                     <input
@@ -132,7 +140,6 @@ export function SignInForm() {
                   <button
                     type="submit"
                     className="w-full bg-[#FF7F50] text-white py-2 px-4 rounded-md shadow-lg hover:bg-[#FF6347]"
-                    formAction={login}
                   >
                     Continue
                   </button>

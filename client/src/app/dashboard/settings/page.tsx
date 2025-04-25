@@ -8,5 +8,5 @@ export default async function SettingsPage() {
     <Suspense fallback={<p>Loading...</p>}>
       <Settings user={user} />
     </Suspense>
-);
-} 
+  );
+}

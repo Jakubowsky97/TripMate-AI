@@ -37,7 +37,7 @@ export default function SidebarRight({ activeUsers, localData } : { activeUsers:
   };
 
   return (
-    <div className="w-1/5 bg-white overflow-y-auto flex flex-col">
+    <div className="w-1/5 bg-white overflow-y-auto flex flex-col h-screen pt-20">
       <h2 className="text-lg font-semibold mb-4 p-4 pb-0">Group Chat</h2>
       <div className="flex pl-4 pb-4 gap-3 items-center">
         <UserAvatars users={activeUsers} size={8} />

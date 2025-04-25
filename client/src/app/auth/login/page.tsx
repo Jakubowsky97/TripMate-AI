@@ -7,7 +7,7 @@ export default async function LoginPage() {
   
   const { data, error } = await supabase.auth.getUser()
   if (data?.user) {
-    redirect('/dashboard?user_id=' + data.user.id)
+    redirect('/dashboard')
   }
   return (
     <div className="min-h-screen flex bg-white">      

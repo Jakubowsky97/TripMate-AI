@@ -1,10 +1,14 @@
+// File: server/src/controllers/profileController.ts
+
 import { Request, Response } from "express";
 import supabase from "../utils/supabase";
+import { AuthenticatedRequest } from "../middleware/auth";
 
 
-export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
+export const updateUserProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const { user_id, username, avatar_url, email, full_name } = req.body;  
+        const { username, avatar_url, email, full_name } = req.body;
+        const user_id = req.user?.sub;
 
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
@@ -59,9 +63,9 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     }
 };
 
-export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
+export const getUserProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const { user_id } = req.query;  
+        const user_id = req.user?.sub;
 
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
@@ -84,9 +88,9 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
     }
 };
 
-export const getPreferences = async (req: Request, res: Response): Promise<void>=> {
+export const getPreferences = async (req: AuthenticatedRequest, res: Response): Promise<void>=> {
     try {
-        const { user_id } = req.query;
+        const user_id = req.user?.sub;
     
         if (!user_id || typeof user_id !== "string") {
         res.status(400).json({ error: "Missing or invalid user_id parameter" });
@@ -109,9 +113,10 @@ export const getPreferences = async (req: Request, res: Response): Promise<void>
     }
   };
 
-  export const updatePreferences = async (req: Request, res: Response): Promise<void> => {
+  export const updatePreferences = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const { user_id, ...updatedPreferences } = req.body;
+        const { ...updatedPreferences } = req.body;
+        const user_id = req.user?.sub;
 
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });

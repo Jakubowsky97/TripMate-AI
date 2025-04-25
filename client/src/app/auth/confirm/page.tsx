@@ -31,7 +31,10 @@ const ConfirmPageContent = () => {
 
             try {
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/confirm?token_hash=${token_hash}&type=${type}&next=${next}&user_id=${user_id}`
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/confirm?token_hash=${token_hash}&type=${type}&next=${next}`,
+                    {
+                        credentials: "include",
+                    }
                 );
 
                 const data = await response.json();

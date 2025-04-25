@@ -6,7 +6,7 @@ export default async function RegisterPage() {
   
   const { data, error } = await supabase.auth.getUser()
   if (data?.user) {
-    redirect('/dashboard?user_id=' + data.user.id)
+    redirect('/dashboard')
   }
   redirect("/auth/register/step-1");
 }

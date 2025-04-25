@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import PreferenceCard from "../auth/PreferenceCard";
 import { useSearchParams } from "next/navigation";
-import { useDarkMode } from "../ui/DarkModeContext";
+import { useDarkMode } from "@/hooks/useDarkMode";
 
 interface Preferences {
     [key: string]: string[];
   }
 
-
-  // TODO: wyswitlac preferencje dodane przez uzytkownika
 export default function PreferencesPage() {
-    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
@@ -22,17 +19,23 @@ export default function PreferencesPage() {
         favorite_types_of_attractions: [],
       });  
     const { darkMode }= useDarkMode();
-    
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+      setUserId(localStorage.getItem("user_id"));
+    }, []);
+
     useEffect(() => {
         const fetchPreferences = async () => {
-            const userId = searchParams.get("user_id");
             if (!userId) {
                 setError("Missing or invalid user_id");
                 setLoading(false);
                 return;
             }
             try {
-              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getPreferences?user_id=${userId}`);
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/getPreferences`, {
+                credentials: "include",
+              });
           
               if (!response.ok) {
                 throw new Error("Failed to fetch preferences");
@@ -58,9 +61,11 @@ export default function PreferencesPage() {
                 setLoading(false);
             }
         };
-
-        fetchPreferences();
-    }, [searchParams]);
+        
+        if(userId) {
+          fetchPreferences();
+        }
+    }, [userId]);
 
     
       const handlePreferenceChange = (category: string, option: string) => { 
@@ -118,7 +123,6 @@ export default function PreferencesPage() {
         
         try {
             setLoading(true);
-            const userId = searchParams.get("user_id");
             if (!userId) {
                 setError("Missing or invalid user_id");
                 setLoading(false);
@@ -130,9 +134,9 @@ export default function PreferencesPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    user_id: userId,
                     ...updatedPreferences,
                 }),
+                credentials: "include",
             });
         } catch (error) {
             console.error("Error updating preferences:", error);

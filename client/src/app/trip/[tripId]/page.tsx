@@ -19,6 +19,16 @@ interface UserData {
   email: string;
 }
 
+export interface Message {
+  id: string; // UUID
+  trip_id: string;
+  user_id: string;
+  text: string;
+  created_at: string; // ISO string
+  user?: UserData; // Dodawane opcjonalnie z relacji
+}
+
+
 const socket = io(process.env.NEXT_PUBLIC_API_URL);
 
 // Lazy load TripHeader to prevent SSR issues
@@ -75,7 +85,7 @@ export default function TripPage() {
       }
     };
     checkSession();
-  }, []); 
+  }, []);
 
   // Socket connection cleanup
   useEffect(() => {
@@ -214,11 +224,10 @@ export default function TripPage() {
       }
     };
 
-    if(userId) {
+    if (userId) {
       fetchUserData();
       getTripData();
     }
-
   }, [searchParams, tripId, userId]);
 
   useEffect(() => {
@@ -376,6 +385,7 @@ export default function TripPage() {
 
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
   const [inactiveUsers, setInactiveUsers] = useState<UserData[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     if (localData.id) {
@@ -384,7 +394,191 @@ export default function TripPage() {
     setAllUsers([...activeUsers, ...inactiveUsers]);
   }, [localData]);
 
+  useEffect(() => {
+    if (!tripId || !localData.id) return;
+  
+    // Presence channel
+    const presence = supabase
+      .channel(`presence-trip-${tripId}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = presence.presenceState();
+        // Transform the presence state into UserData objects
+        const presentUsers: UserData[] = [localData]; // Always include local user
+        
+        // Each key in the state object contains an array of presence objects
+        Object.values(state).forEach((userInstances: any[]) => {
+          userInstances.forEach((instance) => {
+            // Only add if the instance contains the required UserData properties and it's not the local user
+            if (
+              instance.id && 
+              instance.id !== localData.id && // Prevent duplicates of local user
+              instance.avatar_url && 
+              instance.full_name && 
+              instance.username && 
+              instance.email
+            ) {
+              // Check if this user is already in our presentUsers array
+              const existingIndex = presentUsers.findIndex(u => u.id === instance.id);
+              if (existingIndex === -1) {
+                presentUsers.push({
+                  id: instance.id,
+                  avatar_url: instance.avatar_url,
+                  full_name: instance.full_name,
+                  username: instance.username,
+                  email: instance.email
+                });
+              }
+            }
+          });
+        });
+        
+        setActiveUsers(presentUsers);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presence.track({
+            id: localData.id,
+            avatar_url: localData.avatar_url,
+            full_name: localData.full_name,
+            username: localData.username,
+            email: localData.email,
+            joined_at: new Date().toISOString(),
+          });
+        }
+      });
+  
+    // Cleanup presence on unmount
+    return () => {
+      presence.unsubscribe();
+    };
+  }, [tripId, localData]);
+
+  const fetchUserAvatars = async (userId: string) => {
+    try {
+      // Find if user already exists in activeUsers
+      const existingUser = activeUsers.find(u => u.id === userId);
+      if (existingUser) return existingUser;
+  
+      // If not, fetch user data
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error || !data) {
+        console.error("Error fetching user data:", error);
+        return null;
+      }
+      
+      // Download avatar
+      const { data: avatarData, error: avatarError } = await supabase.storage
+        .from("avatars")
+        .download(data.avatar_url);
+        
+      if (avatarError) {
+        console.error("Error downloading avatar:", avatarError);
+        return {
+          id: data.id,
+          full_name: data.full_name,
+          username: data.username,
+          email: data.email,
+          avatar_url: ""
+        };
+      }
+      
+      const url = URL.createObjectURL(avatarData);
+      
+      return {
+        id: data.id,
+        full_name: data.full_name,
+        username: data.username,
+        email: data.email,
+        avatar_url: url
+      };
+    } catch (err) {
+      console.error("Error in fetchUserAvatars:", err);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!tripId) return;
+  
+    // Chat channel
+    const chat = supabase
+      .channel(`chat-trip-${tripId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `trip_id=eq.${tripId}` }, async ({ new: msg }) => {
+        // If the message is from another user, fetch their data
+        if (msg.user_id !== localData.id) {
+          const userData = await fetchUserAvatars(msg.user_id);
+          if (userData) {
+            // Add to activeUsers if not already there
+            setActiveUsers(prev => {
+              if (!prev.some(u => u.id === userData.id)) {
+                return [...prev, userData];
+              }
+              return prev;
+            });
+          }
+        }
+        setMessages(prev => [...prev, msg as Message]);
+      })
+      .subscribe();
+  
+    // Initial load of messages
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('created_at', { ascending: true });
+      
+      if (data && data.length > 0) {
+        // Create a set of unique user IDs from messages
+        const userIds = new Set(data.map(msg => msg.user_id));
+        
+        // Fetch user data for each unique user ID
+        const userPromises = Array.from(userIds).map(async userId => {
+          if (userId === localData.id) return localData;
+          return await fetchUserAvatars(userId);
+        });
+        
+        const users = await Promise.all(userPromises);
+        const validUsers = users.filter(u => u !== null) as UserData[];
+        
+        // Update active users with message senders
+        setActiveUsers(prev => {
+          const newUsers = [...prev];
+          validUsers.forEach(user => {
+            if (!newUsers.some(u => u.id === user.id)) {
+              newUsers.push(user);
+            }
+          });
+          return newUsers;
+        });
+        
+        setMessages(data);
+      }
+    };
+    
+    loadMessages();
+  
+    return () => {
+      chat.unsubscribe();
+    };
+  }, [tripId, localData.id]);
+
+  const sendMessage = async (text: string) => {
+    if (!localData) return;
+    await supabase.from('messages').insert([
+      { trip_id: tripId, user_id: localData.id, text }
+    ]);
+  };
+
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
+
+  console.log("Active users:", activeUsers);
 
   const [selectedPlaces, setSelectedPlaces] = useState<
     {
@@ -406,6 +600,47 @@ export default function TripPage() {
     }[]
   >([]);
 
+  const placeTypes = [
+    { label: "Cafés", type: "cafe" },
+    { label: "Attractions", type: "tourist_attraction" },
+    { label: "Groceries", type: "supermarket" },
+  ];
+
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+
+  const handlePlaceTypeClick = async (type: string) => {
+    const center = mapRef.current?.getCenter();
+    if (!center) return;
+
+    const placesService = new google.maps.places.PlacesService(
+      mapRef.current as google.maps.Map
+    );
+
+    const request = {
+      location: center,
+      radius: 2000,
+      type: type,
+    };
+
+    placesService.nearbySearch(request, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        const container = document.getElementById("place-list-container");
+        if (container) {
+          container.innerHTML = "";
+          results.forEach((place) => {
+            const placeElement = document.createElement("div");
+            placeElement.textContent = place.name || "Unknown Place";
+            container.appendChild(placeElement);
+          });
+        }
+      } else {
+        console.error("Failed to fetch places:", status);
+      }
+    });
+
+    setSelectedType(type);
+  };
+
   if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;
   if (!tripId) return <p>Ładowanie...</p>;
   if (loading) return <p>Loading user data...</p>;
@@ -421,8 +656,32 @@ export default function TripPage() {
         allUsers={allUsers}
       />
       <div className="flex flex-1">
-        <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef} />
-        <div className="flex-grow h-full pt-18">
+        <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef} setSelectedPlaces={setSelectedPlaces} />
+        <div className="flex-grow h-full pt-18 relative">
+          {/* 1. Przyciski kategorii */}
+          <div className="absolute z-30 top-4 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow p-2 flex gap-4">
+            {placeTypes.map((p) => (
+              <button
+                key={p.type}
+                onClick={() => handlePlaceTypeClick(p.type)}
+                className={`px-4 py-2 rounded font-medium ${
+                  selectedType === p.type
+                    ? "bg-orange-600 text-white"
+                    : "bg-orange-500 text-white hover:bg-orange-600"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 2. Kontener na PlaceList */}
+          <div
+            id="place-list-container"
+            className="absolute z-30 bottom-4 left-1/2 -translate-x-1/2 w-[400px] max-h-[300px] overflow-y-auto bg-white rounded shadow p-2"
+          />
+
+          {/* 3. Twoja mapa */}
           <TripMap
             tripId={tripId}
             mapRef={mapRef}
@@ -430,7 +689,8 @@ export default function TripPage() {
             selectedPlaces={selectedPlaces}
           />
         </div>
-        <SidebarRight activeUsers={activeUsers} localData={localData} />
+
+        <SidebarRight activeUsers={activeUsers} localData={localData} onSendMessage={sendMessage} messages={messages}/>
       </div>
     </div>
   );

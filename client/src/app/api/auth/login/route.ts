@@ -27,9 +27,9 @@ export async function POST(req: Request) {
   response.cookies.set("access_token", accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: "none",
     path: "/",
-    maxAge: 60 * 60 * 24, // 1 dzień
+    maxAge: 1000 * 60 * 60 * 24, // 1 dzień
   });
 
   response.headers.set("X-user-id", data.user.id); 

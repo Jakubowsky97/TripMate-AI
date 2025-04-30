@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: 1000 * 60 * 60 * 24, // 1 dzień
+    maxAge: 60 * 60 * 24, // 1 dzień
   });
 
   response.headers.set("X-user-id", data.user.id); 

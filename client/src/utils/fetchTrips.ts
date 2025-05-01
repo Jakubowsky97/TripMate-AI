@@ -60,7 +60,7 @@ const fetchOwnerData = async (ownerId: string) => {
   if (!ownerId) return "Unknown Owner"; // Jeśli brak właściciela, zwróć 'Unknown Owner'
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getUser`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/trip/getUserData?user_id=${ownerId}`,
     {
       credentials: 'include', // Pamiętamy o ciasteczkach!
     }
@@ -105,9 +105,10 @@ export const fetchTripsFromFriends = async () => {
             imageUrl = signedUrlData.signedUrl;
           }
         }
-
         // Pobieramy dane właściciela
         const owner = await fetchOwnerData(item.profiles_travel_data[0].profiles.id);
+
+        console.log("Owner data:", owner);
 
         return {
           id: item.id,

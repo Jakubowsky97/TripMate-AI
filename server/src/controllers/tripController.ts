@@ -235,3 +235,79 @@ export const updateTravelData = async (trip_id: string, { ...travelData }: Trave
 
   console.log("Travel data saved successfully", data);
 };
+
+export const joinTrip = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.sub;
+    const { trip_code } = req.body;
+
+    if (!user_id || typeof trip_code !== "string" || trip_code.length !== 6) {
+      res.status(400).json({ error: "Invalid user_id or trip_code" });
+      return;
+    }
+
+    // Sprawdź, czy taka wycieczka istnieje
+    const { data: trip, error: tripError } = await supabase
+      .from("travel_data")
+      .select("id, friends_list")
+      .eq("trip_code", trip_code)
+      .single();
+
+    if (tripError || !trip) {
+      res.status(404).json({ error: "Trip not found with provided code" });
+      return;
+    }
+
+    // Sprawdź, czy użytkownik już dołączył
+    const alreadyJoined = trip.friends_list?.includes(user_id);
+    if (alreadyJoined) {
+      res.status(400).json({ error: "User already joined this trip" });
+      return;
+    }
+
+    // Dodaj użytkownika do listy znajomych (friends_list)
+    const updatedFriendsList = [...(trip.friends_list || []), user_id];
+
+    const { error: updateError } = await supabase
+      .from("travel_data")
+      .update({ friends_list: updatedFriendsList })
+      .eq("id", trip.id);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    res.status(200).json({ message: "Successfully joined the trip", trip_id: trip.id });
+  } catch (error) {
+    console.error("Join trip error:", error);
+    res.status(500).json({ error: "Internal server error", details: (error as Error).message });
+  }
+};
+
+export const getUserProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+      const user_id = req.query.user_id as string;
+
+      if (!user_id || typeof user_id !== "string") {
+          res.status(400).json({ error: "Missing or invalid user_id" });
+          return;
+      }
+
+      const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user_id);
+
+      if (error) {
+          res.status(500).json({ error: "Error updating user profile", details: error.message });
+          return;
+      }
+
+      res.status(200).json({ message: "User profile updated successfully", data });
+  } catch (err) {
+      res.status(500).json({ error: "Internal server error", details: err });
+  }
+};

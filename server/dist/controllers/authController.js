@@ -3,11 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginWithGoogle = exports.login = exports.saveUserPreferences = exports.checkEmailVerification = exports.confirmEmail = void 0;
+exports.saveUserPreferences = exports.checkEmailVerification = exports.confirmEmail = void 0;
 const supabase_1 = __importDefault(require("../utils/supabase"));
+// Potwierdzenie adresu e-mail
 const confirmEmail = async (req, res) => {
     try {
-        const { token_hash, type, next, user_id } = req.query;
+        const { token_hash, type, next: nextQuery } = req.query;
+        const user_id = req.user?.sub; // Pobieramy user_id z JWT
         if (!user_id) {
             res.status(400).json({ error: "Unable to get user" });
             return;
@@ -24,7 +26,6 @@ const confirmEmail = async (req, res) => {
             res.status(400).json({ error: error.message });
             return;
         }
-        // Aktualizacja statusu potwierdzenia
         const { error: updateError } = await supabase_1.default
             .from("profiles")
             .update({ isConfirmed: true })
@@ -32,17 +33,25 @@ const confirmEmail = async (req, res) => {
         if (updateError) {
             console.error("Error updating email confirmation status:", updateError);
             res.status(500).json({ message: "Failed to update confirmation status" });
+            return;
         }
-        res.status(200).json({ message: "Email confirmed successfully", success: true, next: next || "/" });
+        res.status(200).json({ message: "Email confirmed successfully", success: true, next: nextQuery || "/" });
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Internal server error" });
+        return;
     }
 };
 exports.confirmEmail = confirmEmail;
+// Sprawdzenie statusu weryfikacji e-mail
 const checkEmailVerification = async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const user_id = req.user?.sub; // Pobieramy user_id z JWT
+        if (!user_id) {
+            res.status(400).json({ error: "Unable to get user" });
+            return;
+        }
         const { data, error } = await supabase_1.default
             .from("profiles")
             .select("isConfirmed")
@@ -60,29 +69,32 @@ const checkEmailVerification = async (req, res) => {
     }
     catch (err) {
         console.error("Error:", err);
+        res.status(500).json({ error: "Internal server error" });
         return;
     }
 };
 exports.checkEmailVerification = checkEmailVerification;
+// Zapisanie preferencji użytkownika
 const saveUserPreferences = async (req, res) => {
     try {
-        const { userId, preferences } = req.body;
-        if (!userId || !preferences) {
+        const user_id = req.user?.sub; // Pobieramy user_id z JWT
+        const { preferences } = req.body;
+        if (!user_id || !preferences) {
             res.status(400).json({ error: "Missing user ID or preferences" });
             return;
         }
         const { data, error } = await supabase_1.default
-            .from('user_travel_preferences')
+            .from("user_travel_preferences")
             .upsert([
             {
-                id: userId,
+                id: user_id,
                 travel_interests: preferences.travel_interests || [],
                 travel_style: preferences.travel_style || [],
                 preferred_transport: preferences.preferred_transport || [],
                 preferred_accommodation: preferences.preferred_accommodation || [],
                 favorite_types_of_attractions: preferences.favorite_types_of_attractions || [],
-            }
-        ], { onConflict: 'id' });
+            },
+        ], { onConflict: "id" });
         if (error) {
             console.error("Supabase Error: ", error);
             res.status(500).json({ error: error.message || "Failed to save preferences" });
@@ -91,51 +103,9 @@ const saveUserPreferences = async (req, res) => {
         res.status(200).json({ message: "Preferences saved successfully", data });
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({ error: "Internal server error" });
+        return;
     }
 };
 exports.saveUserPreferences = saveUserPreferences;
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            res.status(400).json({ error: "Missing email or password" });
-            return;
-        }
-        const { data, error } = await supabase_1.default.auth.signInWithPassword({
-            email,
-            password,
-        });
-        if (error) {
-            res.status(401).json({ error: error.message });
-            return;
-        }
-        // Zapisz tokeny w ciasteczkach, które będą dostępne w przyszłych żądaniach
-        res.cookie("access_token", data?.session?.access_token, { httpOnly: true, secure: true });
-        res.cookie("refresh_token", data?.session?.refresh_token, { httpOnly: true, secure: true });
-        res.status(200).json({ message: "Login successful", user: data.user });
-    }
-    catch (err) {
-        res.status(500).json({ error: "Internal server error", details: err });
-    }
-};
-exports.login = login;
-const loginWithGoogle = async (req, res) => {
-    const { response } = req.body;
-    try {
-        const { data: signInData, error: signInError } = await supabase_1.default.auth.signInWithIdToken({
-            provider: "google",
-            token: response.credential,
-        });
-        if (signInError) {
-            res.status(500).json({ error: "Error signing in with Google", details: signInError });
-        }
-        else {
-            res.status(200).json({ message: "Login successful", user: signInData?.user });
-        }
-    }
-    catch (error) {
-        res.status(500).json({ error: "Error signing in with Google", details: error });
-    }
-};
-exports.loginWithGoogle = loginWithGoogle;

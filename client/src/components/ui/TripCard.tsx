@@ -42,7 +42,7 @@ export default function TripCard({
 }: TripCardProps) {
   const supabase = createClient();
   const [ownerAvatar, setOwnerAvatar] = useState<string | null>(null);
-
+  
   useEffect(() => {
     const fetchOwnerAvatar = async () => {
       const { data: avatarData, error } = await supabase.storage

@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const profileController_1 = require("../controllers/profileController");
+const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-router.get("/getUser", profileController_1.getUserProfile);
-router.post("/updateUser", profileController_1.updateUserProfile);
-router.get("/getPreferences", profileController_1.getPreferences);
-router.post("/updatePreferences", profileController_1.updatePreferences);
-router.get("/getFriendsData", profileController_1.getFriendsData);
+router.get("/getUser", auth_1.authenticate, profileController_1.getUserProfile);
+router.post("/updateUser", auth_1.authenticate, profileController_1.updateUserProfile);
+router.get("/getPreferences", auth_1.authenticate, profileController_1.getPreferences);
+router.post("/updatePreferences", auth_1.authenticate, profileController_1.updatePreferences);
+router.get("/getFriendsData", auth_1.authenticate, profileController_1.getFriendsData);
 exports.default = router;

@@ -1,4 +1,5 @@
 "use strict";
+// File: server/src/controllers/profileController.ts
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,7 +8,8 @@ exports.getFriendsData = exports.updatePreferences = exports.getPreferences = ex
 const supabase_1 = __importDefault(require("../utils/supabase"));
 const updateUserProfile = async (req, res) => {
     try {
-        const { user_id, username, avatar_url, email, full_name } = req.body;
+        const { username, avatar_url, email, full_name } = req.body;
+        const user_id = req.user?.sub;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;
@@ -57,7 +59,7 @@ const updateUserProfile = async (req, res) => {
 exports.updateUserProfile = updateUserProfile;
 const getUserProfile = async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const user_id = req.user?.sub;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;
@@ -79,7 +81,7 @@ const getUserProfile = async (req, res) => {
 exports.getUserProfile = getUserProfile;
 const getPreferences = async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const user_id = req.user?.sub;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id parameter" });
             return;
@@ -101,7 +103,8 @@ const getPreferences = async (req, res) => {
 exports.getPreferences = getPreferences;
 const updatePreferences = async (req, res) => {
     try {
-        const { user_id, ...updatedPreferences } = req.body;
+        const { ...updatedPreferences } = req.body;
+        const user_id = req.user?.sub;
         if (!user_id || typeof user_id !== "string") {
             res.status(400).json({ error: "Missing or invalid user_id" });
             return;

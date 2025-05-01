@@ -11,18 +11,23 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const profile_1 = __importDefault(require("./routes/profile"));
 const trip_1 = __importDefault(require("./routes/trip"));
 const socket_io_1 = require("socket.io");
+const chat_1 = __importDefault(require("./routes/chat"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
 const server = (0, node_http_1.createServer)(app);
 const corsOptions = {
     origin: `${env_1.APP_URL}`,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     optionsSuccessStatus: 200,
+    credentials: true,
 };
 app.use((0, cors_1.default)(corsOptions));
+app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use('/api/auth', auth_1.default);
 app.use('/api/profile', profile_1.default);
 app.use('/api/trip', trip_1.default);
+app.use('/api/chat', chat_1.default);
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: `${env_1.APP_URL}`,

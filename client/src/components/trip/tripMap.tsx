@@ -63,20 +63,34 @@ export default function TripMap({
 
       async function getDirections() {
         try {
-          const startPlace = selectedPlaces[0]?.places[0];
+          // Extract the start place (first place in the first city)
+          const startPlace = selectedPlaces[0]?.places.find((place) => place.is_start_point);
+      
+          // Extract the end place (last place in the last city)
           const lastCity = selectedPlaces[selectedPlaces.length - 1];
           const endPlace = lastCity?.places[lastCity.places.length - 1];
-
+      
           if (!startPlace || !endPlace) {
-            console.warn("Brakuje punktów startowych lub końcowych");
+            console.warn("Missing start or end points");
             return;
           }
-
+      
+          // Collect waypoints from intermediate places
+          const waypoints = selectedPlaces
+            .flatMap((cityObj) =>
+              cityObj.places
+                .filter((place) => !place.is_start_point && !place.is_end_point) // Exclude start and end points
+                .map((place) => ({
+                  location: { lat: place.coordinates[1], lng: place.coordinates[0] },
+                  stopover: true, // Indicates that this is a stopover point
+                }))
+            );
+      
           const directionsService = new google.maps.DirectionsService();
-          const directionsRenderer = new google.maps.DirectionsRenderer();
+          const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
           directionsRenderer.setMap(map);
-
-          const request = {
+      
+          const request: google.maps.DirectionsRequest = {
             origin: {
               lat: startPlace.coordinates[1],
               lng: startPlace.coordinates[0],
@@ -85,9 +99,10 @@ export default function TripMap({
               lat: endPlace.coordinates[1],
               lng: endPlace.coordinates[0],
             },
+            waypoints: waypoints, // Add waypoints here
             travelMode: google.maps.TravelMode.DRIVING,
           };
-
+      
           directionsService.route(request, (result, status) => {
             if (status === google.maps.DirectionsStatus.OK) {
               directionsRenderer.setDirections(result);
@@ -99,6 +114,7 @@ export default function TripMap({
           console.error("Error getting directions:", error);
         }
       }
+      
 
       getDirections();
 
@@ -133,7 +149,7 @@ export default function TripMap({
               ? "#f43f5e"
               : "#f97316";
 
-          new google.maps.Marker({
+          const marker = new google.maps.Marker({
             position: { lat: place.coordinates[1], lng: place.coordinates[0] },
             map,
             title: place.name,
@@ -145,6 +161,30 @@ export default function TripMap({
               strokeColor: "white",
               strokeWeight: 2,
             },
+          });
+
+          // Create an InfoWindow for the marker
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div>
+                <h3>${place.name}</h3>
+                <p><strong>City:</strong> ${place.city}</p>
+                <p><strong>Country:</strong> ${place.country}</p>
+                <p><strong>Type:</strong> ${place.type}</p>
+                <p><strong>Weather:</strong> ${place.weather.temp}°C, ${place.weather.condition}</p>
+                <p><strong>Date:</strong> ${place.date}</p>
+              </div>
+            `,
+          });
+
+          // Add a click listener to the marker to show the InfoWindow
+          marker.addListener("click", () => {
+            infoWindow.open(map, marker);
+            if (mapRef.current && place.coordinates?.length === 2) {
+              const latLng = new google.maps.LatLng(place.coordinates[1], place.coordinates[0])
+              mapRef.current.panTo(latLng)
+              mapRef.current.setZoom(16)
+            }
           });
         });
       });

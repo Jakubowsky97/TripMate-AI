@@ -296,7 +296,7 @@ export default function TripPage() {
       ) {
         throw new Error("Nie udało się pobrać współrzędnych z Google Maps");
       }
-
+      console.log(coordinatesResponse)
       const location = coordinatesResponse.data.results[0].geometry.location;
       const coordinates = [location.lng, location.lat]; // dopasowane do mapRef
 
@@ -600,47 +600,6 @@ export default function TripPage() {
     }[]
   >([]);
 
-  const placeTypes = [
-    { label: "Cafés", type: "cafe" },
-    { label: "Attractions", type: "tourist_attraction" },
-    { label: "Groceries", type: "supermarket" },
-  ];
-
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-
-  const handlePlaceTypeClick = async (type: string) => {
-    const center = mapRef.current?.getCenter();
-    if (!center) return;
-
-    const placesService = new google.maps.places.PlacesService(
-      mapRef.current as google.maps.Map
-    );
-
-    const request = {
-      location: center,
-      radius: 2000,
-      type: type,
-    };
-
-    placesService.nearbySearch(request, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        const container = document.getElementById("place-list-container");
-        if (container) {
-          container.innerHTML = "";
-          results.forEach((place) => {
-            const placeElement = document.createElement("div");
-            placeElement.textContent = place.name || "Unknown Place";
-            container.appendChild(placeElement);
-          });
-        }
-      } else {
-        console.error("Failed to fetch places:", status);
-      }
-    });
-
-    setSelectedType(type);
-  };
-
   if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;
   if (!tripId) return <p>Ładowanie...</p>;
   if (loading) return <p>Loading user data...</p>;
@@ -658,30 +617,6 @@ export default function TripPage() {
       <div className="flex flex-1">
         <SidebarLeft selectedPlaces={selectedPlaces} mapRef={mapRef} setSelectedPlaces={setSelectedPlaces} />
         <div className="flex-grow h-full pt-18 relative">
-          {/* 1. Przyciski kategorii */}
-          <div className="absolute z-30 top-4 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow p-2 flex gap-4">
-            {placeTypes.map((p) => (
-              <button
-                key={p.type}
-                onClick={() => handlePlaceTypeClick(p.type)}
-                className={`px-4 py-2 rounded font-medium ${
-                  selectedType === p.type
-                    ? "bg-orange-600 text-white"
-                    : "bg-orange-500 text-white hover:bg-orange-600"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          {/* 2. Kontener na PlaceList */}
-          <div
-            id="place-list-container"
-            className="absolute z-30 bottom-4 left-1/2 -translate-x-1/2 w-[400px] max-h-[300px] overflow-y-auto bg-white rounded shadow p-2"
-          />
-
-          {/* 3. Twoja mapa */}
           <TripMap
             tripId={tripId}
             mapRef={mapRef}

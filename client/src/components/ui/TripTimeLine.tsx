@@ -92,7 +92,7 @@ const DraggableItem = ({ cityIndex, index, place, cityObj, mapRef }: any) => {
         }`}
         onClick={() => {
           if (mapRef.current && place.coordinates?.length === 2) {
-            const latLng = new google.maps.LatLng(place.coordinates[0], place.coordinates[1])
+            const latLng = new google.maps.LatLng(place.coordinates[1], place.coordinates[0])
             mapRef.current.panTo(latLng)
             mapRef.current.setZoom(16)
           }

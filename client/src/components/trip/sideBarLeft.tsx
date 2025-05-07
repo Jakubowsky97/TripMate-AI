@@ -15,28 +15,13 @@ interface SidebarLeftProps {
 export default function SidebarLeft({ mapRef, selectedPlaces }: SidebarLeftProps) {
   const [view, setView] = useState<"timeline" | "search">("timeline");
 
-  const handleSearch = async () => {
-    if (!mapRef.current) return;
-    const center = mapRef.current.getCenter();
-    if (!center) return;
-
-    const lib = (await google.maps.importLibrary("places")) as any;
-    const PlaceListElement = lib.PlaceListElement;
-
-    // Create and mount the PlaceList
-    const listEl = new PlaceListElement({
-      locationRestriction: { center: center.toJSON(), radius: 2000 },
-      includedTypes: [], // fetch all types if empty
-      maxResultCount: 20,
-    });
-
-    const container = document.getElementById("place-list-container")!;
-    container.innerHTML = "";
-    container.appendChild(listEl);
-    setView("search");
+  const handleBack = () => {
+    setView("timeline");
+    const placeListContainer = document.getElementById("place-list-container");
+    if (placeListContainer) {
+      placeListContainer.innerHTML = ""; // Wyczyść zawartość kontenera
+    }
   };
-
-  const handleBack = () => setView("timeline");
 
   return (
     <div className="w-1/5 xl:w-[30%] 2xl:w-1/5 p-4 overflow-y-auto h-screen pt-24 scrollbar-hide">
@@ -50,11 +35,7 @@ export default function SidebarLeft({ mapRef, selectedPlaces }: SidebarLeftProps
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >
-            {/* Zakładamy, że TripTimeLine jest renderowane w TripPage */}
-            <Button className="w-full" onClick={handleSearch}>
-              Wyszukaj miejsca
-            </Button>
-            <TripTimeLine selectedPlaces={selectedPlaces} mapRef={mapRef} />
+            <TripTimeLine selectedPlaces={selectedPlaces} mapRef={mapRef}  />
           </motion.div>
         )}
 

@@ -7,19 +7,25 @@ import { FaPaperPlane } from "react-icons/fa";
 import { FaRegImage } from "react-icons/fa6";
 import { useSearchParams } from "next/navigation";
 
+interface ChatMessage {
+  text: string;
+  sender: "user" | "assistant";
+  type?: "message" | "places";
+  places?: {
+    name: string;
+    description?: string;
+    location: { lat: number; lng: number };
+    place_id: string;
+  }[];
+}
+
 const Chatbot = () => {
   const [userMessage, setUserMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [tripId, setTripId] = useState("");
   const [userId, setUserId] = useState("");
   const searchParams = useSearchParams();
-  const [chatHistory, setChatHistory] = useState<
-    {
-      text: string;
-      sender: "user" | "assistant";
-      type?: "message";
-    }[]
-  >([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
@@ -65,12 +71,23 @@ const Chatbot = () => {
     setTimeout(async () => {
       try {
         const response = await sendMessageToServer(text, tripId, userId);
-        // Dodajemy pustą wiadomość AI, którą później zaktualizujemy
         setChatHistory((prev) => [
           ...prev,
           { text: "", sender: "assistant", type: "message" },
         ]);
         animateText(response.message);
+        
+        if (response.places) {
+          setChatHistory((prev) => [
+            ...prev,
+            {
+              text: "",
+              sender: "assistant",
+              type: "places",
+              places: response.places,
+            } as any,
+          ]);
+        }        
       } catch {
         setChatHistory((prev) => [
           ...prev,

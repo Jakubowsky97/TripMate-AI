@@ -15,6 +15,7 @@ interface Place {
   weather: { temp: string; condition: string };
   coordinates: number[];
   date: string;
+  category?: string;
 }
 
 interface CityPlaces {
@@ -60,6 +61,9 @@ export default function TripMap({
       });
 
       mapRef.current = map;
+
+      // Setup place details service for getting additional information
+      const placesService = new google.maps.places.PlacesService(map);
 
       async function getDirections() {
         try {
@@ -115,12 +119,117 @@ export default function TripMap({
         }
       }
       
-
       getDirections();
 
       // Obsługa socketów
       socket.emit("joinTrip", tripId);
 
+// Handle map clicks for adding new places
+map.addListener("click", (e: google.maps.MapMouseEvent) => {
+  if (!e.latLng) return;
+  
+  const lat = e.latLng.lat();
+  const lng = e.latLng.lng();
+  
+  // Get place details from the location if possible
+  const request = {
+    location: { lat, lng },
+    fields: ['name', 'formatted_address', 'place_id', 'geometry', 'types'],
+    types: ['establishment'],
+    rankBy: google.maps.places.RankBy.DISTANCE,
+  };
+  
+  placesService.nearbySearch(request, (results, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+      // Process only the first place found
+      const place = results[0];
+        // Determine category from place types - expanded to include more place types
+        let category = 'place';
+        if (place.types && place.types.length > 0) {
+          // Priority list for categorization
+          if (place.types.includes('restaurant') || place.types.includes('food') || 
+              place.types.includes('cafe') || place.types.includes('bar')) {
+            category = 'restaurant';
+          } else if (place.types.includes('lodging') || place.types.includes('hotel')) {
+            category = 'hotel';
+          } else if (place.types.includes('tourist_attraction') || place.types.includes('museum') || 
+                    place.types.includes('park')) {
+            category = 'attraction';
+          } else if (place.types.includes('store') || place.types.includes('shopping_mall')) {
+            category = 'shopping';
+          } else if (place.types.includes('transit_station') || place.types.includes('bus_station') || 
+                    place.types.includes('train_station') || place.types.includes('airport')) {
+            category = 'transportation';
+          } else if (place.types.includes('hospital') || place.types.includes('pharmacy') || 
+                    place.types.includes('doctor')) {
+            category = 'health';
+          } else {
+            // If none of the above categories match, use the first type as the category
+            category = place.types[0].charAt(0).toUpperCase() + place.types[0].slice(1).replaceAll('_', ' ');
+          }
+        }
+        
+        // Get more detailed place information
+        placesService.getDetails(
+          { placeId: place.place_id || '', fields: ['name', 'formatted_address', 'address_components'] }, 
+          (placeDetails, detailsStatus) => {
+            if (detailsStatus === google.maps.places.PlacesServiceStatus.OK && placeDetails) {
+              // Extract city and country from address components
+              let city = '';
+              let country = '';
+              
+              if (placeDetails.address_components) {
+                placeDetails.address_components.forEach((component) => {
+                  if (component.types.includes('locality')) {
+                    city = component.long_name;
+                  }
+                  if (component.types.includes('country')) {
+                    country = component.long_name;
+                  }
+                });
+              }
+              
+              const placeData = {
+                name: placeDetails.name || place.name || 'Unnamed Place',
+                coordinates: [
+                  place.geometry?.location?.lng() || lng,
+                  place.geometry?.location?.lat() || lat
+                ],
+                city,
+                country,
+                category,
+                weather: { temp: '25°C', condition: 'Sunny' }, // Example data, should be fetched from a weather API
+                type: category, // Adding type to match the Place interface
+                date: new Date().toISOString().split('T')[0] // Today's date
+              };
+              
+              // Call the handlePlaceClick method via the custom handlers object
+              if (mapRef.current && (mapRef.current as any).customHandlers?.handlePlaceClick) {
+                (mapRef.current as any).customHandlers.handlePlaceClick(placeData);
+              }
+            }
+          }
+        );
+    } else {
+      // No place found, use generic data
+      const placeData = {
+        name: 'New Place',
+        coordinates: [lng, lat],
+        category: 'place',
+        type: 'place',
+        city: '',
+        country: '',
+        weather: { temp: '25°C', condition: 'Sunny' }, // Example data
+        date: new Date().toISOString().split('T')[0] // Today's date
+      };
+      
+      // Call the handlePlaceClick method via the custom handlers object
+      if (mapRef.current && (mapRef.current as any).customHandlers?.handlePlaceClick) {
+        (mapRef.current as any).customHandlers.handlePlaceClick(placeData);
+      }
+    }
+  });
+});
       socket.on("existingMarkers", (markers: { lat: number; lng: number }[]) => {
         markers.forEach(({ lat, lng }) => {
           new google.maps.Marker({ position: { lat, lng }, map });
@@ -177,13 +286,19 @@ export default function TripMap({
             `,
           });
 
-          // Add a click listener to the marker to show the InfoWindow
+          // Add a click listener to the marker to show the InfoWindow AND open place detail view
           marker.addListener("click", () => {
             infoWindow.open(map, marker);
-            if (mapRef.current && place.coordinates?.length === 2) {
-              const latLng = new google.maps.LatLng(place.coordinates[1], place.coordinates[0])
-              mapRef.current.panTo(latLng)
-              mapRef.current.setZoom(16)
+            
+            if (mapRef.current) {
+              const latLng = new google.maps.LatLng(place.coordinates[1], place.coordinates[0]);
+              mapRef.current.panTo(latLng);
+              mapRef.current.setZoom(16);
+              
+              // Call the handlePlaceClick method via the custom handlers object
+              if ((mapRef.current as any).customHandlers?.handlePlaceClick) {
+                (mapRef.current as any).customHandlers.handlePlaceClick(place);
+              }
             }
           });
         });

@@ -202,8 +202,8 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
 `;
 
     const messages = [
-      { role: "system", content: systemPrompt },
       ...chatHistory,
+      { role: "system", content: systemPrompt },
       { role: "user", content: message },
     ];
 

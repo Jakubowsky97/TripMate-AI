@@ -6,6 +6,7 @@ import { fetchChatHistory, sendMessageToServer } from "@/app/api/chatApi";
 import { FaPaperPlane } from "react-icons/fa";
 import { FaRegImage } from "react-icons/fa6";
 import { useSearchParams } from "next/navigation";
+import { Virtuoso } from "react-virtuoso";
 
 interface ChatMessage {
   text: string;
@@ -30,7 +31,7 @@ const Chatbot = () => {
 
   useEffect(() => {
     const welcomeMessage =
-      "**Cześć!** Jestem Twoim asystentem podróży. W czym mogę Ci pomóc?";
+      "**Hello! I'm your travel assistant.**";
     setChatHistory([
       { text: welcomeMessage, sender: "assistant", type: "message" },
     ]);
@@ -46,7 +47,7 @@ const Chatbot = () => {
 
   useEffect(() => {
     const loadChatHistory = async () => {
-      if(!userId || !tripId) return;
+      if (!userId || !tripId) return;
       try {
         const history = await fetchChatHistory(userId, tripId);
         setChatHistory(history);
@@ -76,7 +77,7 @@ const Chatbot = () => {
           { text: "", sender: "assistant", type: "message" },
         ]);
         animateText(response.message);
-        
+
         if (response.places) {
           setChatHistory((prev) => [
             ...prev,
@@ -87,12 +88,12 @@ const Chatbot = () => {
               places: response.places,
             } as any,
           ]);
-        }        
+        }
       } catch {
         setChatHistory((prev) => [
           ...prev,
           {
-            text: "**Coś poszło nie tak.** Spróbuj ponownie.",
+            text: "**Could not fetch data from the server. Please try again.**",
             sender: "assistant",
             type: "message",
           },
@@ -102,22 +103,22 @@ const Chatbot = () => {
       }
     }, 1500);
   };
-  
-    // Funkcja do przewijania na dół
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "start",
-        });
-      }
-    };
-  
-    // Wywołanie scrollowania przy każdej zmianie wiadomości
-    useEffect(() => {
-      scrollToBottom();
-    }, [chatHistory]);
+
+  // Funkcja do przewijania na dół
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      });
+    }
+  };
+
+  // Wywołanie scrollowania przy każdej zmianie wiadomości
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistory]);
 
   const animateText = (text: string) => {
     let i = 0;
@@ -139,37 +140,48 @@ const Chatbot = () => {
   };
 
   const renderers = {
-    a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    a: ({
+      href,
+      children,
+      ...props
+    }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
       <a
         href={href || "#"}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ color: "#1E90FF", textDecoration: "underline", cursor: "pointer" }}
+        style={{
+          color: "#1E90FF",
+          textDecoration: "underline",
+          cursor: "pointer",
+        }}
         {...props}
       >
         {children}
       </a>
-    )
+    ),
   };
 
   return (
-    <div className="flex flex-col items-center justify-between h-full pt-4 overflow-y-hidden">
-      <div className="w-full max-w-4xl flex flex-col h-[84vh] overflow-y-auto space-y-3 p-2 scrollbar-hide pb-12">
-        {chatHistory.map((msg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`p-3 rounded-xl max-w-full shadow-md ${
-              msg.sender === "user"
-                ? "bg-orange-500 text-white self-end rounded-tr-none"
-                : "bg-white text-gray-700 self-start rounded-tl-none"
-            }`}
-          >
-            <ReactMarkdown components={renderers}>{msg.text}</ReactMarkdown>
-          </motion.div>
-        ))}
+    <div className="flex flex-col items-center justify-between h-full overflow-y-hidden">
+      <div className="w-full max-w-4xl flex flex-col h-[84vh] overflow-y-auto p-2 scrollbar-hide">
+        <Virtuoso
+          style={{ height: "86vh" }}
+          className="scrollbar-hide"
+          data={chatHistory}
+          followOutput
+          itemContent={(index, msg) => (
+            <div
+              className={`p-3 my-5 rounded-xl max-w-full shadow-md ${
+                msg.sender === "user"
+                  ? "bg-orange-500 text-white self-end rounded-tr-none"
+                  : "bg-white text-gray-700 self-start rounded-tl-none"
+              }`
+            }
+            >
+              <ReactMarkdown components={renderers}>{msg.text}</ReactMarkdown>
+            </div>
+          )}
+        />
 
         {isTyping && (
           <motion.div
@@ -178,7 +190,7 @@ const Chatbot = () => {
             transition={{ repeat: Infinity, duration: 1 }}
             className="text-gray-500 italic"
           >
-            AI pisze...
+            AI is typing...
           </motion.div>
         )}
 
@@ -201,7 +213,7 @@ const Chatbot = () => {
               }
             }}
             onChange={(e) => setUserMessage(e.target.value)}
-            placeholder="Zadaj pytanie o podróż..."
+            placeholder="Ask me anything about your trip..."
             className="flex-1 p-3 pl-4 bg-[#f3f4f6] rounded-full focus:outline-none focus:ring-2 focus:ring-[#f97316]"
           />
           <button

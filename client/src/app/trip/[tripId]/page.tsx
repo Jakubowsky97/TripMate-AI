@@ -296,9 +296,8 @@ export default function TripPage() {
       ) {
         throw new Error("Nie udało się pobrać współrzędnych z Google Maps");
       }
-      console.log(coordinatesResponse)
       const location = coordinatesResponse.data.results[0].geometry.location;
-      const coordinates = [location.lng, location.lat]; // dopasowane do mapRef
+      const coordinates = [location.lng, location.lat]; 
 
       // 3. Przetwarzanie daty
       const start_date = new Date(place.start_date);

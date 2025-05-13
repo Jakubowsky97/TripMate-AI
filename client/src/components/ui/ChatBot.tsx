@@ -50,7 +50,7 @@ const Chatbot = () => {
       if (!userId || !tripId) return;
       try {
         const history = await fetchChatHistory(userId, tripId);
-        setChatHistory(history);
+        setChatHistory([...chatHistory, ...history]);
       } catch (error) {
         console.error("Błąd pobierania historii:", error);
       }

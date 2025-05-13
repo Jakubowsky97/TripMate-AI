@@ -323,9 +323,9 @@ export default function TripMap({
             return;
 
           const color =
-            place.type === "Start"
+            place.is_start_point == true
               ? "#f59e0b"
-              : place.type === "End"
+              : place.is_end_point == true
               ? "#f43f5e"
               : "#f97316";
 

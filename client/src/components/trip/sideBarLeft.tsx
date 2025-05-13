@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import TripTimeLine from "../ui/TripTimeLine";
 import PlaceDetailView from "../ui/PlaceDetailView";
+import { FaArrowLeft } from "react-icons/fa";
 
 interface SidebarLeftProps {
   mapRef: React.MutableRefObject<google.maps.Map | null>;
@@ -37,30 +38,39 @@ export default function SidebarLeft({
   };
 
   // Handle adding a place to the trip
-  const handleAddPlaceToTrip = (placeData: any) => {
-    // Find if the city already exists in selectedPlaces
-    const cityIndex = selectedPlaces.findIndex(
-      cityObj => cityObj.city === placeData.city
-    );
+const handleAddPlaceToTrip = (placeData: any) => {
+  const cityIndex = selectedPlaces.findIndex(
+    cityObj => cityObj.city === placeData.city
+  );
 
-    if (cityIndex !== -1) {
-      // City exists, add place to its places array
-      const updatedSelectedPlaces = [...selectedPlaces];
-      updatedSelectedPlaces[cityIndex].places.push(placeData);
-      setSelectedPlaces(updatedSelectedPlaces);
+  if (cityIndex !== -1) {
+    const updatedSelectedPlaces = [...selectedPlaces];
+    const places = updatedSelectedPlaces[cityIndex].places;
+
+    if (places.length > 1) {
+      // Insert before the last item
+      places.splice(places.length - 1, 0, placeData);
     } else {
-      // Create new city entry
-      const newCityEntry = {
-        city: placeData.city || "Unknown City",
-        country: placeData.country || "Unknown Country",
-        places: [placeData]
-      };
-      setSelectedPlaces([...selectedPlaces, newCityEntry]);
+      // If there's only 0 or 1 place, just push
+      places.push(placeData);
     }
 
-    // Return to timeline view
-    setView({ type: "timeline" });
-  };
+    setSelectedPlaces(updatedSelectedPlaces);
+  } else {
+    const newCityEntry = {
+      city: placeData.city || "Unknown City",
+      country: placeData.country || "Unknown Country",
+      places: [placeData]
+    };
+    setSelectedPlaces([...selectedPlaces, newCityEntry]);
+  }
+  //TODO: When adding a new place, it should be added to the second last position
+  // in the list of places for that city, not the last position.
+  console.log("Selected Places:", selectedPlaces);
+
+  setView({ type: "timeline" });
+};
+
 
   // Expose the handlePlaceClick method via a custom property
   // Using a proper type extension
@@ -77,9 +87,9 @@ export default function SidebarLeft({
         {view.type === "timeline" && (
           <motion.div
             key="timeline"
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >
@@ -98,9 +108,9 @@ export default function SidebarLeft({
           >
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Search Results</h2>
-              <Button variant="ghost" onClick={handleBack}>
-                ← Back
-              </Button>
+              <FaArrowLeft
+                className="cursor-pointer text-gray-500 hover:text-gray-700"
+                onClick={handleBack}/>
             </div>
             <div
               id="place-list-container"
@@ -112,9 +122,9 @@ export default function SidebarLeft({
         {view.type === "place-detail" && view.data && (
           <motion.div
             key="place-detail"
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >

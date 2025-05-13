@@ -308,12 +308,10 @@ export default function TripPage() {
         date =
           start_date.toLocaleString("en-GB", { month: "long" }) +
           ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
-        place.type = "Start";
       } else if (place.is_end_point) {
         date =
           end_date.toLocaleString("en-GB", { month: "long" }) +
           ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
-        place.type = "End";
       } else if (place.start_date && place.end_date) {
         if (
           start_date.toLocaleDateString("en-GB", { month: "long" }) ===

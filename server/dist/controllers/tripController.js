@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserProfile = exports.joinTrip = exports.updateTravelData = exports.getTripById = exports.getTripsForUser = exports.getAllTrips = exports.getTripCodeById = exports.createTripData = void 0;
+exports.getUserProfile = exports.joinTrip = exports.updateTravel = exports.updateTravelData = exports.getTripById = exports.getTripsForUser = exports.getAllTrips = exports.getTripCodeById = exports.createTripData = void 0;
 const supabase_1 = __importDefault(require("../utils/supabase"));
 const createTripData = async (req, res) => {
     try {
@@ -196,6 +196,23 @@ const updateTravelData = async (trip_id, { ...travelData }) => {
     console.log("Travel data saved successfully", data);
 };
 exports.updateTravelData = updateTravelData;
+const updateTravel = async (req, res) => {
+    const { trip_id, places_to_stay } = req.body;
+    if (!trip_id || typeof trip_id !== "string") {
+        throw new Error("Missing or invalid trip_id");
+    }
+    if (!places_to_stay || !Array.isArray(places_to_stay)) {
+        throw new Error("Missing or invalid places_to_stay");
+    }
+    console.log(places_to_stay);
+    // const { data, error } = await supabase
+    //   .from("travel_data")
+    //   .upsert([{ id: trip_id, ...travelData, status: "confirmed" }], { onConflict: "id" });
+    // if (error) {
+    //   throw new Error(`Error saving travel data: ${error.message}`);
+    // }
+};
+exports.updateTravel = updateTravel;
 const joinTrip = async (req, res) => {
     try {
         const user_id = req.user?.sub;

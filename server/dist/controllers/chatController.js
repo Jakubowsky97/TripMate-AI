@@ -10,6 +10,7 @@ const supabase_1 = __importDefault(require("../utils/supabase"));
 const amadeus_1 = __importDefault(require("amadeus"));
 const preferencesController_1 = require("./preferencesController");
 const tripController_1 = require("./tripController");
+const axios_1 = __importDefault(require("axios"));
 const chatModel = new deepseek_1.ChatDeepSeek({
     apiKey: process.env.DEEPSEEK_API_KEY,
     model: "deepseek-chat",
@@ -95,7 +96,9 @@ const sendMessageToAI = async (userId, message, tripId) => {
     {
       "street": "...",
       "city": "...",
-      "country": "..."
+      "country": "...",
+      "type": "...", // "restaurant", "hotel", etc.
+      "radius": 2000 // in meters
     }
     END_PLACES_INFO_JSON
 
@@ -117,7 +120,9 @@ const sendMessageToAI = async (userId, message, tripId) => {
     {
       "street": "Rue Cler",
       "city": "Paris",
-      "country": "France"
+      "country": "France",
+      "type": "restaurant",
+      "radius": 2000
     }
     END_PLACES_INFO_JSON
 
@@ -160,7 +165,9 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
     {
       "street": "plac św. Piotra",
       "city": "...",
-      "country": "Watykan"
+      "country": "Watykan",
+      "type": "hotel",
+      "radius": 5000
     }
     END_PLACES_INFO_JSON
     BEGIN_PREFERENCES_JSON  
@@ -186,8 +193,8 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
    If invalid: "Nie jestem pewien lokalizacji . Czy chodzi o...?"
 `;
         const messages = [
-            { role: "system", content: systemPrompt },
             ...chatHistory,
+            { role: "system", content: systemPrompt },
             { role: "user", content: message },
         ];
         // Wysłanie wiadomości do modelu AI
@@ -262,11 +269,17 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
         else {
             console.log("Nie udało się wyekstrahować danych podróży.");
         }
+        let foundPlaces = null;
         if (placesInfo) {
+            const { type, street, city, country, radius } = placesInfo;
             console.log("Wyekstrahowane dane miejsca:", placesInfo);
-        }
-        else {
-            console.log("Nie udało się wyekstrahować danych miejsca.");
+            try {
+                foundPlaces = await findPlacesNearby(type, `${street}, ${city}, ${country}`, radius);
+                console.log("Znalezione miejsca:", foundPlaces);
+            }
+            catch (err) {
+                console.error("Błąd przy szukaniu miejsc:", err);
+            }
         }
         // Zapisanie wiadomości użytkownika i odpowiedzi AI do bazy
         const { error: insertError } = await supabase_1.default.from("chat_messages").insert([
@@ -280,7 +293,7 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
         ]);
         if (insertError)
             throw insertError;
-        return { message: cleanedText };
+        return { message: cleanedText, places: foundPlaces, trip };
     }
     catch (error) {
         console.error("Błąd wysyłania wiadomości do AI:", error);
@@ -324,8 +337,12 @@ const chatController = async (req, res) => {
             return;
         }
         // Wykonanie logiki wysyłania wiadomości do AI
-        const { message: aiMessage } = await sendMessageToAI(userId, message, tripId);
-        res.json({ message: aiMessage });
+        const { message: aiMessage, places, trip } = await sendMessageToAI(userId, message, tripId);
+        res.json({
+            message: aiMessage,
+            places: places,
+            trip
+        });
     }
     catch (error) {
         console.error("Chat error:", error);
@@ -367,3 +384,38 @@ const getChatHistory = async (req, res) => {
     }
 };
 exports.getChatHistory = getChatHistory;
+async function findPlacesNearby(placeType, address, radius) {
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+    try {
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json`;
+        const geocodeRes = await axios_1.default.get(geocodeUrl, {
+            params: {
+                address,
+                key: GOOGLE_API_KEY,
+            },
+        });
+        if (!geocodeRes.data.results.length) {
+            throw new Error("Nie znaleziono lokalizacji dla podanego adresu.");
+        }
+        const { lat, lng } = geocodeRes.data.results[0].geometry.location;
+        const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json`;
+        const placesRes = await axios_1.default.get(placesUrl, {
+            params: {
+                location: `${lat},${lng}`,
+                radius,
+                type: placeType,
+                key: GOOGLE_API_KEY,
+            },
+        });
+        return placesRes.data.results;
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            console.error("Błąd podczas pobierania miejsc:", error.message);
+        }
+        else {
+            console.error("Błąd podczas pobierania miejsc:", error);
+        }
+        return [];
+    }
+}

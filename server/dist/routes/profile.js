@@ -9,4 +9,5 @@ router.post("/updateUser", auth_1.authenticate, profileController_1.updateUserPr
 router.get("/getPreferences", auth_1.authenticate, profileController_1.getPreferences);
 router.post("/updatePreferences", auth_1.authenticate, profileController_1.updatePreferences);
 router.get("/getFriendsData", auth_1.authenticate, profileController_1.getFriendsData);
+router.post("/deleteUser", auth_1.authenticate, profileController_1.deleteAccount);
 exports.default = router;

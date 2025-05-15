@@ -11,4 +11,5 @@ router.get('/getTripsFromFriends', auth_1.authenticate, tripController_1.getTrip
 router.get('/getTripById/:trip_id', auth_1.authenticate, tripController_1.getTripById);
 router.post('/joinTrip', auth_1.authenticate, tripController_1.joinTrip);
 router.get('/getUserData', auth_1.authenticate, tripController_1.getUserProfile);
+router.post('/updateTrip', auth_1.authenticate, tripController_1.updateTravel);
 exports.default = router;

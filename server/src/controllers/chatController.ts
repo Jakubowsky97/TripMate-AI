@@ -337,7 +337,7 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
 
     if (insertError) throw insertError;
 
-    return { message: cleanedText, places: foundPlaces };
+    return { message: cleanedText, places: foundPlaces, trip };
 
   } catch (error) {
     console.error("Błąd wysyłania wiadomości do AI:", error);
@@ -395,13 +395,19 @@ export const chatController = async (
     }
 
     // Wykonanie logiki wysyłania wiadomości do AI
-    const { message: aiMessage } = await sendMessageToAI(
+    const { message: aiMessage, places, trip } = await sendMessageToAI(
       userId,
       message,
       tripId
     );
 
-    res.json({ message: aiMessage });
+    res.json({
+      message: aiMessage,
+      places: places,
+      trip
+    })
+
+
   } catch (error) {
     console.error("Chat error:", error);
     const errorMessage =

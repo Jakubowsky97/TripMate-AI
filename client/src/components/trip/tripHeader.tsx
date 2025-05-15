@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
-import { FaCompass } from "react-icons/fa";
+import { FaCompass, FaUserPlus } from "react-icons/fa";
 import { IoMdNotifications } from "react-icons/io";
 import UserAvatars from "../ui/UserAvatars";
-
 
 interface UserData {
   id: string;
@@ -22,22 +21,28 @@ export default function TripHeader({
   socket,
   localData,
   allUsers,
+  onShareClick,
 }: {
   mapRef: React.MutableRefObject<google.maps.Map | null>;
   tripId: string;
   socket: any;
   localData: UserData;
   allUsers: any[];
+  onShareClick: () => void;
 }) {
+  const [showShareModal, setShowShareModal] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [autocomplete, setAutocomplete] =
+    useState<google.maps.places.Autocomplete | null>(null);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Ustawienie Autocomplete po załadowaniu mapy
   useEffect(() => {
     if (mapRef.current && inputRef.current) {
-      const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current);
+      const autocompleteInstance = new google.maps.places.Autocomplete(
+        inputRef.current
+      );
       autocompleteInstance.setFields(["geometry", "name"]);
       setAutocomplete(autocompleteInstance);
 
@@ -58,7 +63,9 @@ export default function TripHeader({
           if (tripId) {
             socket.emit("addMarker", {
               tripId,
-              marker: location ? { lat: location.lat(), lng: location.lng() } : undefined,
+              marker: location
+                ? { lat: location.lat(), lng: location.lng() }
+                : undefined,
             });
           }
         }
@@ -89,8 +96,12 @@ export default function TripHeader({
 
       <div>
         <div className="flex flex-row gap-8 items-center">
-          <UserAvatars users={allUsers} size={10} />
-          <IoMdNotifications size={24} />
+          <FaUserPlus
+            size={26}
+            className="cursor-pointer hover:text-orange-500 transition"
+            onClick={onShareClick}
+          />
+
           <Image
             src={localData.avatar_url || "/img/default.png"}
             alt="Avatar"

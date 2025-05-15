@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import TripTimeLine from "../ui/TripTimeLine";
 import PlaceDetailView from "../ui/PlaceDetailView";
 import { FaArrowLeft } from "react-icons/fa";
+import { set } from "date-fns";
+import { log } from "console";
 
 interface SidebarLeftProps {
   mapRef: React.MutableRefObject<google.maps.Map | null>;
@@ -26,16 +28,16 @@ export default function SidebarLeft({
   const [view, setView] = useState<ViewState>({ type: "timeline" });
 
   const handleBack = () => {
-    setView({ type: "timeline" });
+    setView({ type: "timeline" })
   };
 
   // Call this when a place on the map is clicked
-  const handlePlaceClick = (placeData: any) => {
+  const handlePlaceClick = useCallback((placeData: any) => {
     setView({ 
       type: "place-detail", 
       data: placeData 
     });
-  };
+  }, [setView]);
 
   // Handle adding a place to the trip
 const handleAddPlaceToTrip = (placeData: any) => {
@@ -47,15 +49,28 @@ const handleAddPlaceToTrip = (placeData: any) => {
     const updatedSelectedPlaces = [...selectedPlaces];
     const places = updatedSelectedPlaces[cityIndex].places;
 
-    if (places.length > 1) {
+    if (places.length >= 1) {
       // Insert before the last item
       places.splice(places.length - 1, 0, placeData);
     } else {
       // If there's only 0 or 1 place, just push
-      places.push(placeData);
+      places.push(placeData)
     }
 
     setSelectedPlaces(updatedSelectedPlaces);
+  } else if(!placeData.is_end_point || !placeData.is_start_point) {
+    const newCityEntry = {
+      city: placeData.city || "Unknown City",
+      country: placeData.country || "Unknown Country",
+      places: [placeData]
+    }
+
+    const updatedSelectedPlaces = [...selectedPlaces]
+    const lastCityEntry = updatedSelectedPlaces[updatedSelectedPlaces.length - 1];
+    updatedSelectedPlaces.pop();
+    updatedSelectedPlaces.push(newCityEntry);
+    updatedSelectedPlaces.push(lastCityEntry);
+    setSelectedPlaces(updatedSelectedPlaces)
   } else {
     const newCityEntry = {
       city: placeData.city || "Unknown City",
@@ -64,22 +79,30 @@ const handleAddPlaceToTrip = (placeData: any) => {
     };
     setSelectedPlaces([...selectedPlaces, newCityEntry]);
   }
-  //TODO: When adding a new place, it should be added to the second last position
-  // in the list of places for that city, not the last position.
-  console.log("Selected Places:", selectedPlaces);
 
   setView({ type: "timeline" });
 };
 
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (mapRef.current) {
+      (mapRef.current as any).customHandlers = {
+        ...(mapRef.current as any).customHandlers,
+        handlePlaceClick
+      };
+      clearInterval(interval);
+    }
+  }, 100); // co 100ms sprawdza mapRef
 
-  // Expose the handlePlaceClick method via a custom property
-  // Using a proper type extension
-  if (mapRef.current) {
-    (mapRef.current as any).customHandlers = {
-      ...(mapRef.current as any).customHandlers,
-      handlePlaceClick
-    };
-  }
+  return () => clearInterval(interval);
+}, [mapRef, handlePlaceClick]);
+
+
+useEffect(() => {
+  console.log("Selected Places:", selectedPlaces);
+}, [selectedPlaces])
+  
+
 
   return (
     <div className="w-1/5 xl:w-[30%] 2xl:w-1/5 p-4 overflow-y-auto h-screen pt-24 scrollbar-hide">

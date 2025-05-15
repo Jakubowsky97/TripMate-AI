@@ -236,6 +236,32 @@ export const updateTravelData = async (trip_id: string, { ...travelData }: Trave
   console.log("Travel data saved successfully", data);
 };
 
+export const updateTravel = async (
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<void> => {
+  const { trip_id, places_to_stay } = req.body;
+
+  if (!trip_id || typeof trip_id !== "string") {
+    throw new Error("Missing or invalid trip_id");
+  }
+
+  if (!places_to_stay || !Array.isArray(places_to_stay)) {
+    throw new Error("Missing or invalid places_to_stay");
+  }
+
+  console.log(places_to_stay)
+
+  // const { data, error } = await supabase
+  //   .from("travel_data")
+  //   .upsert([{ id: trip_id, ...travelData, status: "confirmed" }], { onConflict: "id" });
+
+  // if (error) {
+  //   throw new Error(`Error saving travel data: ${error.message}`);
+  // }
+
+};
+
 export const joinTrip = async (
   req: AuthenticatedRequest,
   res: Response

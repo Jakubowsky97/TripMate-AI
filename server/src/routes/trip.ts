@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTripData, getAllTrips, getTripById, getTripCodeById, getTripsForUser, getUserProfile, joinTrip } from "../controllers/tripController";
+import { createTripData, getAllTrips, getTripById, getTripCodeById, getTripsForUser, getUserProfile, joinTrip, updateTravel, updateTravelData } from "../controllers/tripController";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
@@ -11,5 +11,6 @@ router.get('/getTripsFromFriends', authenticate, getTripsForUser);
 router.get('/getTripById/:trip_id', authenticate, getTripById)
 router.post('/joinTrip', authenticate, joinTrip); 
 router.get('/getUserData', authenticate, getUserProfile)
+router.post('/updateTrip', authenticate, updateTravel)
 
 export default router;

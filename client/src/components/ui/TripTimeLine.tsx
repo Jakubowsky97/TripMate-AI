@@ -100,6 +100,7 @@ const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
 
       {/* Card */}
       <div
+        ref={setDraggableRef}
         className={`w-full p-4 rounded-2xl shadow-md transition-all hover:shadow-lg cursor-pointer ${typeStyle.lightBg}`}
         onClick={() => {
           if (mapRef.current && place.coordinates?.length === 2) {

@@ -23,6 +23,7 @@ body {
 /* Ukrywa pasek przewijania w Firefox */
 .scrollbar-hide {
   scrollbar-width: none;
+  overflow-x: hidden;
 }
 
 

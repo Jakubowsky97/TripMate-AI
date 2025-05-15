@@ -52,6 +52,6 @@ const isSessionExpired = (user: any) => {
   if (!user) return true
   const lastSignIn = new Date(user.last_sign_in_at)
   const now = new Date()
-  const maxAgeHours = 48 // 2 dni
+  const maxAgeHours = 24; // 1 dzień 
   return (now.getTime() - lastSignIn.getTime()) > maxAgeHours * 60 * 60 * 1000
 }

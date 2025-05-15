@@ -4,7 +4,7 @@ import ProfilePage from "@/components/settings/profilePage";
 import PreferencesPage from "@/components/settings/preferencesPage";
 import { redirect } from "next/navigation";
 
-const tabs = ["Profile", "Preferences", "Notifications", "Account"];
+const tabs = ["Profile", "Preferences"];
 
 export default function Settings({ user } : { user: any }) {
   const [activeTab, setActiveTab] = useState("Profile");
@@ -19,10 +19,6 @@ export default function Settings({ user } : { user: any }) {
         return <ProfilePage /> ;
       case "Preferences":
         return <PreferencesPage />;
-      case "Notifications": 
-        return <p>Work in progress</p>;
-      case "Account":
-        return <button className="bg-red-500 text-white p-2 rounded">Delete Account</button>;
       default:
         return null;
     }

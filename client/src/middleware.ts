@@ -1,5 +1,6 @@
 import { updateSession } from '@/utils/supabase/middleware';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from './utils/supabase/client';
 
 export async function middleware(request: NextRequest) {
   const response = await updateSession(request);
@@ -16,6 +17,23 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const user = response.headers.get("x-user");
+
+if (user) {
+  // Dekodowanie danych z URL
+  const userDecoded = decodeURIComponent(user);
+
+  // Parsowanie do obiektu JSON
+  const userObject = JSON.parse(userDecoded);
+  const last_sign_in_at = new Date(userObject.last_sign_in_at);
+  const now = new Date();
+  const maxAgeHours = 24;
+  const isSessionExpired = (now.getTime() - last_sign_in_at.getTime()) > maxAgeHours * 60 * 60 * 1000;
+  if (isSessionExpired) {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL("/auth/login", request.url));
+  }
+}
 
   // ✅ Zgoda na publiczne ścieżki
   if (publicRoutes.includes(pathname)) {

@@ -56,7 +56,13 @@ export default function Dashboard({
         const userTrips = await fetchTrips(userId);
         const friendsTrips = await fetchTripsFromFriends();
         const allTrips = [...(userTrips || []), ...(friendsTrips || [])];
-        setTrips(allTrips.slice(0, 4));
+        if(window.innerWidth < 1536) {
+          setTrips(allTrips.slice(0, 3));
+        } else {
+          setTrips(allTrips.slice(0, 4));
+
+        }
+        
       } catch (err) {
         setError("Failed to fetch trips");
         console.error(err);

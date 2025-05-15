@@ -5,6 +5,7 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const isProduction = process.env.NODE_ENV === "production";
 
   const supabase = await createClient();
 
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     sameSite: "none",
     path: "/",
     maxAge: 60 * 60 * 24, // 1 dzień
+    domain: isProduction ? ".tripmate-ai.com" : undefined
   });
 
   response.headers.set("X-user-id", data.user.id); 

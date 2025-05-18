@@ -24,7 +24,10 @@ export const fetchTrips = async (userId: string) => {
           : null;
 
         if (imagePath) {
-          const { data: signedUrlData, error: signedUrlError } =
+          if (item.travel_data.image.includes("https://") || item.travel_data.image.includes("http://")) {
+            imageUrl = item.travel_data.image; 
+          } else {
+            const { data: signedUrlData, error: signedUrlError } =
             await supabase.storage
               .from("trip-images/user-images")
               .createSignedUrl(imagePath, 60);
@@ -33,6 +36,7 @@ export const fetchTrips = async (userId: string) => {
             console.error("Error getting signed URL:", signedUrlError);
           } else {
             imageUrl = signedUrlData.signedUrl;
+          }
           }
         }
 

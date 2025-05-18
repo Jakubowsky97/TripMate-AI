@@ -46,8 +46,9 @@ const sendMessageToAI = async (
   try {
     // Pobranie historii rozmowy
     const chatHistory = await fetchChatHistory(userId, tripId);
+    const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
 
-    const systemPrompt = `You are a POLISH/ENGLISH bilingual travel planner AI. Your responses must follow these rules:
+    const systemPrompt = `You are a POLISH/ENGLISH bilingual travel planner AI and today is: ${today} . Your responses must follow these rules:
 
 ■■■ STRICT FORMAT RULES ■■■
 1. USER COMMUNICATION:

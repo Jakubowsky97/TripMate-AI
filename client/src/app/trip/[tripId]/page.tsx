@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import TripMap from "@/components/trip/tripMap";
 import { useParams, useSearchParams } from "next/navigation";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import SidebarLeft from "@/components/trip/sideBarLeft";
 import SidebarRight from "@/components/trip/sideBarRight";
@@ -699,17 +699,19 @@ useEffect(() => {
         allUsers={allUsers}
         onShareClick={() => setShowShareModal(true)}
       />
-      {showShareModal && (
-        <TripShareModal
-          shareCode={tripData.trip_code}
-          onClose={() => setShowShareModal(false)}
-        />
-      )}
+{tripData?.trip_code && showShareModal && (
+  <TripShareModal
+    shareCode={tripData.trip_code}
+    onClose={() => setShowShareModal(false)}
+  />
+)}
+
       <div className="flex flex-1">
         <SidebarLeft
           selectedPlaces={selectedPlaces}
           mapRef={mapRef}
           setSelectedPlaces={setSelectedPlaces}
+          tripId={tripId}
         />
         <div className="flex-grow h-full pt-18 relative">
           <TripMap

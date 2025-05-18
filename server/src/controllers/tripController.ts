@@ -172,6 +172,7 @@ export const getTripById = async (
         image,
         type_of_trip,
         friends_list,
+        trip_code,
         profiles_travel_data!inner (user_id)
       `
       )

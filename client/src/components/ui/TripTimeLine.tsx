@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { DndContext, useDroppable, useDraggable } from '@dnd-kit/core'
+import { useEffect, useState } from "react";
+import { DndContext, useDroppable, useDraggable } from "@dnd-kit/core";
 import {
   FaBuilding,
   FaSun,
@@ -10,75 +10,85 @@ import {
   FaMapMarkerAlt,
   FaPlaneDeparture,
   FaPlaneArrival,
-} from 'react-icons/fa'
+} from "react-icons/fa";
 
 interface Place {
-  city: string
-  name: string
-  type: string
-  start_date: string
-  end_date: string
-  is_start_point: boolean
-  is_end_point: boolean
-  country: string
-  weather: { temp: string; condition: string }
-  coordinates: any[]
-  date: string
+  city: string;
+  name: string;
+  type: string;
+  start_date: string;
+  end_date: string;
+  is_start_point: boolean;
+  is_end_point: boolean;
+  country: string;
+  weather: { temp: string; condition: string };
+  coordinates: any[];
+  date: string;
 }
 
 interface SelectedPlaces {
-  city: string
-  country: string
-  places: Place[]
+  city: string;
+  country: string;
+  places: Place[];
 }
 
 interface TripTimeLineInterface {
-  selectedPlaces: SelectedPlaces[]
-  mapRef: React.MutableRefObject<any>
+  selectedPlaces: SelectedPlaces[];
+  mapRef: React.MutableRefObject<any>;
+  tripId: string;
 }
 
 const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
-  const { setNodeRef: setDraggableRef, attributes, listeners } = useDraggable({
+  const {
+    setNodeRef: setDraggableRef,
+    attributes,
+    listeners,
+  } = useDraggable({
     id: `place-${index}`,
     data: { index },
-  })
+  });
 
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: `droppable-${index}`,
     data: { index },
-  })
+  });
 
   const typeColors = {
     Start: {
-      bg: 'bg-yellow-400',
-      lightBg: 'bg-yellow-50',
-      iconText: 'text-yellow-800',
-      labelText: 'text-yellow-700',
+      bg: "bg-yellow-400",
+      lightBg: "bg-yellow-50",
+      iconText: "text-yellow-800",
+      labelText: "text-yellow-700",
     },
     End: {
-      bg: 'bg-rose-500',
-      lightBg: 'bg-rose-50',
-      iconText: 'text-rose-800',
-      labelText: 'text-rose-700',
+      bg: "bg-rose-500",
+      lightBg: "bg-rose-50",
+      iconText: "text-rose-800",
+      labelText: "text-rose-700",
     },
     Default: {
-      bg: 'bg-orange-400',
-      lightBg: 'bg-orange-50',
-      iconText: 'text-orange-800',
-      labelText: 'text-orange-700',
+      bg: "bg-orange-400",
+      lightBg: "bg-orange-50",
+      iconText: "text-orange-800",
+      labelText: "text-orange-700",
     },
-  }
+  };
 
-  const typeStyle = place.is_start_point == true
-    ? typeColors.Start
-    : place.is_end_point == true
-    ? typeColors.End
-    : typeColors.Default
+  const typeStyle =
+    place.is_start_point == true
+      ? typeColors.Start
+      : place.is_end_point == true
+      ? typeColors.End
+      : typeColors.Default;
 
   const icon =
-    place.is_start_point == true ? <FaPlaneDeparture className="text-white" /> :
-    place.is_end_point == true ? <FaPlaneArrival className="text-white" /> :
-    <FaMapMarkerAlt className="text-white" />
+    place.is_start_point == true ? (
+      <FaPlaneDeparture className="text-white" />
+    ) : place.is_end_point == true ? (
+      <FaPlaneArrival className="text-white" />
+    ) : (
+      <FaMapMarkerAlt className="text-white" />
+    );
 
   return (
     <div
@@ -96,47 +106,66 @@ const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
       </div>
 
       {/* Vertical Line */}
-      <div className={`absolute top-10 left-4 w-[2px] bg-neutral-200 ${isLast ? "h-0" : "h-full"}`}></div>
+      <div
+        className={`absolute top-10 left-4 w-[2px] bg-neutral-200 ${
+          isLast ? "h-0" : "h-full"
+        }`}
+      ></div>
 
       {/* Card */}
       <div
         ref={setDraggableRef}
+        {...attributes}
+        {...listeners}
         className={`w-full p-4 rounded-2xl shadow-md transition-all hover:shadow-lg cursor-pointer ${typeStyle.lightBg}`}
         onClick={() => {
           if (mapRef.current && place.coordinates?.length === 2) {
-            const latLng = new google.maps.LatLng(place.coordinates[1], place.coordinates[0])
-            mapRef.current.panTo(latLng)
-            mapRef.current.setZoom(16)
+            const latLng = new google.maps.LatLng(
+              place.coordinates[1],
+              place.coordinates[0]
+            );
+            mapRef.current.panTo(latLng);
+            mapRef.current.setZoom(16);
           }
         }}
       >
         {/* Top Row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 mb-2">
-          <h3 className={`text-base sm:text-lg font-semibold ${typeStyle.iconText}`}>
+          <h3
+            className={`text-base sm:text-lg font-semibold ${typeStyle.iconText}`}
+          >
             {place.name}
           </h3>
-          <span className={`text-sm sm:text-base font-medium ${typeStyle.labelText}`}>
-            {place.is_start_point == true ? 'Start' :
-            place.is_end_point == true ? 'End' : 'Stopover'}
+          <span
+            className={`text-sm sm:text-base font-medium ${typeStyle.labelText}`}
+          >
+            {place.is_start_point == true
+              ? "Start"
+              : place.is_end_point == true
+              ? "End"
+              : "Stopover"}
           </span>
         </div>
 
         {/* Location and Date */}
-        <p className="text-sm text-gray-500">{place.city}, {place.country}</p>
+        <p className="text-sm text-gray-500">
+          {place.city}, {place.country}
+        </p>
         <p className="text-sm text-gray-600 mb-3">{place.date}</p>
 
         {/* Details */}
         {place.is_start_point == true || place.is_end_point == true ? (
-          <div className={`flex flex-wrap items-center gap-4 text-sm ${typeStyle.labelText}`}>
+          <div
+            className={`flex flex-wrap items-center gap-4 text-sm ${typeStyle.labelText}`}
+          >
             <div className="flex items-center gap-1">
-              <FaSun />
+              <FaBuilding />
               <span>{place.type}</span>
             </div>
             <div className="flex items-center gap-1">
               <FaTemperatureHigh />
-              <span>{place.weather?.temp || 'N/A'}</span>
+              <span>{place.weather?.temp || "N/A"}</span>
             </div>
-            
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -152,12 +181,11 @@ const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-
-const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
-  const [places, setPlaces] = useState<Place[]>([])
+const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface) => {
+  const [places, setPlaces] = useState<Place[]>([]);
 
   useEffect(() => {
     // Flatten all places from all cities into a single array
@@ -167,23 +195,53 @@ const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
         city: place.city || cityObj.city,
         country: place.country || cityObj.country,
       }))
-    )
-    setPlaces(allPlaces)
-  }, [selectedPlaces])
+    );
+    setPlaces(allPlaces);
+  }, [selectedPlaces]);
 
   const handleDragEnd = (e: any) => {
-    const { active, over } = e
-    if (!over) return
+    const { active, over } = e;
+    if (!over) return;
 
-    const reordered = [...places]
-    const activeIndex = active.data.current.index
-    const overIndex = over.data.current.index
+    const reordered = [...places];
+    const activeIndex = active.data.current.index;
+    const overIndex = over.data.current.index;
 
-    const [moved] = reordered.splice(activeIndex, 1)
-    reordered.splice(overIndex, 0, moved)
+    const [moved] = reordered.splice(activeIndex, 1);
+    reordered.splice(overIndex, 0, moved);
 
-    setPlaces(reordered)
-  }
+    setPlaces(reordered);
+
+    // Unflatten the places to update the selectedPlaces state
+    const cities = reordered.reduce((acc: any, place: Place) => {
+      const cityIndex = acc.findIndex(
+        (city: any) => city.city === place.city
+      );
+      if (cityIndex === -1) {
+        acc.push({
+          city: place.city,
+          country: place.country,
+          places: [place],
+        });
+      } else {
+        acc[cityIndex].places.push(place);
+      }
+      return acc;
+    }
+    , []);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      trip_id: tripId,
+      places_to_stay: cities,
+    }),
+    credentials: "include",
+  })
+  };
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
@@ -204,7 +262,7 @@ const TripTimeLine = ({ selectedPlaces, mapRef }: TripTimeLineInterface) => {
         )}
       </div>
     </DndContext>
-  )
-}
+  );
+};
 
-export default TripTimeLine
+export default TripTimeLine;

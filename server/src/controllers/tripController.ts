@@ -166,6 +166,7 @@ export const getTripById = async (
         countries,
         cities,
         places_to_stay,
+        places_to_visit,
         title,
         start_date,
         end_date,

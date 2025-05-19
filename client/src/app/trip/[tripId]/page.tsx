@@ -53,6 +53,7 @@ export default function TripPage() {
     countries: [""],
     cities: [""],
     places_to_stay: [""],
+    places_to_visit: [""],
     title: "",
     start_date: "",
     end_date: "",
@@ -171,6 +172,7 @@ export default function TripPage() {
           countries: data.data.countries,
           cities: data.data.cities,
           places_to_stay: data.data.places_to_stay,
+          places_to_visit: data.data.places_to_visit,
           title: data.data.title,
           start_date: data.data.start_date,
           end_date: data.data.end_date,
@@ -194,6 +196,11 @@ export default function TripPage() {
           typeof data.data.places_to_stay === "string"
             ? JSON.parse(data.data.places_to_stay)
             : data.data.places_to_stay;
+
+        const placesToVisit =
+          typeof data.data.places_to_visit === "string"
+            ? JSON.parse(data.data.places_to_visit)
+            : data.data.places_to_visit;
 
         const initialPlaces = cities.map((city: string, index: number) => ({
           city,
@@ -611,82 +618,80 @@ export default function TripPage() {
     }[]
   >([]);
 
-useEffect(() => {
-  let changed = false;
+  useEffect(() => {
+    let changed = false;
 
-  const hasStart = selectedPlaces.some((city) =>
-    city.places.some((place) => place.is_start_point)
-  );
+    const hasStart = selectedPlaces.some((city) =>
+      city.places.some((place) => place.is_start_point)
+    );
 
-  const hasEnd = selectedPlaces.some((city) =>
-    city.places.some((place) => place.is_end_point)
-  );
+    const hasEnd = selectedPlaces.some((city) =>
+      city.places.some((place) => place.is_end_point)
+    );
 
-  if (!hasStart || !hasEnd) {
-    setSelectedPlaces((prev) => {
-      const updated = prev.map((city) => ({
-        ...city,
-        places: city.places.map((place) => ({ ...place }))
-      }));
+    if (!hasStart || !hasEnd) {
+      setSelectedPlaces((prev) => {
+        const updated = prev.map((city) => ({
+          ...city,
+          places: city.places.map((place) => ({ ...place })),
+        }));
 
-      if (!hasStart) {
-        const firstCity = updated[0];
-        if (firstCity && firstCity.places.length > 0) {
-          firstCity.places[0].is_start_point = true;
-          changed = true;
+        if (!hasStart) {
+          const firstCity = updated[0];
+          if (firstCity && firstCity.places.length > 0) {
+            firstCity.places[0].is_start_point = true;
+            changed = true;
+          }
         }
-      }
 
-      if (!hasEnd) {
-        const lastCity = updated[updated.length - 1];
-        if (
-          lastCity &&
-          lastCity.places.length > 0
-        ) {
-          lastCity.places[lastCity.places.length - 1].is_end_point = true;
-          changed = true;
+        if (!hasEnd) {
+          const lastCity = updated[updated.length - 1];
+          if (lastCity && lastCity.places.length > 0) {
+            lastCity.places[lastCity.places.length - 1].is_end_point = true;
+            changed = true;
+          }
         }
-      }
 
-      return changed ? updated : prev;
-    })
-  }
-}, [selectedPlaces]);
+        return changed ? updated : prev;
+      });
+    }
+  }, [selectedPlaces]);
 
-useEffect(() => {
-  // Sprawdź czy selectedPlaces zawiera rzeczywiste dane
-  if (selectedPlaces.length === 0 || 
-      selectedPlaces.every(city => city.places.length === 0)) {
-    return; // Nie wykonuj zapisu, jeśli brak danych
-  }
+  useEffect(() => {
+    // Sprawdź czy selectedPlaces zawiera rzeczywiste dane
+    if (
+      selectedPlaces.length === 0 ||
+      selectedPlaces.every((city) => city.places.length === 0)
+    ) {
+      return; // Nie wykonuj zapisu, jeśli brak danych
+    }
 
-  const jsonPlaces = selectedPlaces.flatMap((city) =>
-    city.places.map((place) => ({
-      ...place,
-    }))
-  );
+    const jsonPlaces = selectedPlaces.flatMap((city) =>
+      city.places.map((place) => ({
+        ...place,
+      }))
+    );
 
-  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      trip_id: tripId,
-      places_to_stay: jsonPlaces,
-    }),
-    credentials: "include",
-  })
-}, [selectedPlaces, tripId]); // Zmiana z setSelectedPlaces na selectedPlaces
-
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        trip_id: tripId,
+        places_to_stay: jsonPlaces,
+      }),
+      credentials: "include",
+    });
+  }, [selectedPlaces, tripId]); // Zmiana z setSelectedPlaces na selectedPlaces
 
   if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;
   if (!tripId) return <p>Ładowanie...</p>;
   if (loading) return <p>Loading user data...</p>;
   if (error) return <p>Error: {error}</p>;
   if (!tripData) {
-  return <p>Loading...</p>;
-}
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="flex flex-col">
@@ -698,12 +703,12 @@ useEffect(() => {
         allUsers={allUsers}
         onShareClick={() => setShowShareModal(true)}
       />
-{tripData?.trip_code && showShareModal && (
-  <TripShareModal
-    shareCode={tripData.trip_code}
-    onClose={() => setShowShareModal(false)}
-  />
-)}
+      {tripData?.trip_code && showShareModal && (
+        <TripShareModal
+          shareCode={tripData.trip_code}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       <div className="flex flex-1">
         <SidebarLeft

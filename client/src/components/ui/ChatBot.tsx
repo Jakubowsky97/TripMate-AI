@@ -208,7 +208,7 @@ const Chatbot = () => {
                   </div>  
                 </div>
                 <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {msg.places.map((place: any) => (
+                  {msg.places.slice(0, 5).map((place: any) => (
                     <div
                       key={place.place_id}
                       className="bg-white rounded-xl shadow p-4 flex flex-col gap-2 border border-gray-100"

@@ -10,6 +10,7 @@ import {
   FaMapMarkerAlt,
   FaPlaneDeparture,
   FaPlaneArrival,
+  FaSave,
 } from "react-icons/fa";
 
 interface Place {
@@ -186,6 +187,7 @@ const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
 
 const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface) => {
   const [places, setPlaces] = useState<Place[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     // Flatten all places from all cities into a single array
@@ -211,9 +213,12 @@ const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface)
     reordered.splice(overIndex, 0, moved);
 
     setPlaces(reordered);
+    setHasChanges(true); // Zaznacz, że są niezapisane zmiany
+  };
 
+  const saveChanges = () => {
     // Unflatten the places to update the selectedPlaces state
-    const cities = reordered.reduce((acc: any, place: Place) => {
+    const cities = places.reduce((acc: any, place: Place) => {
       const cityIndex = acc.findIndex(
         (city: any) => city.city === place.city
       );
@@ -227,26 +232,37 @@ const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface)
         acc[cityIndex].places.push(place);
       }
       return acc;
-    }
-    , []);
+    }, []);
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      trip_id: tripId,
-      places_to_stay: cities,
-    }),
-    credentials: "include",
-  })
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        trip_id: tripId,
+        places_to_stay: cities,
+      }),
+      credentials: "include",
+    }).then(() => {
+      setHasChanges(false); // Zresetuj flagę zmian po zapisaniu
+    });
   };
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="relative">
-        <h2 className="text-xl font-semibold mb-4">Trip Timeline</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Trip Timeline</h2>
+          {hasChanges && (
+            <button 
+              onClick={saveChanges} 
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              <FaSave /> Save Changes
+            </button>
+          )}
+        </div>
         {places.length > 0 ? (
           places.map((place, index) => (
             <DraggableItem

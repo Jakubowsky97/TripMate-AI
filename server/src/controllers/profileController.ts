@@ -459,3 +459,20 @@ export const deleteAccount = async (
     res.status(500).json({ error: "Internal server error", details: err });
   }
 };
+
+export const getUserData = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(`Error fetching user data: ${error}`);
+  }
+}

@@ -160,10 +160,24 @@ const TripsPage = () => {
         </div>
       </div>
 
+      {trips.length === 0 && (
+        <div>
+          <p
+            className={`text-center text-lg ${
+              darkMode ? "text-white" : "text-black"
+            } w-full`}
+          >
+            No trips found. Create or join a trip to get started!
+          </p>
+        </div>
+      )}
+
       <div
         className={`grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 rounded-3xl ${
           darkMode ? "" : "text-black"
-        }`}
+        }
+          ${trips.length === 0 ? "hidden" : "block"}
+        `}
       >
         {trips.map((trip) => (
           <TripCard
@@ -187,67 +201,66 @@ const TripsPage = () => {
         ))}
       </div>
       <Dialog
-  open={isJoinModalOpen}
-  onClose={() => setIsJoinModalOpen(false)}
-  className="fixed z-50 inset-0 overflow-y-auto"
->
-  <div className="flex items-center justify-center min-h-screen px-4 relative">
-    {/* Przyciemnione tło */}
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-
-    <DialogPanel
-      className={`p-6 z-10 rounded-xl shadow-lg w-full max-w-md ${
-        darkMode ? "bg-gray-800" : "bg-white"
-      }`}
-    >
-      <DialogTitle
-        className={`text-lg font-bold mb-4 ${
-          darkMode ? "text-white" : "text-black"
-        }`}
+        open={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        className="fixed z-50 inset-0 overflow-y-auto"
       >
-        Join the trip
-      </DialogTitle>
-      <input
-        type="text"
-        value={joinCode}
-        onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
-        maxLength={6}
-        className={`w-full px-4 py-2 border rounded-md mb-2 ${
-          darkMode
-            ? "bg-gray-700 text-white border-gray-600"
-            : "bg-white text-black border-gray-300"
-        }`}
-        placeholder="Enter the 6-character code"
-      />
-      {joinError && (
-        <p className="text-red-500 text-sm mb-2">{joinError}</p>
-      )}
-      <div className="flex justify-end space-x-2">
-        <button
-          onClick={() => setIsJoinModalOpen(false)}
-          className={`px-4 py-2 rounded-md ${
-            darkMode
-              ? "bg-gray-600 hover:bg-gray-700 text-white"
-              : "bg-gray-300 hover:bg-gray-400 text-black"
-          }`}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleJoinTrip}
-          className={`px-4 py-2 rounded-md font-bold text-white ${
-            darkMode
-              ? "bg-[#FFA500] hover:bg-[#FF7F50]"
-              : "bg-[#FFA500] hover:bg-[#FF7F50]"
-          }`}
-        >
-          Join
-        </button>
-      </div>
-    </DialogPanel>
-  </div>
-</Dialog>
+        <div className="flex items-center justify-center min-h-screen px-4 relative">
+          {/* Przyciemnione tło */}
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
 
+          <DialogPanel
+            className={`p-6 z-10 rounded-xl shadow-lg w-full max-w-md ${
+              darkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <DialogTitle
+              className={`text-lg font-bold mb-4 ${
+                darkMode ? "text-white" : "text-black"
+              }`}
+            >
+              Join the trip
+            </DialogTitle>
+            <input
+              type="text"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
+              maxLength={6}
+              className={`w-full px-4 py-2 border rounded-md mb-2 ${
+                darkMode
+                  ? "bg-gray-700 text-white border-gray-600"
+                  : "bg-white text-black border-gray-300"
+              }`}
+              placeholder="Enter the 6-character code"
+            />
+            {joinError && (
+              <p className="text-red-500 text-sm mb-2">{joinError}</p>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsJoinModalOpen(false)}
+                className={`px-4 py-2 rounded-md ${
+                  darkMode
+                    ? "bg-gray-600 hover:bg-gray-700 text-white"
+                    : "bg-gray-300 hover:bg-gray-400 text-black"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJoinTrip}
+                className={`px-4 py-2 rounded-md font-bold text-white ${
+                  darkMode
+                    ? "bg-[#FFA500] hover:bg-[#FF7F50]"
+                    : "bg-[#FFA500] hover:bg-[#FF7F50]"
+                }`}
+              >
+                Join
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
     </div>
   );
 };

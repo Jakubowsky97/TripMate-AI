@@ -4,10 +4,14 @@ import { ChatDeepSeek } from "@langchain/deepseek";
 import { Request, Response } from "express";
 import supabase from "../utils/supabase";
 import Amadeus from "amadeus";
-import { updateUserPreferences } from "./preferencesController";
+import {
+  fetchUserPreferences,
+  updateUserPreferences,
+} from "./preferencesController";
 import { updateTravelData } from "./tripController";
 import axios from "axios";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { getUserData } from "./profileController";
 
 const chatModel = new ChatDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -47,9 +51,16 @@ const sendMessageToAI = async (
     // Pobranie historii rozmowy
     const chatHistory = await fetchChatHistory(userId, tripId);
     const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+    const userPreferences = await fetchUserPreferences(userId);
+    const userData = await getUserData(userId);
 
-    const systemPrompt = `You are a POLISH/ENGLISH bilingual travel planner AI and today is: ${today} . Your responses must follow these rules:
+    const systemPrompt = `You are a POLISH/ENGLISH bilingual travel planner AI and today is: ${today}. 
+You are talking to a user with the following data: ${JSON.stringify(userData)}.
+And these are the user preferences: ${JSON.stringify(userPreferences)}.
+You are a travel assistant and your task is to help the user plan their trip.
+You will be given a message from the user and you will respond in a natural way, as if you were having a conversation with them.    
 
+Your responses must follow these rules:
 ■■■ STRICT FORMAT RULES ■■■
 1. USER COMMUNICATION:
    - Use ONLY natural conversation in user's language
@@ -59,21 +70,22 @@ const sendMessageToAI = async (
      * Special separators (---, ===, ###)
 
 2. DATA EXTRACTION:
-   - Collect 3 JSON objects SILENTLY:
+   - Collect 4 JSON objects SILENTLY:
      a) preferences - long-term user preferences
      b) trip - single trip data matching database schema
      c) places_info - street-level location data
+     d) places_to_visit - places the user plans to visit or activities to do during the trip
 
-    - if place in places_to_stay is starting point it must have only one date.
+   - If place in places_to_stay is starting point it must have only one date.
 
-    - Remember that cities in TRIP_JSON should be from starting point to destination.
-    Example:
-    User: "Chcę lecieć z Warszawy do Mediolanu i zrobić postój w Paryżu"
-    { "countries": ["Poland", "France", "Italy"], "cities": ["Warszawa", "Paris", "Mediolan"] }
+   - Remember that cities in TRIP_JSON should be from starting point to destination.
+   Example:
+   User: "Chcę lecieć z Warszawy do Mediolanu i zrobić postój w Paryżu"
+   { "countries": ["Poland", "France", "Italy"], "cities": ["Warszawa", "Paris", "Mediolan"] }
 
    - JSON must use EXACTLY these field names, not more, not less, JSON must look like below and start WITH the keywords:
-     "BEGIN_PREFERENCES_JSON", "BEGIN_TRIP_JSON", "BEGIN_PLACES_INFO_JSON".
-     and end with "END_PREFERENCES_JSON", "END_TRIP_JSON", "END_PLACES_INFO_JSON".
+     "BEGIN_PREFERENCES_JSON", "BEGIN_TRIP_JSON", "BEGIN_PLACES_INFO_JSON", "BEGIN_PLACES_TO_VISIT_JSON".
+     and end with "END_PREFERENCES_JSON", "END_TRIP_JSON", "END_PLACES_INFO_JSON", "END_PLACES_TO_VISIT_JSON".
      DON'T USE '''json'''
      - Example:
      BEGIN_PREFERENCES_JSON  
@@ -92,7 +104,7 @@ const sendMessageToAI = async (
       "countries": [...],  
       "cities": [...],  
       "places_to_stay": [
-    { "name": "...", "city": "...", "type": "...", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
+    { "name": "...", "city": "...", "type": "hotel", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
       "title": "...",  
       "start_date": "YYYY-MM-DD",  
       "end_date": "YYYY-MM-DD",  
@@ -100,7 +112,13 @@ const sendMessageToAI = async (
       "type_of_trip": "..."  
     }  
     END_TRIP_JSON
-    
+
+    BEGIN_PLACES_TO_VISIT_JSON
+    [
+      { "name": "...", "city": "...", "type": "...", "date": "YYYY-MM-DD", "time": "HH:mm" (optional), "notes": "..." (optional) }, ...
+    ]
+    END_PLACES_TO_VISIT_JSON
+
     BEGIN_PLACES_INFO_JSON
     {
       "street": "...",
@@ -149,7 +167,7 @@ AI: "Dobry wybór! 🛫 Na kiedy planujesz powrót z Mediolanu?"
       "countries": [...],  
       "cities": ["Mediolan"],  
       "places_to_stay": [
-    { "name": "...", "city": "...", "type": "...", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
+    { "name": "...", "city": "...", "type": "hotel", "start_date": "...", "end_date": "...", "is_start_point": true | false, "is_end_point": true | false }, ... ],
       "title": "...",  
       "start_date": "2025-07-15",  
       "end_date": "YYYY-MM-DD",  
@@ -221,6 +239,7 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
       preferences: any | null;
       trip: any | null;
       placesInfo: any | null;
+      placesToVisit: any | null;
       cleanedText: string;
     } => {
       const preferencesMatch = text.match(
@@ -232,10 +251,14 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
       const placesInfoMatch = text.match(
         /BEGIN_PLACES_INFO_JSON\s*([\s\S]*?)\s*END_PLACES_INFO_JSON/
       );
+      const placesToVisitMatch = text.match(
+        /BEGIN_PLACES_TO_VISIT_JSON\s*([\s\S]*?)\s*END_PLACES_TO_VISIT_JSON/
+      );
 
       let preferences = null;
       let trip = null;
       let placesInfo = null;
+      let placesToVisit = null;
 
       if (preferencesMatch) {
         try {
@@ -261,6 +284,14 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
         }
       }
 
+      if (placesToVisitMatch) {
+        try {
+          placesToVisit = JSON.parse(placesToVisitMatch[1]);
+        } catch (e) {
+          console.error("Błąd parsowania places_to_visit JSON:", e);
+        }
+      }
+
       // Usuń bloki z tekstu
       const cleanedText = text
         .replace(
@@ -272,12 +303,16 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
           /BEGIN_PLACES_INFO_JSON\s*([\s\S]*?)\s*END_PLACES_INFO_JSON/,
           ""
         )
+        .replace(
+          /BEGIN_PLACES_TO_VISIT_JSON\s*([\s\S]*?)\s*END_PLACES_TO_VISIT_JSON/,
+          ""
+        )
         .trim();
 
-      return { preferences, trip, placesInfo, cleanedText };
+      return { preferences, trip, placesInfo, placesToVisit, cleanedText };
     };
 
-    const { preferences, trip, placesInfo, cleanedText } =
+    const { preferences, trip, placesInfo, placesToVisit, cleanedText } =
       extractJSONsAndCleanText(String(response.content));
 
     const intent = await detectIntentBasedOnConversation(cleanedText);
@@ -306,6 +341,27 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
       await updateTravelData(tripId, trip);
     } else {
       console.log("Nie udało się wyekstrahować danych podróży.");
+    }
+
+    if (placesToVisit) {
+      console.log("Wyekstrahowane miejsca do odwiedzenia:", placesToVisit);
+      const { data: existingData, error } = await supabase
+        .from("travel_data")
+        .select("*")
+        .eq("id", tripId)
+        .single();
+
+      if (error) throw new Error("Could not fetch existing travel data");
+
+      const updatedData = {
+        ...existingData,
+        places_to_visit: placesToVisit,
+        status: "confirmed", // jeśli potrzebujesz tego pola
+      };
+
+      await updateTravelData(tripId, updatedData);
+    } else {
+      console.log("Nie udało się wyekstrahować miejsc do odwiedzenia.");
     }
 
     let foundPlaces = null;
@@ -339,7 +395,6 @@ AI: "Sprawdzam noclegi w okolicy Watykanu..."
     if (insertError) throw insertError;
 
     return { message: cleanedText, places: foundPlaces, trip };
-
   } catch (error) {
     console.error("Błąd wysyłania wiadomości do AI:", error);
     throw new Error("Nie udało się przetworzyć wiadomości.");
@@ -396,19 +451,17 @@ export const chatController = async (
     }
 
     // Wykonanie logiki wysyłania wiadomości do AI
-    const { message: aiMessage, places, trip } = await sendMessageToAI(
-      userId,
-      message,
-      tripId
-    );
+    const {
+      message: aiMessage,
+      places,
+      trip,
+    } = await sendMessageToAI(userId, message, tripId);
 
     res.json({
       message: aiMessage,
       places: places,
-      trip
-    })
-
-
+      trip,
+    });
   } catch (error) {
     console.error("Chat error:", error);
     const errorMessage =
@@ -485,6 +538,7 @@ async function findPlacesNearby(
         radius,
         type: placeType,
         key: GOOGLE_API_KEY,
+        limit: 5,
       },
     });
 

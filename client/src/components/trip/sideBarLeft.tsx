@@ -1,8 +1,7 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import TripTimeLine from "../ui/TripTimeLine";
 import PlaceDetailView from "../ui/PlaceDetailView";
 import { FaArrowLeft } from "react-icons/fa";
@@ -101,7 +100,7 @@ useEffect(() => {
 
 useEffect(() => {
   console.log("Selected Places:", selectedPlaces);
-}, [selectedPlaces])
+}, [selectedPlaces]);
   
 
 

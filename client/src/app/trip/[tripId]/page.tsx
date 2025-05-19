@@ -654,6 +654,18 @@ useEffect(() => {
 }, [selectedPlaces]);
 
 useEffect(() => {
+  // Sprawdź czy selectedPlaces zawiera rzeczywiste dane
+  if (selectedPlaces.length === 0 || 
+      selectedPlaces.every(city => city.places.length === 0)) {
+    return; // Nie wykonuj zapisu, jeśli brak danych
+  }
+
+  const jsonPlaces = selectedPlaces.flatMap((city) =>
+    city.places.map((place) => ({
+      ...place,
+    }))
+  );
+
   fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
     method: "POST",
     headers: {
@@ -661,24 +673,11 @@ useEffect(() => {
     },
     body: JSON.stringify({
       trip_id: tripId,
-      places_to_stay: selectedPlaces.map((city) => ({
-        places: city.places.map((place) => ({
-          name: place.name,
-          type: place.type,
-          start_date: place.start_date,
-          end_date: place.end_date,
-          is_start_point: place.is_start_point,
-          is_end_point: place.is_end_point,
-          country: place.country,
-          weather: place.weather,
-          coordinates: place.coordinates,
-          date: place.date,
-        })),
-      })),
+      places_to_stay: jsonPlaces,
     }),
     credentials: "include",
   })
-}, [setSelectedPlaces, selectedPlaces]);
+}, [selectedPlaces, tripId]); // Zmiana z setSelectedPlaces na selectedPlaces
 
 
   if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;

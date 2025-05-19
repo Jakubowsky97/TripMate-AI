@@ -216,7 +216,9 @@ export default function Dashboard({
           darkMode
             ? "bg-gradient-to-br from-gray-800 to-gray-700 text-white"
             : "bg-gradient-to-br from-blue-100 to-white text-gray-900"
-        }`}
+        }
+        ${trips.length === 0 ? "hidden" : "block"}    
+        `}
       >
         <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">

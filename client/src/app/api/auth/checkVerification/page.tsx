@@ -26,7 +26,13 @@ function CheckVerificationContent() {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/auth/checkEmail`,
           {
-            credentials: 'include',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: userId,
+            }),
           }
         );
 
@@ -38,6 +44,12 @@ function CheckVerificationContent() {
 
         if (data.isConfirmed === true) {
           router.push('/auth/register/step-4');
+              fetch("/api/auth/login", {
+                method: "POST",
+                body: {
+                  
+                },
+              })
         } else {
           router.push('/auth/register/step-3?error=Email%20not%20confirmed');
         }

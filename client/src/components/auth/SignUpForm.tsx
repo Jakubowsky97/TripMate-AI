@@ -198,6 +198,7 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
 
     if (password !== confirmPassword) {
       setPasswordsMatch(false);
+      alert("Passwords do not match. Please try again.");
       return;
     }
 
@@ -207,6 +208,7 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
     formData.append("confirmPassword", confirmPassword);
     formData.append("fname", fname);
     formData.append("lname", lname);
+    sessionStorage.setItem("password", password);
 
     const data = await signup(formData);
     localStorage.setItem("user_id", data.user?.id as string);
@@ -263,7 +265,6 @@ export function SignUpPasswordForm({onClick} : SignUpFormInterface) {
                 <button
                   type="submit"
                   className={`w-full bg-[#FF7F50] text-white shadow-lg hover:bg-[#FF6347] py-2 px-4 rounded-md " ${passwordsMatch ? 'bg-[#FF7F50]' : 'bg-[#c7775a]'}`}
-                  disabled={!passwordsMatch}
                 >
                   Continue
                 </button>

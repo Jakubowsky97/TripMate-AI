@@ -222,7 +222,24 @@ export default function TripPage() {
             start_date: place.start_date,
             end_date: place.end_date,
             type: place.type,
+            typeOfPlace: "stay",
             country,
+          });
+        }
+
+        for (const place of placesToVisit) {
+          const countryIndex = cities.indexOf(place.city);
+          const country = countries[countryIndex] || "";
+
+          await addPlaceWithWeather({
+            city: place.city,
+            name: place.name,
+            date: place.date,
+            time: place.time || "",
+            notes: place.notes || "",
+            type: place.type,
+            typeOfPlace: "visit",
+            country
           });
         }
       } catch (err) {
@@ -273,11 +290,15 @@ export default function TripPage() {
   const addPlaceWithWeather = async (place: {
     city: string;
     name: string;
-    type: string;
-    end_date: string;
-    start_date: string;
-    is_end_point: boolean;
-    is_start_point: boolean;
+    type?: string;
+    typeOfPlace: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+    end_date?: string;
+    start_date?: string;
+    is_end_point?: boolean;
+    is_start_point?: boolean;
     country: string;
   }) => {
     try {
@@ -310,44 +331,57 @@ export default function TripPage() {
       const coordinates = [location.lng, location.lat];
 
       // 3. Przetwarzanie daty
-      const start_date = new Date(place.start_date);
-      const end_date = new Date(place.end_date);
+      const start_date = new Date(place.start_date ?? "");
+      const end_date = new Date(place.end_date ?? "");
+      const date_to_visit = new Date(place.date ?? "");
 
       let date = "";
-      if (place.is_start_point) {
+
+      if (place.typeOfPlace === "visit") {
         date =
-          start_date.toLocaleString("en-GB", { month: "long" }) +
-          ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
-      } else if (place.is_end_point) {
-        date =
-          end_date.toLocaleString("en-GB", { month: "long" }) +
-          ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
-      } else if (place.start_date && place.end_date) {
-        if (
-          start_date.toLocaleDateString("en-GB", { month: "long" }) ===
-          end_date.toLocaleDateString("en-GB", { month: "long" })
-        ) {
-          if (start_date.getDate() === end_date.getDate()) {
-            date =
-              start_date.toLocaleString("en-GB", { month: "long" }) +
-              ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+          date_to_visit.toLocaleString("en-GB", { month: "long" }) +
+          ` ${date_to_visit.getDate()}, ${date_to_visit.getFullYear()}`;
+      } else {  
+        if (place.is_start_point) {
+          date =
+            start_date.toLocaleString("en-GB", { month: "long" }) +
+            ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+        } else if (place.is_end_point) {
+          date =
+            end_date.toLocaleString("en-GB", { month: "long" }) +
+            ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
+        } else if (place.start_date && place.end_date) {
+          if (
+            start_date.toLocaleDateString("en-GB", { month: "long" }) ===
+            end_date.toLocaleDateString("en-GB", { month: "long" })
+          ) {
+            if (start_date.getDate() === end_date.getDate()) {
+              date =
+                start_date.toLocaleString("en-GB", { month: "long" }) +
+                ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+            } else {
+              date =
+                start_date.toLocaleString("en-GB", { month: "long" }) +
+                ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+            }
           } else {
             date =
               start_date.toLocaleString("en-GB", { month: "long" }) +
-              ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+              ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
+                month: "long",
+              })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
           }
-        } else {
-          date =
-            start_date.toLocaleString("en-GB", { month: "long" }) +
-            ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
-              month: "long",
-            })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
         }
       }
-
-      // 4. Finalny obiekt miejsca
       const fullPlace = {
         ...place,
+        type: place.type ?? "",
+        start_date: place.start_date ?? "",
+        end_date: place.end_date ?? "",
+        is_start_point: place.is_start_point ?? false,
+        is_end_point: place.is_end_point ?? false,
+        country: place.country,
+        typeOfPlace: place.typeOfPlace,
         weather: {
           temp: `${weather.main.temp.toFixed(1)}°C`,
           condition:
@@ -606,14 +640,17 @@ export default function TripPage() {
         city: string;
         name: string;
         type: string;
-        start_date: string;
-        end_date: string;
-        is_start_point: boolean;
-        is_end_point: boolean;
+        start_date?: string;
+        end_date?: string;
+        is_start_point?: boolean;
+        is_end_point?: boolean;
         country: string;
         weather: { temp: string; condition: string };
         coordinates: any[];
-        date: string;
+        date?: string;
+        notes?: string;
+        time?: string;
+        typeOfPlace?: string;
       }[];
     }[]
   >([]);
@@ -666,11 +703,13 @@ export default function TripPage() {
       return; // Nie wykonuj zapisu, jeśli brak danych
     }
 
-    const jsonPlaces = selectedPlaces.flatMap((city) =>
-      city.places.map((place) => ({
-        ...place,
-      }))
-    );
+  const places_to_stay = selectedPlaces.flatMap((city) =>
+    city.places.filter((place) => place.typeOfPlace === 'stay')
+  );
+
+  const places_to_visit = selectedPlaces.flatMap((city) =>
+    city.places.filter((place) => place.typeOfPlace === 'visit')
+  );
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
       method: "POST",
@@ -679,7 +718,8 @@ export default function TripPage() {
       },
       body: JSON.stringify({
         trip_id: tripId,
-        places_to_stay: jsonPlaces,
+        places_to_stay: places_to_stay,
+        places_to_visit: places_to_visit,
       }),
       credentials: "include",
     });

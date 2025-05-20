@@ -1,5 +1,5 @@
 // File: server/src/controllers/authController.ts
-import { Response } from "express";
+import { Request, Response } from "express";
 import supabase from "../utils/supabase";
 import { EmailOtpType } from "@supabase/supabase-js";
 import { AuthenticatedRequest } from "../middleware/auth";
@@ -50,9 +50,9 @@ export const confirmEmail = async (req: AuthenticatedRequest, res: Response): Pr
 
 
 // Sprawdzenie statusu weryfikacji e-mail
-export const checkEmailVerification = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const checkEmailVerification = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user_id = req.user?.sub; // Pobieramy user_id z JWT
+    const { user_id }= req.body
 
     if (!user_id) {
       res.status(400).json({ error: "Unable to get user" });

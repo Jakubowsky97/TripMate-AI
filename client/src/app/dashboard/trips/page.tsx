@@ -28,7 +28,7 @@ const TripsPage = () => {
       startDate: string;
       endDate: string;
       image: string | null;
-      friendsList: { id: string; full_name: string }[];
+      friendsList: string[];
       status?: string;
       owner: Owner;
     }[]

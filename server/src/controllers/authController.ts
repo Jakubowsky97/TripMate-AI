@@ -1,19 +1,14 @@
 // File: server/src/controllers/authController.ts
 import { Request, Response } from "express";
-import supabase from "../utils/supabase";
+import supabase, { supabaseAdmin } from "../utils/supabase";
 import { EmailOtpType } from "@supabase/supabase-js";
 import { AuthenticatedRequest } from "../middleware/auth";
 
 // Potwierdzenie adresu e-mail
-export const confirmEmail = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const confirmEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token_hash, type, next: nextQuery } = req.query;
-    const user_id = req.user?.sub; // Pobieramy user_id z JWT
 
-    if (!user_id) {
-      res.status(400).json({ error: "Unable to get user" });
-      return;
-    }
     if (!token_hash || !type) {
       res.status(400).json({ error: "Missing token_hash or type" });
       return;
@@ -29,17 +24,6 @@ export const confirmEmail = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ isConfirmed: true })
-      .eq("id", user_id);
-
-    if (updateError) {
-      console.error("Error updating email confirmation status:", updateError);
-      res.status(500).json({ message: "Failed to update confirmation status" });
-      return;
-    }
-
     res.status(200).json({ message: "Email confirmed successfully", success: true, next: nextQuery || "/" });
   } catch (err) {
     console.error(err);
@@ -52,30 +36,27 @@ export const confirmEmail = async (req: AuthenticatedRequest, res: Response): Pr
 // Sprawdzenie statusu weryfikacji e-mail
 export const checkEmailVerification = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { user_id }= req.body
+    const user_id = req.query.user_id as string;
 
     if (!user_id) {
       res.status(400).json({ error: "Unable to get user" });
       return;
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("isConfirmed")
-      .eq("id", user_id);
+    const { data, error } = await supabaseAdmin
+      .auth.admin.getUserById(user_id);
 
     if (error) {
-      console.error("Error fetching email confirmation status:", error);
-      res.status(500).json({ message: "Failed to fetch confirmation status" });
-      return;
+      console.error("Supabase Error: ", error);
+      res.status(500).json({ error: error.message || "Failed to get user" });
     }
 
-    if (!data || data.length === 0) {
-      res.status(404).json({ message: "User not found" });
-      return;
+    if (data.user?.email_confirmed_at) {
+      res.status(200).json({ isConfirmed: true });
+    } else {
+      res.status(200).json({ isConfirmed: false });
     }
 
-    res.status(200).json({ isConfirmed: data[0].isConfirmed });
   } catch (err) {
     console.error("Error:", err);
     res.status(500).json({ error: "Internal server error" });

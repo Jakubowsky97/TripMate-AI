@@ -2,7 +2,7 @@
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { FaChartPie, FaMap, FaTrophy } from "react-icons/fa";
 import TripCard from "./TripCard";
-import { useEffect, useState } from "react";;
+import { useEffect, useState } from "react";
 import { fetchTrips, fetchTripsFromFriends } from "@/utils/fetchTrips";
 import { useDarkMode } from "@/hooks/useDarkMode";
 
@@ -37,7 +37,20 @@ export default function Dashboard({
       startDate: string;
       endDate: string;
       image: string | null;
-      friendsList: { id: string; full_name: string }[];
+      friendsList: string[];
+      status?: string;
+      owner: Owner;
+    }[]
+  >([]);
+  const [allTrips, setAllTrips] = useState<
+    {
+      id: number;
+      title: string;
+      typeOfTrip: string;
+      startDate: string;
+      endDate: string;
+      image: string | null;
+      friendsList: string[];
       status?: string;
       owner: Owner;
     }[]
@@ -45,7 +58,7 @@ export default function Dashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-
+  const [topCompanion, setTopCompanion] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTrips = async () => {
@@ -56,13 +69,12 @@ export default function Dashboard({
         const userTrips = await fetchTrips(userId);
         const friendsTrips = await fetchTripsFromFriends();
         const allTrips = [...(userTrips || []), ...(friendsTrips || [])];
-        if(window.innerWidth < 1536) {
+        setAllTrips(allTrips);
+        if (window.innerWidth < 1536) {
           setTrips(allTrips.slice(0, 3));
         } else {
           setTrips(allTrips.slice(0, 4));
-
         }
-        
       } catch (err) {
         setError("Failed to fetch trips");
         console.error(err);
@@ -73,6 +85,48 @@ export default function Dashboard({
 
     loadTrips();
   }, [userId]);
+
+  useEffect(() => {
+    const calculateTopCompanion = async () => {
+      const companionCount: { [key: string]: number } = {};
+
+      allTrips.forEach((trip) => {
+        trip.friendsList?.forEach((friend) => {
+          console.log("Friend ID:", friend);
+          if (friend && friend !== userId) {
+            companionCount[friend] = (companionCount[friend] || 0) + 1;
+          }
+        });
+      });
+
+      if (Object.keys(companionCount).length === 0) {
+        console.log("No companions found.");
+        return;
+      }
+
+      const topCompanion = Object.entries(companionCount).reduce(
+        (a, b) => (a[1] > b[1] ? a : b),
+        ["", 0]
+      );
+
+      const friendId = topCompanion[0];
+      const query = `friends_list=${encodeURIComponent(friendId)}`;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/profile/getFriendsData?${query}`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch friends data");
+      }
+
+      const data = await response.json();
+      setTopCompanion(data.data[0]?.full_name || "N/A");
+    };
+
+    calculateTopCompanion();
+  }, [allTrips, userId]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -90,20 +144,24 @@ export default function Dashboard({
 
   return (
     <div className="p-6">
-      <h1 className={`${darkMode ? "text-white" : "text-[#0077B6]"} font-bold text-3xl mb-6`}>
+      <h1
+        className={`${
+          darkMode ? "text-white" : "text-[#0077B6]"
+        } font-bold text-3xl mb-6`}
+      >
         🌴 Good Morning, {user_firstName} 👋
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           {
             icon: <FaMap className="text-yellow-400 text-4xl" />,
-            label: "Countries Visited",
-            value: "12",
+            label: "Trips Planned",
+            value: allTrips.length,
           },
           {
             icon: <FaTrophy className="text-amber-300 text-4xl" />,
             label: "Top Travel Companion",
-            value: "Alex",
+            value: topCompanion || "N/A",
           },
           {
             icon: <FaChartPie className="text-purple-500 text-4xl" />,
@@ -231,10 +289,10 @@ export default function Dashboard({
               owner={trip.owner}
               darkMode={darkMode}
               onClick={() => {
-                if(trip.status == "draft") {
-                  router.push('/trip/creator?trip_id=' + trip.id);
+                if (trip.status == "draft") {
+                  router.push("/trip/creator?trip_id=" + trip.id);
                 } else {
-                  router.push(`/trip/${trip.id}`)
+                  router.push(`/trip/${trip.id}`);
                 }
               }}
             />

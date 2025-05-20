@@ -24,15 +24,12 @@ function CheckVerificationContent() {
     const confirmEmail = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/checkEmail`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/checkEmail?user_id=${userId}`,
           {
-            method: 'POST',
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_id: userId,
-            }),
+            }
           }
         );
 
@@ -43,13 +40,17 @@ function CheckVerificationContent() {
         }
 
         if (data.isConfirmed === true) {
-          router.push('/auth/register/step-4');
+          const formData = new FormData();
+          formData.append('email', sessionStorage.getItem('email') || '');
+          formData.append('password', sessionStorage.getItem('password') || '');
+
               fetch("/api/auth/login", {
                 method: "POST",
-                body: {
-                  
-                },
+                body: formData
               })
+          sessionStorage.removeItem('email');
+          sessionStorage.removeItem('password');
+          router.push('/auth/register/step-4');
         } else {
           router.push('/auth/register/step-3?error=Email%20not%20confirmed');
         }

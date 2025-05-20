@@ -1,18 +1,17 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import TripTimeLine from "../ui/TripTimeLine";
 import PlaceDetailView from "../ui/PlaceDetailView";
 import { FaArrowLeft } from "react-icons/fa";
-import { set } from "date-fns";
-import { log } from "console";
+
 
 interface SidebarLeftProps {
   mapRef: React.MutableRefObject<google.maps.Map | null>;
   selectedPlaces: any[]; // Type to customize
   setSelectedPlaces: React.Dispatch<React.SetStateAction<any[]>>; // Type to customize
+  tripId: string;
 }
 
 interface ViewState {
@@ -23,7 +22,8 @@ interface ViewState {
 export default function SidebarLeft({ 
   mapRef, 
   selectedPlaces,
-  setSelectedPlaces 
+  setSelectedPlaces, 
+  tripId
 }: SidebarLeftProps) {
   const [view, setView] = useState<ViewState>({ type: "timeline" });
 
@@ -100,7 +100,7 @@ useEffect(() => {
 
 useEffect(() => {
   console.log("Selected Places:", selectedPlaces);
-}, [selectedPlaces])
+}, [selectedPlaces]);
   
 
 
@@ -116,7 +116,7 @@ useEffect(() => {
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >
-            <TripTimeLine selectedPlaces={selectedPlaces} mapRef={mapRef} />
+            <TripTimeLine selectedPlaces={selectedPlaces} mapRef={mapRef} tripId={tripId} />
           </motion.div>
         )}
 

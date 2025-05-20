@@ -12,7 +12,7 @@ interface TripCardProps {
   typeOfTrip: string;
   startDate: string;
   endDate: string;
-  friendsList: { id: string; full_name: string }[];
+  friendsList: string[];
   owner: Owner;
   image: string;
   darkMode: boolean; // Pass darkMode as a prop

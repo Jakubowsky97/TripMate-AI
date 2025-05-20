@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import TripMap from "@/components/trip/tripMap";
 import { useParams, useSearchParams } from "next/navigation";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import SidebarLeft from "@/components/trip/sideBarLeft";
 import SidebarRight from "@/components/trip/sideBarRight";
@@ -53,6 +53,7 @@ export default function TripPage() {
     countries: [""],
     cities: [""],
     places_to_stay: [""],
+    places_to_visit: [""],
     title: "",
     start_date: "",
     end_date: "",
@@ -171,6 +172,7 @@ export default function TripPage() {
           countries: data.data.countries,
           cities: data.data.cities,
           places_to_stay: data.data.places_to_stay,
+          places_to_visit: data.data.places_to_visit,
           title: data.data.title,
           start_date: data.data.start_date,
           end_date: data.data.end_date,
@@ -195,6 +197,11 @@ export default function TripPage() {
             ? JSON.parse(data.data.places_to_stay)
             : data.data.places_to_stay;
 
+        const placesToVisit =
+          typeof data.data.places_to_visit === "string"
+            ? JSON.parse(data.data.places_to_visit)
+            : data.data.places_to_visit;
+
         const initialPlaces = cities.map((city: string, index: number) => ({
           city,
           country: countries[index] || countries[0] || "",
@@ -215,7 +222,24 @@ export default function TripPage() {
             start_date: place.start_date,
             end_date: place.end_date,
             type: place.type,
+            typeOfPlace: "stay",
             country,
+          });
+        }
+
+        for (const place of placesToVisit) {
+          const countryIndex = cities.indexOf(place.city);
+          const country = countries[countryIndex] || "";
+
+          await addPlaceWithWeather({
+            city: place.city,
+            name: place.name,
+            date: place.date,
+            time: place.time || "",
+            notes: place.notes || "",
+            type: place.type,
+            typeOfPlace: "visit",
+            country
           });
         }
       } catch (err) {
@@ -266,11 +290,15 @@ export default function TripPage() {
   const addPlaceWithWeather = async (place: {
     city: string;
     name: string;
-    type: string;
-    end_date: string;
-    start_date: string;
-    is_end_point: boolean;
-    is_start_point: boolean;
+    type?: string;
+    typeOfPlace: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+    end_date?: string;
+    start_date?: string;
+    is_end_point?: boolean;
+    is_start_point?: boolean;
     country: string;
   }) => {
     try {
@@ -303,44 +331,57 @@ export default function TripPage() {
       const coordinates = [location.lng, location.lat];
 
       // 3. Przetwarzanie daty
-      const start_date = new Date(place.start_date);
-      const end_date = new Date(place.end_date);
+      const start_date = new Date(place.start_date ?? "");
+      const end_date = new Date(place.end_date ?? "");
+      const date_to_visit = new Date(place.date ?? "");
 
       let date = "";
-      if (place.is_start_point) {
+
+      if (place.typeOfPlace === "visit") {
         date =
-          start_date.toLocaleString("en-GB", { month: "long" }) +
-          ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
-      } else if (place.is_end_point) {
-        date =
-          end_date.toLocaleString("en-GB", { month: "long" }) +
-          ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
-      } else if (place.start_date && place.end_date) {
-        if (
-          start_date.toLocaleDateString("en-GB", { month: "long" }) ===
-          end_date.toLocaleDateString("en-GB", { month: "long" })
-        ) {
-          if (start_date.getDate() === end_date.getDate()) {
-            date =
-              start_date.toLocaleString("en-GB", { month: "long" }) +
-              ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+          date_to_visit.toLocaleString("en-GB", { month: "long" }) +
+          ` ${date_to_visit.getDate()}, ${date_to_visit.getFullYear()}`;
+      } else {  
+        if (place.is_start_point) {
+          date =
+            start_date.toLocaleString("en-GB", { month: "long" }) +
+            ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+        } else if (place.is_end_point) {
+          date =
+            end_date.toLocaleString("en-GB", { month: "long" }) +
+            ` ${end_date.getDate()}, ${end_date.getFullYear()}`;
+        } else if (place.start_date && place.end_date) {
+          if (
+            start_date.toLocaleDateString("en-GB", { month: "long" }) ===
+            end_date.toLocaleDateString("en-GB", { month: "long" })
+          ) {
+            if (start_date.getDate() === end_date.getDate()) {
+              date =
+                start_date.toLocaleString("en-GB", { month: "long" }) +
+                ` ${start_date.getDate()}, ${start_date.getFullYear()}`;
+            } else {
+              date =
+                start_date.toLocaleString("en-GB", { month: "long" }) +
+                ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+            }
           } else {
             date =
               start_date.toLocaleString("en-GB", { month: "long" }) +
-              ` ${start_date.getDate()}-${end_date.getDate()}, ${start_date.getFullYear()}`;
+              ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
+                month: "long",
+              })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
           }
-        } else {
-          date =
-            start_date.toLocaleString("en-GB", { month: "long" }) +
-            ` ${start_date.getDate()} - ${end_date.toLocaleString("en-GB", {
-              month: "long",
-            })} ${end_date.getDate()}, ${start_date.getFullYear()}`;
         }
       }
-
-      // 4. Finalny obiekt miejsca
       const fullPlace = {
         ...place,
+        type: place.type ?? "",
+        start_date: place.start_date ?? "",
+        end_date: place.end_date ?? "",
+        is_start_point: place.is_start_point ?? false,
+        is_end_point: place.is_end_point ?? false,
+        country: place.country,
+        typeOfPlace: place.typeOfPlace,
         weather: {
           temp: `${weather.main.temp.toFixed(1)}°C`,
           condition:
@@ -599,95 +640,98 @@ export default function TripPage() {
         city: string;
         name: string;
         type: string;
-        start_date: string;
-        end_date: string;
-        is_start_point: boolean;
-        is_end_point: boolean;
+        start_date?: string;
+        end_date?: string;
+        is_start_point?: boolean;
+        is_end_point?: boolean;
         country: string;
         weather: { temp: string; condition: string };
         coordinates: any[];
-        date: string;
+        date?: string;
+        notes?: string;
+        time?: string;
+        typeOfPlace?: string;
       }[];
     }[]
   >([]);
 
-useEffect(() => {
-  let changed = false;
+  useEffect(() => {
+    let changed = false;
 
-  const hasStart = selectedPlaces.some((city) =>
-    city.places.some((place) => place.is_start_point)
+    const hasStart = selectedPlaces.some((city) =>
+      city.places.some((place) => place.is_start_point)
+    );
+
+    const hasEnd = selectedPlaces.some((city) =>
+      city.places.some((place) => place.is_end_point)
+    );
+
+    if (!hasStart || !hasEnd) {
+      setSelectedPlaces((prev) => {
+        const updated = prev.map((city) => ({
+          ...city,
+          places: city.places.map((place) => ({ ...place })),
+        }));
+
+        if (!hasStart) {
+          const firstCity = updated[0];
+          if (firstCity && firstCity.places.length > 0) {
+            firstCity.places[0].is_start_point = true;
+            changed = true;
+          }
+        }
+
+        if (!hasEnd) {
+          const lastCity = updated[updated.length - 1];
+          if (lastCity && lastCity.places.length > 0) {
+            lastCity.places[lastCity.places.length - 1].is_end_point = true;
+            changed = true;
+          }
+        }
+
+        return changed ? updated : prev;
+      });
+    }
+  }, [selectedPlaces]);
+
+  useEffect(() => {
+    // Sprawdź czy selectedPlaces zawiera rzeczywiste dane
+    if (
+      selectedPlaces.length === 0 ||
+      selectedPlaces.every((city) => city.places.length === 0)
+    ) {
+      return; // Nie wykonuj zapisu, jeśli brak danych
+    }
+
+  const places_to_stay = selectedPlaces.flatMap((city) =>
+    city.places.filter((place) => place.typeOfPlace === 'stay')
   );
 
-  const hasEnd = selectedPlaces.some((city) =>
-    city.places.some((place) => place.is_end_point)
+  const places_to_visit = selectedPlaces.flatMap((city) =>
+    city.places.filter((place) => place.typeOfPlace === 'visit')
   );
 
-  if (!hasStart || !hasEnd) {
-    setSelectedPlaces((prev) => {
-      const updated = prev.map((city) => ({
-        ...city,
-        places: city.places.map((place) => ({ ...place }))
-      }));
-
-      if (!hasStart) {
-        const firstCity = updated[0];
-        if (firstCity && firstCity.places.length > 0) {
-          firstCity.places[0].is_start_point = true;
-          changed = true;
-        }
-      }
-
-      if (!hasEnd) {
-        const lastCity = updated[updated.length - 1];
-        if (
-          lastCity &&
-          lastCity.places.length > 0
-        ) {
-          lastCity.places[lastCity.places.length - 1].is_end_point = true;
-          changed = true;
-        }
-      }
-
-      return changed ? updated : prev;
-    })
-  }
-}, [selectedPlaces]);
-
-useEffect(() => {
-  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      trip_id: tripId,
-      places_to_stay: selectedPlaces.map((city) => ({
-        places: city.places.map((place) => ({
-          name: place.name,
-          type: place.type,
-          start_date: place.start_date,
-          end_date: place.end_date,
-          is_start_point: place.is_start_point,
-          is_end_point: place.is_end_point,
-          country: place.country,
-          weather: place.weather,
-          coordinates: place.coordinates,
-          date: place.date,
-        })),
-      })),
-    }),
-    credentials: "include",
-  })
-}, [setSelectedPlaces, selectedPlaces]);
-
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        trip_id: tripId,
+        places_to_stay: places_to_stay,
+        places_to_visit: places_to_visit,
+      }),
+      credentials: "include",
+    });
+  }, [selectedPlaces, tripId]); // Zmiana z setSelectedPlaces na selectedPlaces
 
   if (!sessionChecked) return <p>Sprawdzanie sesji...</p>;
   if (!tripId) return <p>Ładowanie...</p>;
   if (loading) return <p>Loading user data...</p>;
   if (error) return <p>Error: {error}</p>;
   if (!tripData) {
-  return <p>Loading...</p>;
-}
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="flex flex-col">
@@ -699,17 +743,19 @@ useEffect(() => {
         allUsers={allUsers}
         onShareClick={() => setShowShareModal(true)}
       />
-      {showShareModal && (
+      {tripData?.trip_code && showShareModal && (
         <TripShareModal
           shareCode={tripData.trip_code}
           onClose={() => setShowShareModal(false)}
         />
       )}
+
       <div className="flex flex-1">
         <SidebarLeft
           selectedPlaces={selectedPlaces}
           mapRef={mapRef}
           setSelectedPlaces={setSelectedPlaces}
+          tripId={tripId}
         />
         <div className="flex-grow h-full pt-18 relative">
           <TripMap

@@ -166,12 +166,14 @@ export const getTripById = async (
         countries,
         cities,
         places_to_stay,
+        places_to_visit,
         title,
         start_date,
         end_date,
         image,
         type_of_trip,
         friends_list,
+        trip_code,
         profiles_travel_data!inner (user_id)
       `
       )
@@ -250,16 +252,16 @@ export const updateTravel = async (
     throw new Error("Missing or invalid places_to_stay");
   }
 
-  console.log(places_to_stay)
+  const { data, error } = await supabase
+    .from("travel_data")
+    .upsert([{ id: trip_id, places_to_stay, status: "confirmed" }], { onConflict: "id" });
 
-  // const { data, error } = await supabase
-  //   .from("travel_data")
-  //   .upsert([{ id: trip_id, ...travelData, status: "confirmed" }], { onConflict: "id" });
+  if (error) {
+    throw new Error(`Error saving travel data: ${error.message}`);
+  }
 
-  // if (error) {
-  //   throw new Error(`Error saving travel data: ${error.message}`);
-  // }
-
+  console.log("Travel data saved successfully", data);
+  res.status(200).json({ message: "Travel data saved successfully", data });
 };
 
 export const joinTrip = async (

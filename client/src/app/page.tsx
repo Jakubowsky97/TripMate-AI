@@ -1,5 +1,5 @@
 "use client";
-import FeatureSection from "@/components/layout/feturesSection";
+import FeatureSection from "@/components/layout/featuresSection";
 import HeroSection from "@/components/layout/heroSection";
 import NavBar from "@/components/layout/navBar";
 import HowItWorksSection from "@/components/layout/howItWorksSection";

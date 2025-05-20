@@ -3,21 +3,22 @@
 import { useEffect, useRef } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import axios from "axios";
-import { FaBuilding } from "react-icons/fa";
 
 interface Place {
   city: string;
   name: string;
   type: string;
-  start_date: string;
-  end_date: string;
-  is_start_point: boolean;
-  is_end_point: boolean;
+  start_date?: string;
+  end_date?: string;
+  is_start_point?: boolean;
+  is_end_point?: boolean;
   country: string;
   weather: { temp: string; condition: string };
-  coordinates: number[];
-  date: string;
-  category?: string;
+  coordinates: any[];
+  date?: string;
+  notes?: string;
+  time?: string;
+  typeOfPlace?: string;
 }
 
 interface CityPlaces {
@@ -33,7 +34,6 @@ interface TripMapProps {
   selectedPlaces: CityPlaces[];
   onRemovePlace: (place: Place) => void; // nowy props
 }
-
 
 export default function TripMap({
   tripId,
@@ -257,7 +257,7 @@ export default function TripMap({
                       condition:
                         weather.weather[0].description.charAt(0).toUpperCase() +
                         weather.weather[0].description.slice(1),
-                    }, 
+                    },
                     type: category,
                     date: new Date().toISOString().split("T")[0], // Today's date
                   };
@@ -317,88 +317,87 @@ export default function TripMap({
 
       // Markery z selectedPlaces
       // Markery z selectedPlaces
-selectedPlaces.forEach((cityObj) => {
-  cityObj.places.forEach((place) => {
-    if (
-      !place.coordinates ||
-      place.coordinates.length !== 2 ||
-      typeof place.coordinates[0] !== "number" ||
-      typeof place.coordinates[1] !== "number"
-    )
-      return;
+      selectedPlaces.forEach((cityObj) => {
+        cityObj.places.forEach((place) => {
+          if (
+            !place.coordinates ||
+            place.coordinates.length !== 2 ||
+            typeof place.coordinates[0] !== "number" ||
+            typeof place.coordinates[1] !== "number"
+          )
+            return;
 
-    const color =
-      place.is_start_point == true
-        ? "#f59e0b"
-        : place.is_end_point == true
-        ? "#f43f5e"
-        : "#f97316";
+          const color =
+            place.is_start_point == true
+              ? "#f59e0b"
+              : place.is_end_point == true
+              ? "#f43f5e"
+              : "#f97316";
 
-    const marker = new google.maps.Marker({
-      position: { lat: place.coordinates[1], lng: place.coordinates[0] },
-      map,
-      title: place.name,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: color,
-        fillOpacity: 1,
-        scale: 8,
-        strokeColor: "white",
-        strokeWeight: 2,
-      },
-    });
+          const marker = new google.maps.Marker({
+            position: { lat: place.coordinates[1], lng: place.coordinates[0] },
+            map,
+            title: place.name,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: color,
+              fillOpacity: 1,
+              scale: 8,
+              strokeColor: "white",
+              strokeWeight: 2,
+            },
+          });
 
-    const infoWindowContent = `
-      <div id="info-window-${place.name.replace(/\s+/g, "-")}">
+          const infoWindowContent = `
+      <div id="info-window-${place.name}">
         <h3>${place.name}</h3>
         <p><strong>City:</strong> ${place.city}</p>
         <p><strong>Country:</strong> ${place.country}</p>
         <p><strong>Type:</strong> ${place.type}</p>
         <p><strong>Weather:</strong> ${place.weather.temp}, ${place.weather.condition}</p>
         <p><strong>Date:</strong> ${place.date}</p>
-        <button style="margin-top: 8px; background-color: #ef4444; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer;" id="remove-marker-btn-${place.name.replace(/\s+/g, "-")}">
+        <button style="margin-top: 8px; background-color: #ef4444; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer;" id="remove-marker-btn-${place.name}">
           Usuń miejsce
         </button>
       </div>
     `;
 
-    const infoWindow = new google.maps.InfoWindow({
-      content: infoWindowContent,
-    });
+          const infoWindow = new google.maps.InfoWindow({
+            content: infoWindowContent,
+          });
 
-    marker.addListener("click", () => {
-      infoWindow.open(map, marker);
+          marker.addListener("click", () => {
+            infoWindow.open(map, marker);
 
-      if (mapRef.current) {
-        const latLng = new google.maps.LatLng(
-          place.coordinates[1],
-          place.coordinates[0]
-        );
-        mapRef.current.panTo(latLng);
-        mapRef.current.setZoom(16);
+            if (mapRef.current) {
+              const latLng = new google.maps.LatLng(
+                place.coordinates[1],
+                place.coordinates[0]
+              );
+              mapRef.current.panTo(latLng);
+              mapRef.current.setZoom(16);
 
-        if ((mapRef.current as any).customHandlers?.handlePlaceClick) {
-          (mapRef.current as any).customHandlers.handlePlaceClick(place);
-        }
-      }
-    });
+              if ((mapRef.current as any).customHandlers?.handlePlaceClick) {
+                (mapRef.current as any).customHandlers.handlePlaceClick(place);
+              }
+            }
+          });
 
-    // Obsługa kliknięcia "Usuń miejsce"
-    google.maps.event.addListener(infoWindow, "domready", () => {
-      const btn = document.getElementById(
-        `remove-marker-btn-${place.name.replace(/\s+/g, "-")}`
-      );
-      if (btn) {
-        btn.onclick = () => {
-          marker.setMap(null); // usuń z mapy
-          onRemovePlace(place); // aktualizuj stan w komponencie nadrzędnym
-          infoWindow.close();
-        };
-      }
-    });
-  });
-});
-
+          // Obsługa kliknięcia "Usuń miejsce"
+          google.maps.event.addListener(infoWindow, "domready", () => {
+            const btn = document.getElementById(
+              `remove-marker-btn-${place.name.replace(/\s+/g, "-")}`
+            );
+            if (btn) {
+              btn.onclick = () => {
+                marker.setMap(null); // usuń z mapy
+                onRemovePlace(place); // aktualizuj stan w komponencie nadrzędnym
+                infoWindow.close();
+              };
+            }
+          });
+        });
+      });
 
       return () => {
         socket.off("existingMarkers");

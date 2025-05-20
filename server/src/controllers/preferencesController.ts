@@ -40,3 +40,13 @@ export const updateUserPreferences = async (userId: string, newPrefs: any) => {
     }
   };
   
+
+export const fetchUserPreferences = async (userId: string) => {
+    const { data, error } = await supabase
+        .from("user_travel_preferences")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+  
+        return data;
+  }

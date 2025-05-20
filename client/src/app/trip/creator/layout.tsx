@@ -20,7 +20,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex flex-row items-center gap-6 text-[#4b5563]">
           <button>
-            <FaRegUser size={22} />
+            <FaRegUser size={22} onClick={() => {
+              router.push("/dashboard/settings");
+            }}/>
           </button>
           <button>
             <FaRegBell size={22} />

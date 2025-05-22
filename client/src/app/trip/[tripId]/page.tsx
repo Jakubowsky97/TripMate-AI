@@ -197,10 +197,17 @@ export default function TripPage() {
             ? JSON.parse(data.data.places_to_stay)
             : data.data.places_to_stay;
 
-        const placesToVisit =
+        let placesToVisit =
           typeof data.data.places_to_visit === "string"
             ? JSON.parse(data.data.places_to_visit)
             : data.data.places_to_visit;
+
+        // Sortuj rosnąco po dacie
+        placesToVisit = placesToVisit.sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        });
 
         const initialPlaces = cities.map((city: string, index: number) => ({
           city,
@@ -239,7 +246,7 @@ export default function TripPage() {
             notes: place.notes || "",
             type: place.type,
             typeOfPlace: "visit",
-            country
+            country,
           });
         }
       } catch (err) {
@@ -341,7 +348,7 @@ export default function TripPage() {
         date =
           date_to_visit.toLocaleString("en-GB", { month: "long" }) +
           ` ${date_to_visit.getDate()}, ${date_to_visit.getFullYear()}`;
-      } else {  
+      } else {
         if (place.is_start_point) {
           date =
             start_date.toLocaleString("en-GB", { month: "long" }) +
@@ -703,13 +710,13 @@ export default function TripPage() {
       return; // Nie wykonuj zapisu, jeśli brak danych
     }
 
-  const places_to_stay = selectedPlaces.flatMap((city) =>
-    city.places.filter((place) => place.typeOfPlace === 'stay')
-  );
+    const places_to_stay = selectedPlaces.flatMap((city) =>
+      city.places.filter((place) => place.typeOfPlace === "stay")
+    );
 
-  const places_to_visit = selectedPlaces.flatMap((city) =>
-    city.places.filter((place) => place.typeOfPlace === 'visit')
-  );
+    const places_to_visit = selectedPlaces.flatMap((city) =>
+      city.places.filter((place) => place.typeOfPlace === "visit")
+    );
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
       method: "POST",

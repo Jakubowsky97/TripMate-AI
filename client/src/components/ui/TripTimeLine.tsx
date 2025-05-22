@@ -12,19 +12,23 @@ import {
   FaPlaneArrival,
   FaSave,
 } from "react-icons/fa";
+import { set } from "date-fns";
 
 interface Place {
   city: string;
   name: string;
   type: string;
-  start_date: string;
-  end_date: string;
-  is_start_point: boolean;
-  is_end_point: boolean;
+  start_date?: string;
+  end_date?: string;
+  is_start_point?: boolean;
+  is_end_point?: boolean;
   country: string;
   weather: { temp: string; condition: string };
   coordinates: any[];
-  date: string;
+  date?: string;
+  notes?: string;
+  time?: string;
+  typeOfPlace?: string;
 }
 
 interface SelectedPlaces {
@@ -185,7 +189,11 @@ const DraggableItem = ({ index, place, mapRef, isLast }: any) => {
   );
 };
 
-const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface) => {
+const TripTimeLine = ({
+  selectedPlaces,
+  mapRef,
+  tripId,
+}: TripTimeLineInterface) => {
   const [places, setPlaces] = useState<Place[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -216,38 +224,31 @@ const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface)
     setHasChanges(true); // Zaznacz, że są niezapisane zmiany
   };
 
-  const saveChanges = () => {
-    // Unflatten the places to update the selectedPlaces state
-    const cities = places.reduce((acc: any, place: Place) => {
-      const cityIndex = acc.findIndex(
-        (city: any) => city.city === place.city
-      );
-      if (cityIndex === -1) {
-        acc.push({
-          city: place.city,
-          country: place.country,
-          places: [place],
-        });
-      } else {
-        acc[cityIndex].places.push(place);
-      }
-      return acc;
-    }, []);
+const saveChanges = () => {
+  const stayCities = places.filter(
+    (place) => place.typeOfPlace === "stay"
+  )
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        trip_id: tripId,
-        places_to_stay: cities,
-      }),
-      credentials: "include",
-    }).then(() => {
-      setHasChanges(false); // Zresetuj flagę zmian po zapisaniu
-    });
-  };
+  const visitCities = places.filter(
+    (place) => place.typeOfPlace === "visit"
+  )
+
+  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trip/updateTrip`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      trip_id: tripId,
+      places_to_stay: stayCities,
+      places_to_visit: visitCities,
+    }),
+    credentials: "include",
+  }).then(() => {
+    setHasChanges(false); // Zresetuj flagę zmian po zapisaniu
+  });
+};
+
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
@@ -255,8 +256,8 @@ const TripTimeLine = ({ selectedPlaces, mapRef, tripId }: TripTimeLineInterface)
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Trip Timeline</h2>
           {hasChanges && (
-            <button 
-              onClick={saveChanges} 
+            <button
+              onClick={saveChanges}
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
             >
               <FaSave /> Save Changes

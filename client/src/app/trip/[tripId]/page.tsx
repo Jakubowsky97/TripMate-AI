@@ -203,11 +203,16 @@ export default function TripPage() {
             : data.data.places_to_visit;
 
         // Sortuj rosnąco po dacie
-        placesToVisit = placesToVisit.sort((a: { date: string | number | Date; }, b: { date: string | number | Date; }) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateA.getTime() - dateB.getTime();
-        });
+        placesToVisit = placesToVisit.sort(
+          (
+            a: { date: string | number | Date },
+            b: { date: string | number | Date }
+          ) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateA.getTime() - dateB.getTime();
+          }
+        );
 
         const initialPlaces = cities.map((city: string, index: number) => ({
           city,
@@ -231,6 +236,7 @@ export default function TripPage() {
             type: place.type,
             typeOfPlace: "stay",
             country,
+            maxIndexOfVisit: placesToVisit.length,
           });
         }
 
@@ -307,6 +313,8 @@ export default function TripPage() {
     is_end_point?: boolean;
     is_start_point?: boolean;
     country: string;
+    maxIndexOfVisit?: number;
+    currentIndex?: number;
   }) => {
     try {
       // 1. Pogoda z OpenWeather
@@ -409,7 +417,27 @@ export default function TripPage() {
             (p) => p.name === place.name
           );
           if (existingPlaceIndex === -1) {
-            updated[cityIndex].places.push(fullPlace);
+            if (fullPlace.is_start_point && fullPlace.is_end_point) {
+              updated[cityIndex].places.unshift({
+                ...fullPlace,
+                is_end_point: false,
+                is_start_point: true,
+                index: 0,
+              }); // jako początek
+              updated[cityIndex].places.push({
+                ...fullPlace,
+                is_end_point: true,
+                is_start_point: false,
+                duplicated: true,
+                index: (fullPlace.maxIndexOfVisit ?? 0) + 1,
+              }); // jako koniec
+            } else if (fullPlace.is_start_point) {
+              updated[cityIndex].places.unshift({...fullPlace, index: 0}); // tylko początek
+            } else if (fullPlace.is_end_point) {
+              updated[cityIndex].places.push({...fullPlace}); // tylko koniec
+            } else {
+              updated[cityIndex].places.push(fullPlace); // normalne miejsce
+            }
           }
         } else {
           updated.push({
@@ -658,6 +686,8 @@ export default function TripPage() {
         notes?: string;
         time?: string;
         typeOfPlace?: string;
+        duplicated?: boolean;
+        index?: number;
       }[];
     }[]
   >([]);

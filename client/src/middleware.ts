@@ -45,15 +45,6 @@ if (user) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  // 🔒 Sprawdź czy użytkownik ma dostęp admina (ciasteczko `adminAccess`)
-  const adminAccess = request.cookies.get("adminAccess")?.value;
-
-  if (!adminAccess || adminAccess !== "true") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin-auth";
-    return NextResponse.redirect(url);
-  }
-
   return response;
 }
 
